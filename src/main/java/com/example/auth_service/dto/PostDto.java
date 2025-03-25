@@ -5,11 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO для передачи данных поста.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostDto {
 
-    @NotBlank
+    /**
+     * Контент поста.
+     * Не может быть пустым.
+     */
+    @NotBlank(message = "Контент поста не может быть пустым")
     private String content;
 }
