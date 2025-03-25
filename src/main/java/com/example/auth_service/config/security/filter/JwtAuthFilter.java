@@ -79,6 +79,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         UserDetails userDetails;
         try {
+            // Используем loadUserByUsername, который теперь работает для логина и почты
             userDetails = customUserDetailsService.loadUserByUsername(username);
         } catch (Exception e) {
             log.error("Ошибка загрузки данных пользователя: {}", e.getMessage());
