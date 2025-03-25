@@ -13,6 +13,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Сущность для представления поста.
+ * Хранит информацию о контенте поста и привязанном пользователе.
+ */
 @Data
 @Entity
 @NoArgsConstructor
@@ -20,15 +24,27 @@ import lombok.NoArgsConstructor;
 @Table(name = "posts")
 public class Post {
 
+    /**
+     * Идентификатор поста.
+     * Уникальный и генерируется автоматически.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Контент поста.
+     * Не может быть пустым.
+     */
     @Column(name = "content", nullable = false)
     private String content;
 
+    /**
+     * Пользователь, который создал пост.
+     * Связь с сущностью пользователя через поле user_id.
+     * Для предотвращения ленивой загрузки может быть полезно использовать `fetch = FetchType.LAZY`.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",
-            referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 }
