@@ -3,15 +3,16 @@ package com.example.auth_service.controller;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.service.AuthService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
+/**
+ * Контроллер для аутентификации и регистрации пользователей.
+ */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -19,28 +20,49 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * Регистрация нового пользователя.
+     *
+     * @param userSignupDto данные пользователя для регистрации.
+     */
     @PostMapping("/register-user")
+    @ResponseStatus(HttpStatus.CREATED)
     public void register(@Valid @RequestBody UserSignupDto userSignupDto) {
-        authService.registerUser(userSignupDto);
+        log.info("Регистрация пользователя: {}", userSignupDto.getEmail());
+        authService.register(userSignupDto, false);  // false - для обычного пользователя
     }
 
+    /**
+     * Регистрация нового администратора.
+     *
+     * @param userSignupDto данные администратора для регистрации.
+     */
     @PostMapping("/register-admin")
+    @ResponseStatus(HttpStatus.CREATED)
     public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) {
-        authService.registerAdmin(userSignupDto);
+        log.info("Регистрация администратора: {}", userSignupDto.getEmail());
+        authService.register(userSignupDto, true);  // true - для администратора
     }
 
+    /**
+     * Аутентификация пользователя.
+     *
+     * @param userSigninDto данные для входа.
+     * @return JWT-токен.
+     */
     @PostMapping("/login")
     public String login(@Valid @RequestBody UserSigninDto userSigninDto) {
+        log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
         return authService.login(userSigninDto);
     }
 
+    /**
+     * Выход пользователя из системы.
+     */
     @PostMapping("/logout")
-    public void logout(HttpServletRequest request) {
-        authService.logout(extractTokenFromRequest(request));
-    }
-
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        return authHeader.substring(7);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@RequestHeader("Authorization") String authHeader) {
+        log.info("Выход пользователя, токен: {}", authHeader);
+        authService.logout(authHeader);
     }
 }

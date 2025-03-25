@@ -18,6 +18,10 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Сущность для представления пользователя.
+ * Хранит информацию о пользователе, его ролях и постах.
+ */
 @Data
 @Entity
 @NoArgsConstructor
@@ -25,26 +29,51 @@ import java.util.Set;
 @Table(name = "users")
 public class User {
 
+    /**
+     * Идентификатор пользователя.
+     * Уникальный и генерируется автоматически.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Имя пользователя.
+     * Уникально для каждого пользователя и не может быть пустым.
+     */
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
+    /**
+     * Электронная почта пользователя.
+     * Уникальна для каждого пользователя и не может быть пустой.
+     */
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    /**
+     * Пароль пользователя.
+     * Не может быть пустым.
+     */
     @Column(name = "password", nullable = false)
     private String password;
 
+    /**
+     * Роли пользователя.
+     * Связь "многие ко многим" с таблицей ролей.
+     * Используется eager загрузка для немедленной загрузки ролей.
+     */
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles",
-            joinColumns = @JoinColumn(name = "user_id",referencedColumnName = "id"),
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private Set<Role> roles;
 
+    /**
+     * Посты пользователя.
+     * Связь "один ко многим" с таблицей постов.
+     * Используется eager загрузка для немедленной загрузки постов.
+     */
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private List<Post> posts;
 }
-

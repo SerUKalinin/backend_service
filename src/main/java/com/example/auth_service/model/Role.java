@@ -12,6 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Сущность для представления ролей пользователей.
+ * Содержит информацию о типе роли (например, USER или ADMIN).
+ */
 @Data
 @Entity
 @NoArgsConstructor
@@ -19,18 +23,29 @@ import lombok.NoArgsConstructor;
 @Table(name = "roles")
 public class Role {
 
+    /**
+     * Идентификатор роли.
+     * Уникальный и генерируется автоматически.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Тип роли.
+     * Значение обязательно и должно быть уникальным.
+     * Возможные типы: ROLE_USER, ROLE_ADMIN.
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "role_type", nullable = false, unique = true)
     private RoleType roleType;
 
+    /**
+     * Перечисление для типов ролей.
+     * Определяет доступные типы ролей в системе.
+     */
     public enum RoleType {
-        ROLE_USER,
-        ROLE_ADMIN
+        ROLE_USER,  // Роль пользователя с ограниченными правами
+        ROLE_ADMIN  // Роль администратора с расширенными правами
     }
 }
-
-
