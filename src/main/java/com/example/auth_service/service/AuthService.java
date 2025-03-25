@@ -84,8 +84,17 @@ public class AuthService {
     public String login(UserSigninDto userSigninDto) {
         log.info("Попытка входа в систему для пользователя {}", userSigninDto.getUsername());
 
+        // Проверяем, является ли переданное значение почтой
+        String identifier = userSigninDto.getUsername();
+        if (identifier.contains("@")) {
+            log.debug("Идентификатор является email: {}", identifier);
+        } else {
+            log.debug("Идентификатор является логином: {}", identifier);
+        }
+
+        // Пытаемся аутентифицировать пользователя
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(userSigninDto.getUsername(), userSigninDto.getPassword())
+                new UsernamePasswordAuthenticationToken(identifier, userSigninDto.getPassword())
         );
 
         if (authentication == null) {
@@ -93,10 +102,12 @@ public class AuthService {
             throw new UserNotFoundException("Неверное имя пользователя или пароль");
         }
 
+        // Генерация JWT токена
         String token = jwtUtil.generateToken(authentication.getName(), authentication.getAuthorities());
         log.info("Пользователь {} успешно авторизован", userSigninDto.getUsername());
         return token;
     }
+
 
     /**
      * Выполняет выход пользователя из системы.
