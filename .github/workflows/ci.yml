@@ -20,11 +20,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    # Добавлен шаг для установки прав на выполнение
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+
     - name: Set up JDK 17
       uses: actions/setup-java@v2
       with:
         java-version: '17'
-        distribution: 'temurin'  # Исправление: добавлен параметр distribution
+        distribution: 'temurin'
 
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
