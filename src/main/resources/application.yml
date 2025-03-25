@@ -1,0 +1,29 @@
+spring:
+
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/auth_service_db
+    username: dev
+    password: devpass
+
+  jpa:
+    show-sql: true
+    database: postgresql
+    properties:
+      hibernate:
+        boot:
+          allow_jdbc_metadata_access: false
+
+  redis:
+    data:
+      host: localhost
+      port: 6379
+      password: devpass
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+
+auth_service:
+  issuer: auth_service
+  jwtSecret: mySecretKey
+  jwtLifeTimeDuration: 86400000

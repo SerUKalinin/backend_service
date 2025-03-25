@@ -1,0 +1,34 @@
+version: '3.2'
+
+services:
+
+  postgres_db:
+    image: postgres:latest
+    container_name: auth_service_db_container
+    restart: always
+    environment:
+      PGPORT: 5432
+      POSTGRES_DB: auth_service_db
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C --lc-ctype=C'
+    volumes:
+      - ./data/postgres:/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    container_name: auth_service_blacklist_redis_container
+    restart: always
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --port 6379 --save 20 1 --loglevel warning --requirepass devpass
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
