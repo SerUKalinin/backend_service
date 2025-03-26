@@ -1,5 +1,6 @@
 package com.example.auth_service.service;
 
+import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.exception.AuthException;
@@ -110,7 +111,7 @@ public class AuthService {
      * @throws UserNotFoundException Если пользователь с таким именем не найден.
      * @throws UserNotActivatedException Если пользователь не активирован.
      */
-    public String login(UserSigninDto userSigninDto) {
+    public AuthResponse login(UserSigninDto userSigninDto) {
         log.info("Попытка входа в систему для пользователя {}", userSigninDto.getUsername());
 
         // Проверка, если введенный username является email
@@ -139,9 +140,10 @@ public class AuthService {
         // Генерация JWT токена
         String token = jwtUtil.generateToken(authentication.getName(), authentication.getAuthorities());
         log.info("Пользователь {} успешно авторизован", userSigninDto.getUsername());
-        return token;
-    }
 
+        // Возвращаем объект с токеном и сообщением
+        return new AuthResponse(token, "Авторизация успешна");
+    }
 
     /**
      * Подтверждение email пользователя.
