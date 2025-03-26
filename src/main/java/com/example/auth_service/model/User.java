@@ -76,4 +76,11 @@ public class User {
      */
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private List<Post> posts;
+
+    /**
+     * Статус активации пользователя.
+     * По умолчанию пользователь не активирован.
+     */
+    @Column(name = "active", nullable = false)
+    private boolean active = false;  // Значение по умолчанию - false
 }
