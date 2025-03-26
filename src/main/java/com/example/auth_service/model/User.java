@@ -70,14 +70,6 @@ public class User {
     private Set<Role> roles;
 
     /**
-     * Посты пользователя.
-     * Связь "один ко многим" с таблицей постов.
-     * Используется eager загрузка для немедленной загрузки постов.
-     */
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    private List<Post> posts;
-
-    /**
      * Статус активации пользователя.
      * По умолчанию пользователь не активирован.
      */
