@@ -37,6 +37,10 @@ dependencies {
 	compileOnly("org.projectlombok:lombok:1.18.30")
 	annotationProcessor("org.projectlombok:lombok:1.18.30")
 
+	// Mail
+	implementation("org.springframework.boot:spring-boot-starter-mail")
+	implementation("com.sun.mail:jakarta.mail:2.0.1") // Последняя версия Jakarta Mail
+
 	// DevTools
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 
