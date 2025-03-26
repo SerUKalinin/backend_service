@@ -9,11 +9,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Разрешаем доступ с фронтенда (порт 63342) на бэкенд (порт 8080)
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:63342") // Фронтенд будет работать на порту 63342
-                .allowedMethods("GET", "POST", "PUT", "DELETE") // Разрешаем методы
-                .allowedHeaders("*") // Разрешаем все заголовки
-                .allowCredentials(true); // Разрешаем использование cookies, если нужно
+                .allowedOrigins("http://localhost:63342") // Фронтенд работает на порту 63342
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS") // Добавлены дополнительные методы
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept") // Указаны часто используемые заголовки
+                .allowCredentials(true); // Разрешаем использование cookies
     }
 }

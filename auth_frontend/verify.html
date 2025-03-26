@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Подтверждение Email</title>
+    <title>Подтверждение почты</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Подтвердите ваш Email</h1>
-<form id="verify-form">
-    <label for="verify-email">Email:</label>
-    <input type="email" id="verify-email" required><br><br>
-    <label for="verify-code">Код подтверждения:</label>
-    <input type="text" id="verify-code" required><br><br>
-    <button type="submit">Подтвердить</button>
-</form>
+<div class="container">
+    <h1>Подтверждение почты</h1>
+    <p>Введите код, отправленный на вашу почту.</p>
+    <input type="text" id="verificationCode" placeholder="Код">
+    <button onclick="verifyEmail()">Подтвердить</button>
+    <p id="message"></p>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

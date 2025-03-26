@@ -1,13 +1,14 @@
 package com.example.auth_service.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @AllArgsConstructor
 public class AuthResponse {
-    private String token;
-    private String message;
+
+    private String jwtToken;
 }
