@@ -17,6 +17,8 @@ import com.example.auth_service.service.email.EmailService;
 import com.example.auth_service.service.redis.RedisService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Set;
 
 /**
@@ -43,6 +46,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final RedisService redisService;
     private final EmailService emailService;
+    private final SessionService sessionService;
 
     /**
      * Регистрирует нового пользователя или администратора.
@@ -139,10 +143,23 @@ public class AuthService {
 
         // Генерация JWT токена
         String token = jwtUtil.generateToken(authentication.getName(), authentication.getAuthorities());
+
+        // Сохраняем сессию в Redis
+        sessionService.saveSession(user.getUsername(), token, Duration.ofHours(2));
+
         log.info("Пользователь {} успешно авторизован", userSigninDto.getUsername());
 
-        // Возвращаем объект с токеном и сообщением
-        return new AuthResponse(token, "Авторизация успешна");
+        // Возвращаем объект AuthResponse, а не просто строку
+        return new AuthResponse(token);
+    }
+
+    public void addJwtToCookie(String token, HttpServletResponse response) {
+        // Добавляем JWT в cookie
+        Cookie cookie = new Cookie("JWT_TOKEN", token);
+        cookie.setHttpOnly(true);  // Невозможность доступа к cookie через JS
+        cookie.setPath("/");  // Чтобы cookie было доступно на всех маршрутах
+        cookie.setMaxAge(60 * 60 * 2);  // Пример: токен живет 2 часа
+        response.addCookie(cookie);
     }
 
     /**
@@ -185,6 +202,11 @@ public class AuthService {
      */
     public void logout(String authHeader) {
         String token = extractTokenFromAuthHeader(authHeader);
+        if (token == null) {
+            log.warn("JWT токен отсутствует или имеет неверный формат");
+            throw new IllegalArgumentException("Неверный формат токена");
+        }
+
         log.info("Попытка выхода пользователя с токеном {}", token);
         jwtUtil.addJwtToBlacklist(token);
         log.info("Пользователь с токеном {} успешно вышел из системы", token);

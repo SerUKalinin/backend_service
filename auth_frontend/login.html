@@ -7,19 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Вход в систему</h1>
-<form id="login-form">
-    <label for="username">Логин или Email:</label>
-    <input type="text" id="username" required><br><br>
-
-    <label for="login-password">Пароль:</label>
-    <input type="password" id="login-password" required><br><br>
-
-    <button type="submit">Войти</button>
-</form>
-
-<p>Нет аккаунта? <a href="register.html">Зарегистрироваться</a></p> <!-- Ссылка на страницу регистрации -->
-
+<div class="container">
+    <h1>Вход</h1>
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="Логин или Email" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+        <button type="submit">Войти</button>
+    </form>
+    <button onclick="window.location.href='register.html'">Зарегистрироваться</button>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

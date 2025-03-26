@@ -1,5 +1,6 @@
 package com.example.auth_service.config.security.filter;
 
+import com.example.auth_service.repository.redis.RedisRepository;
 import com.example.auth_service.service.security.CustomUserDetailsService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -28,6 +29,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
+    private final RedisRepository redisRepository;
 
     /**
      * Проверяет и обрабатывает JWT-токен из запроса.
@@ -61,6 +63,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (!jwtUtil.isValid(jwt)) {
             log.warn("Получен недействительный JWT-токен");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT in Bearer Header");
+            return;
+        }
+
+        // Проверка на наличие токена в blacklist
+        if (redisRepository.isExists(jwt)) {
+            log.warn("Токен {} был отозван (blacklisted)", jwt);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Токен отозван");
             return;
         }
 

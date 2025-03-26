@@ -6,6 +6,7 @@ import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.dto.EmailVerificationDto;
 import com.example.auth_service.service.AuthService;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +56,16 @@ public class AuthController {
      * @return JWT-токен.
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto) {
+    public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
+
+        // Выполняем логику входа через сервис
         AuthResponse authResponse = authService.login(userSigninDto);
-        return ResponseEntity.ok(authResponse); // Возвращаем успешный ответ с токеном
+
+        // Добавляем JWT в cookie
+        authService.addJwtToCookie(authResponse.getJwtToken(), response);
+
+        return ResponseEntity.ok(authResponse); // Возвращаем успешный ответ
     }
 
     /**
