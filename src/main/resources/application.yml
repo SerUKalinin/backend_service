@@ -14,6 +14,18 @@ spring:
         boot:
           allow_jdbc_metadata_access: false
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: serukalinin@gmail.com
+    password: hlbu gorj pcgk vpgj
+    protocol: smtp
+    properties:
+      mail.transport.protocol: smtp
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+
   redis:
     data:
       host: localhost
@@ -21,7 +33,7 @@ spring:
       password: devpass
 
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
 
 auth_service:
   issuer: auth_service

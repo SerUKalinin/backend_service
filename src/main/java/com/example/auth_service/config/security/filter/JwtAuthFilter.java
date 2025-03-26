@@ -1,5 +1,6 @@
 package com.example.auth_service.config.security.filter;
 
+import com.example.auth_service.repository.redis.RedisRepository;
 import com.example.auth_service.service.security.CustomUserDetailsService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -28,6 +29,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
+    private final RedisRepository redisRepository;
 
     /**
      * Проверяет и обрабатывает JWT-токен из запроса.
@@ -64,6 +66,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Проверка на наличие токена в blacklist
+        if (redisRepository.isExists(jwt)) {
+            log.warn("Токен {} был отозван (blacklisted)", jwt);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Токен отозван");
+            return;
+        }
+
         String username = jwtUtil.decodeToken(jwt).getSubject();
         if (username == null || username.isBlank()) {
             log.warn("JWT не содержит имя пользователя");
@@ -79,6 +88,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         UserDetails userDetails;
         try {
+            // Используем loadUserByUsername, который теперь работает для логина и почты
             userDetails = customUserDetailsService.loadUserByUsername(username);
         } catch (Exception e) {
             log.error("Ошибка загрузки данных пользователя: {}", e.getMessage());

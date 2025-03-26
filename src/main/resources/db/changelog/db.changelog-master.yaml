@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: 001_create_tables.postgresql.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 002_insert_values.postgresql.sql
+      relativeToChangelogFile: true

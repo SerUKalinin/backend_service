@@ -1,12 +1,17 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
+import com.example.auth_service.dto.EmailVerificationDto;
 import com.example.auth_service.service.AuthService;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -27,7 +32,7 @@ public class AuthController {
      */
     @PostMapping("/register-user")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@Valid @RequestBody UserSignupDto userSignupDto) {
+    public void register(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
         log.info("Регистрация пользователя: {}", userSignupDto.getEmail());
         authService.register(userSignupDto, false);  // false - для обычного пользователя
     }
@@ -39,7 +44,7 @@ public class AuthController {
      */
     @PostMapping("/register-admin")
     @ResponseStatus(HttpStatus.CREATED)
-    public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) {
+    public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
         log.info("Регистрация администратора: {}", userSignupDto.getEmail());
         authService.register(userSignupDto, true);  // true - для администратора
     }
@@ -51,9 +56,16 @@ public class AuthController {
      * @return JWT-токен.
      */
     @PostMapping("/login")
-    public String login(@Valid @RequestBody UserSigninDto userSigninDto) {
+    public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
-        return authService.login(userSigninDto);
+
+        // Выполняем логику входа через сервис
+        AuthResponse authResponse = authService.login(userSigninDto);
+
+        // Добавляем JWT в cookie
+        authService.addJwtToCookie(authResponse.getJwtToken(), response);
+
+        return ResponseEntity.ok(authResponse); // Возвращаем успешный ответ
     }
 
     /**
@@ -64,5 +76,15 @@ public class AuthController {
     public void logout(@RequestHeader("Authorization") String authHeader) {
         log.info("Выход пользователя, токен: {}", authHeader);
         authService.logout(authHeader);
+    }
+
+    /**
+     * Подтверждение email.
+     */
+    @PostMapping("/verify-email")
+    @ResponseStatus(HttpStatus.OK)
+    public void verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto) {
+        log.info("Получен запрос на проверку email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+        authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
     }
 }
