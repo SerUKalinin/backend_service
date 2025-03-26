@@ -1,15 +1,17 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
+import com.example.auth_service.dto.EmailVerificationDto;
 import com.example.auth_service.service.AuthService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 /**
  * Контроллер для аутентификации и регистрации пользователей.
@@ -53,9 +55,10 @@ public class AuthController {
      * @return JWT-токен.
      */
     @PostMapping("/login")
-    public String login(@Valid @RequestBody UserSigninDto userSigninDto) {
+    public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
-        return authService.login(userSigninDto);
+        AuthResponse authResponse = authService.login(userSigninDto);
+        return ResponseEntity.ok(authResponse); // Возвращаем успешный ответ с токеном
     }
 
     /**
@@ -68,10 +71,13 @@ public class AuthController {
         authService.logout(authHeader);
     }
 
+    /**
+     * Подтверждение email.
+     */
     @PostMapping("/verify-email")
     @ResponseStatus(HttpStatus.OK)
-    public void verifyEmail(@RequestParam String email, @RequestParam String code) {
-        log.info("Получен запрос на проверку email: {}, code: {}", email, code);
-        authService.confirmEmail(email, code);
+    public void verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto) {
+        log.info("Получен запрос на проверку email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+        authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
     }
 }
