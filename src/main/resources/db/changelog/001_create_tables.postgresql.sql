@@ -21,11 +21,3 @@ CREATE TABLE users_roles
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (role_id) REFERENCES roles (id)
 );
-
-CREATE TABLE posts
-(
-    id          BIGSERIAL PRIMARY KEY,
-    content     VARCHAR(4000) NOT NULL,
-    user_id     BIGINT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id)
-);

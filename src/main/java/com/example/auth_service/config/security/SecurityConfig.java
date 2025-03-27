@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -48,10 +49,41 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register-user", "/auth/register-admin", "/auth/login", "/auth/logout", "/auth/verify-email").permitAll()
+                        // Доступ к аутентификации и регистрации открыт
+                        .requestMatchers(
+                                "/auth/**"
+                        ).permitAll()
+
+                        // Доступ к проектам
+                        .requestMatchers(HttpMethod.GET, "/projects").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/projects").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/projects/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/projects/{id}").hasRole("ADMIN")
+
+                        // Доступ к объектам недвижимости
+                        .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/real-estate-objects/{id}").hasRole("ADMIN")
+
+                        // Доступ к задачам
+                        .requestMatchers(HttpMethod.GET, "/tasks").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/tasks").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/tasks/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/tasks/{id}").hasRole("ADMIN")
+
+                        // Доступ к подзадачам
+                        .requestMatchers(HttpMethod.GET, "/subtasks").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/subtasks").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/subtasks/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/subtasks/{id}").hasRole("ADMIN")
+
+                        // Доступ к постам и информации о пользователях
                         .requestMatchers("/posts", "/posts/**", "/users/info").hasRole("USER")
                         .requestMatchers("/users/info/all").hasRole("ADMIN")
-                        .anyRequest().hasAnyRole("USER", "ADMIN")
+
+                        // Любые другие запросы требуют авторизации
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

@@ -35,11 +35,14 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
     });
 
     if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("token", data.token);  // Сохраняем токен
         window.location.href = "profile.html";
     } else {
         alert("Ошибка входа");
     }
 });
+
 
 // Подтверждение почты
 async function verifyEmail() {
@@ -62,19 +65,36 @@ async function verifyEmail() {
 
 // Выход
 function logout() {
-    fetch(`${API_URL}/logout`, { method: "POST" }).then(() => {
+    fetch(`${API_URL}/logout`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+    }).finally(() => {
+        localStorage.removeItem("token");  // Удаляем токен
         window.location.href = "login.html";
     });
 }
 
+
 // Загрузка профиля
 async function loadProfile() {
-    const response = await fetch(`${API_URL}/profile`, { method: "GET" });
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const response = await fetch(`${API_URL}/profile`, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${token}`  // Передаём токен
+        }
+    });
 
     if (response.ok) {
         const user = await response.json();
         document.getElementById("userInfo").innerHTML = `Логин: ${user.username} <br> Email: ${user.email}`;
     } else {
+        localStorage.removeItem("token");
         window.location.href = "login.html";
     }
 }
