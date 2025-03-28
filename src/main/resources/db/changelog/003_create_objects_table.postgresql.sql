@@ -6,3 +6,14 @@ CREATE TABLE objects (
     created_at  TIMESTAMP DEFAULT now(), -- Дата создания
     updated_at  TIMESTAMP DEFAULT now()  -- Дата обновления
 );
+CREATE OR REPLACE FUNCTION update_timestamp()
+    RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_objects_timestamp
+    BEFORE UPDATE ON objects
+    FOR EACH ROW EXECUTE FUNCTION update_timestamp();

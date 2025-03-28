@@ -97,4 +97,96 @@ async function loadProfile() {
         localStorage.removeItem("token");
         window.location.href = "login.html";
     }
+
+
+    // Функция загрузки объектов недвижимости
+    async function loadObjects() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/real-estate-objects`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const objects = await response.json();
+            const table = document.getElementById("objectsTable");
+            table.innerHTML = "";
+            objects.forEach(obj => {
+                table.innerHTML += `
+                <tr>
+                    <td>${obj.id}</td>
+                    <td>${obj.name}</td>
+                    <td>${obj.objectType}</td>
+                    <td>${obj.parent ? obj.parent.id : "—"}</td>
+                    <td>
+                        <button onclick="deleteObject(${obj.id})">Удалить</button>
+                    </td>
+                </tr>
+            `;
+            });
+        } else {
+            alert("Ошибка загрузки объектов");
+        }
+    }
+
+// Форма создания объекта
+    document.getElementById("objectForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById("objectName").value;
+        const objectType = document.getElementById("objectType").value;
+        const parentId = document.getElementById("parentId").value || null;
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Вы не авторизованы!");
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/real-estate-objects`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ name, objectType, parent: parentId ? { id: parentId } : null })
+        });
+
+        if (response.ok) {
+            loadObjects(); // Перезагрузить список
+            document.getElementById("objectForm").reset();
+        } else {
+            alert("Ошибка при создании объекта");
+        }
+    });
+
+// Удаление объекта
+    async function deleteObject(id) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Вы не авторизованы!");
+            return;
+        }
+
+        const confirmed = confirm("Вы уверены, что хотите удалить объект?");
+        if (!confirmed) return;
+
+        const response = await fetch(`${API_URL}/real-estate-objects/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            loadObjects(); // Перезагрузить список
+        } else {
+            alert("Ошибка при удалении объекта");
+        }
+    }
 }
