@@ -53,13 +53,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**"
                         ).permitAll()
-
-                        // Доступ к проектам
-                        .requestMatchers(HttpMethod.GET, "/projects").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/projects").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/projects/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/projects/{id}").hasRole("ADMIN")
-
                         // Доступ к объектам недвижимости
                         .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
