@@ -51,7 +51,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Доступ к аутентификации и регистрации открыт
                         .requestMatchers(
-                                "/auth/**"
+                                "/auth/**", "/users/info"
                         ).permitAll()
                         // Доступ к объектам недвижимости
                         .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")

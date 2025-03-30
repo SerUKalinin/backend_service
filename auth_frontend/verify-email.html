@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение почты</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Подтвердите почту</h2>
+    <input type="email" id="email" placeholder="Введите почту" required autocomplete="email">
+    <input type="text" id="code" placeholder="Код из письма" required>
+    <button onclick="verifyEmail()">Подтвердить</button>
+</div>
+
+<script>
+    function verifyEmail() {
+        const email = document.getElementById("email").value;
+        const code = document.getElementById("code").value;
+
+        fetch("http://localhost:8080/auth/verify-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, code })
+        })
+            .then(response => {
+                if (response.ok) {
+                    alert("Email подтвержден!");
+                    window.location.href = "login.html";
+                } else {
+                    alert("Ошибка подтверждения");
+                }
+            });
+    }
+</script>
+</body>
+</html>

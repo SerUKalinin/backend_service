@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Личный кабинет</h2>
+    <p><strong>Логин:</strong> <span id="username"></span></p>
+    <p><strong>Почта:</strong> <span id="email"></span></p>
+    <button id="logoutBtn">Выйти</button>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        loadProfile();
+
+        document.getElementById("logoutBtn").addEventListener("click", logout);
+    });
+
+    function loadProfile() {
+        fetch("http://localhost:8080/users/info", {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${getCookie("jwt")}` }
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    window.location.href = "login.html"; // Если токен невалиден, перекидываем на вход
+                }
+            })
+            .then(user => {
+                document.getElementById("username").textContent = user.username;
+                document.getElementById("email").textContent = user.email;
+            })
+            .catch(error => {
+                console.error("Ошибка загрузки профиля:", error);
+                window.location.href = "login.html";
+            });
+    }
+
+    function logout() {
+        fetch("http://localhost:8080/auth/logout", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${getCookie("jwt")}` }
+        })
+            .then(() => {
+                document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC"; // Удаляем JWT
+                window.location.href = "login.html";
+            });
+    }
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+</script>
+</body>
+</html>

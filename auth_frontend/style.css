@@ -1,33 +1,93 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+/* Общие стили */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
 }
 
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #1e1e2e, #3a3a5a);
+    color: #ffffff;
+}
+
+/* Контейнер */
 .container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0px 0px 10px #ccc;
-    text-align: center;
-}
-
-input, button {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     width: 100%;
-    padding: 10px;
-    margin: 5px 0;
+    max-width: 350px;
+    text-align: center;
+    backdrop-filter: blur(10px);
 }
 
+/* Заголовок */
+h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* Поля ввода */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 16px;
+    outline: none;
+    transition: background 0.3s ease;
+}
+
+input::placeholder {
+    color: #dddddd;
+}
+
+input:focus {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Кнопка */
 button {
-    background-color: #4CAF50;
+    width: 100%;
+    padding: 12px;
+    background: #4caf50;
     color: white;
     border: none;
+    border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
+    transition: background 0.3s ease;
 }
 
 button:hover {
-    background-color: #45a049;
+    background: #45a049;
+}
+
+/* Ссылки */
+a {
+    display: block;
+    color: #90caf9;
+    margin-top: 15px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Сообщения */
+.message {
+    font-size: 14px;
+    margin-top: 15px;
+    opacity: 0.8;
 }
