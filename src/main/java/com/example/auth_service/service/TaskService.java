@@ -65,9 +65,10 @@ public class TaskService {
         return taskRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Задача с ID {} не найдена", id);
-                    return new TaskNotFoundException("Задача не найдена");
+                    throw new TaskNotFoundException("Задача не найдена");
                 });
     }
+
 
     /**
      * Обновить существующую задачу.

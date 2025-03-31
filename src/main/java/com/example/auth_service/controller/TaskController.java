@@ -56,16 +56,7 @@ public class TaskController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
-        log.info("Запрос на получение задачи с ID {}", id);
-        return taskService.getTaskById(id)
-                .map(task -> {
-                    log.info("Задача найдена: {}", task);
-                    return ResponseEntity.ok(task);
-                })
-                .orElseGet(() -> {
-                    log.warn("Задача с ID {} не найдена", id);
-                    return ResponseEntity.notFound().build();
-                });
+        return ResponseEntity.ok(taskService.getTaskById(id));
     }
 
     /**
