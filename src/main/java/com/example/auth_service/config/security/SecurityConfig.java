@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -47,11 +48,12 @@ public class SecurityConfig {
         log.info("Настройка SecurityFilterChain");
 
         http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Доступ к аутентификации и регистрации открыт
                         .requestMatchers(
-                                "/auth/**"
+                                "/auth/**", "/users/info"
                         ).permitAll()
                         // Доступ к объектам недвижимости
                         .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")
