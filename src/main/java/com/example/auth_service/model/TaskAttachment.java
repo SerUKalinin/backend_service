@@ -16,6 +16,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Сущность вложения к задаче.
+ */
 @Entity
 @Data
 @Builder
@@ -24,20 +27,27 @@ import java.time.LocalDateTime;
 @Table(name = "task_attachments")
 public class TaskAttachment {
 
+    /** Уникальный идентификатор вложения. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Задача, к которой прикреплено вложение. */
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
+    /** Путь к файлу вложения. */
     @Column(nullable = false)
-    private String filePath; // путь к файлу
+    private String filePath;
 
+    /** Дата и время загрузки вложения. */
     @Column(nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 
+    /**
+     * Устанавливает дату загрузки перед сохранением в базу данных.
+     */
     @PrePersist
     protected void onCreate() {
         this.uploadedAt = LocalDateTime.now();
