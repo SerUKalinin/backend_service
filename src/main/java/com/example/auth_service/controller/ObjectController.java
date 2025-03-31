@@ -19,6 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/real-estate-objects")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:63342")
 public class ObjectController {
 
     private final ObjectService objectService;

@@ -9,56 +9,44 @@
 <body>
 <div class="container">
     <h2>Личный кабинет</h2>
-    <p><strong>Логин:</strong> <span id="username"></span></p>
-    <p><strong>Почта:</strong> <span id="email"></span></p>
-    <button id="logoutBtn">Выйти</button>
+
+    <!-- Информация о пользователе -->
+    <h3>Ваши данные</h3>
+    <div id="userInfo">
+        <p><strong>Имя:</strong> <span id="username"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+        <button onclick="editUserInfo()">Редактировать</button>
+    </div>
+
+    <!-- Раздел управления объектами недвижимости -->
+    <h3>Ваши объекты недвижимости</h3>
+    <button onclick="openCreateObjectModal()">Добавить объект</button>
+    <div id="objectsList"></div>
+
+    <!-- Раздел управления пользователями (только для администратора) -->
+    <div id="adminSection" style="display: none;">
+        <h3>Управление пользователями</h3>
+        <div id="usersList"></div>
+    </div>
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        loadProfile();
+<!-- Модальное окно для создания объекта -->
+<div id="createObjectModal" class="modal">
+    <div class="modal-content">
+        <h3>Создать новый объект</h3>
+        <label for="objectName">Название:</label>
+        <input type="text" id="objectName" placeholder="Введите название">
+        <label for="objectType">Тип объекта:</label>
+        <select id="objectType">
+            <option value="BUILDING">Здание</option>
+            <option value="FLOOR">Этаж</option>
+            <option value="APARTMENT">Квартира</option>
+        </select>
+        <button onclick="createObject()">Создать</button>
+        <button onclick="closeCreateObjectModal()">Закрыть</button>
+    </div>
+</div>
 
-        document.getElementById("logoutBtn").addEventListener("click", logout);
-    });
-
-    function loadProfile() {
-        fetch("http://localhost:8080/users/info", {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${getCookie("jwt")}` }
-        })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    window.location.href = "login.html"; // Если токен невалиден, перекидываем на вход
-                }
-            })
-            .then(user => {
-                document.getElementById("username").textContent = user.username;
-                document.getElementById("email").textContent = user.email;
-            })
-            .catch(error => {
-                console.error("Ошибка загрузки профиля:", error);
-                window.location.href = "login.html";
-            });
-    }
-
-    function logout() {
-        fetch("http://localhost:8080/auth/logout", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${getCookie("jwt")}` }
-        })
-            .then(() => {
-                document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC"; // Удаляем JWT
-                window.location.href = "login.html";
-            });
-    }
-
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(";").shift();
-    }
-</script>
+<script src="script.js"></script>
 </body>
 </html>

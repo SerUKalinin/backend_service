@@ -61,3 +61,90 @@ document.getElementById("verify-form")?.addEventListener("submit", async (e) => 
         alert("Ошибка подтверждения.");
     }
 });
+document.addEventListener("DOMContentLoaded", function () {
+    loadUserInfo();
+    loadObjects();
+});
+
+// Получение данных пользователя
+function loadUserInfo() {
+    fetch("http://localhost:8080/users/info", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${getCookie("jwt")}` }
+    })
+        .then(response => response.json())
+        .then(user => {
+            document.getElementById("username").textContent = user.username;
+            document.getElementById("email").textContent = user.email;
+
+            // Если администратор, загружаем список пользователей
+            if (user.role === "ADMIN") {
+                document.getElementById("adminSection").style.display = "block";
+                loadUsers();
+            }
+        })
+        .catch(error => console.error("Ошибка загрузки данных пользователя:", error));
+}
+
+// Добавление нового объекта
+function openCreateObjectModal() {
+    document.getElementById("createObjectModal").style.display = "flex";
+}
+
+function closeCreateObjectModal() {
+    document.getElementById("createObjectModal").style.display = "none";
+}
+
+function createObject() {
+    const name = document.getElementById("objectName").value;
+    const type = document.getElementById("objectType").value;
+
+    if (!name.trim()) {
+        alert("Введите название объекта!");
+        return;
+    }
+
+    fetch("http://localhost:8080/real-estate-objects", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${getCookie("jwt")}`
+        },
+        body: JSON.stringify({ name, type })
+    })
+        .then(response => response.json())
+        .then(() => {
+            loadObjects();
+            closeCreateObjectModal();
+        })
+        .catch(error => console.error("Ошибка при создании объекта:", error));
+}
+
+// Загрузка объектов недвижимости
+function loadObjects() {
+    fetch("http://localhost:8080/real-estate-objects", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${getCookie("jwt")}` }
+    })
+        .then(response => response.json())
+        .then(objects => {
+            const objectsList = document.getElementById("objectsList");
+            objectsList.innerHTML = "";
+            objects.forEach(object => {
+                const objectItem = document.createElement("div");
+                objectItem.innerHTML = `
+                <p><strong>${object.name}</strong> (${object.type})</p>
+                <button onclick="deleteObject(${object.id})">Удалить</button>
+            `;
+                objectsList.appendChild(objectItem);
+            });
+        })
+        .catch(error => console.error("Ошибка загрузки объектов:", error));
+}
+
+// Получение JWT из куки
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+}
