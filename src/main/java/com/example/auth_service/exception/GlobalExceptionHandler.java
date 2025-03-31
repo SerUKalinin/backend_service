@@ -1,0 +1,109 @@
+package com.example.auth_service.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+/**
+ * Глобальный обработчик исключений для обработки специфических ошибок в приложении.
+ */
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * Обрабатывает исключение, связанное с ошибками аутентификации и авторизации.
+     *
+     * @param ex Исключение {@link AuthException}
+     * @return Ответ с кодом 401 UNAUTHORIZED и сообщением об ошибке
+     */
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<String> handleAuthException(AuthException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключения, возникающие при попытке создания сущности, которая уже существует.
+     *
+     * @param ex Исключение {@link EmailAlreadyExistsException}, {@link UserAlreadyExistsException}, {@link TaskAlreadyExistsException}
+     * @return Ответ с кодом 409 CONFLICT и сообщением об ошибке
+     */
+    @ExceptionHandler({
+            EmailAlreadyExistsException.class,
+            UserAlreadyExistsException.class,
+            TaskAlreadyExistsException.class
+    })
+    public ResponseEntity<String> handleConflictExceptions(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключения, возникающие при отсутствии запрашиваемой сущности в базе данных.
+     *
+     * @param ex Исключение {@link UserNotFoundException}, {@link ObjectNotFoundException}, {@link TaskNotFoundException}
+     * @return Ответ с кодом 404 NOT FOUND и сообщением об ошибке
+     */
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            ObjectNotFoundException.class,
+            TaskNotFoundException.class
+    })
+    public ResponseEntity<String> handleNotFoundExceptions(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключение, возникающее при попытке входа неактивированного пользователя.
+     *
+     * @param ex Исключение {@link UserNotActivatedException}
+     * @return Ответ с кодом 403 FORBIDDEN и сообщением об ошибке
+     */
+    @ExceptionHandler(UserNotActivatedException.class)
+    public ResponseEntity<String> handleUserNotActivatedException(UserNotActivatedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключение, возникающее при неверном коде подтверждения.
+     *
+     * @param ex Исключение {@link InvalidConfirmationCodeException}
+     * @return Ответ с кодом 400 BAD REQUEST и сообщением об ошибке
+     */
+    @ExceptionHandler(InvalidConfirmationCodeException.class)
+    public ResponseEntity<String> handleInvalidConfirmationCodeException(InvalidConfirmationCodeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключение, связанное с некорректной конфигурацией CORS.
+     *
+     * @param ex Исключение {@link InvalidCorsConfigurationException}
+     * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением об ошибке
+     */
+    @ExceptionHandler(InvalidCorsConfigurationException.class)
+    public ResponseEntity<String> handleInvalidCorsConfigurationException(InvalidCorsConfigurationException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключение, связанное с ошибками конфигурации Redis.
+     *
+     * @param ex Исключение {@link RedisConfigurationException}
+     * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением об ошибке
+     */
+    @ExceptionHandler(RedisConfigurationException.class)
+    public ResponseEntity<String> handleRedisConfigurationException(RedisConfigurationException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает любые неожиданные исключения, не предусмотренные в других методах.
+     *
+     * @param ex Общее исключение {@link Exception}
+     * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением "Внутренняя ошибка сервера"
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGenericException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Внутренняя ошибка сервера");
+    }
+}

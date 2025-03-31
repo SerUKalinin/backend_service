@@ -27,10 +27,13 @@ public class ObjectService {
      *
      * @param object объект для создания
      * @return созданный объект
-     * @throws IllegalArgumentException если объект null
+     * @throws IllegalArgumentException если объект null или некорректен
      */
     public ObjectEntity createObject(ObjectEntity object) {
         Assert.notNull(object, "Объект не должен быть null");
+        Assert.hasText(object.getName(), "Имя объекта не должно быть пустым");
+        Assert.notNull(object.getObjectType(), "Тип объекта не должен быть null");
+
         log.info("Создание объекта: {}", object);
         return objectRepository.save(object);
     }
@@ -50,11 +53,12 @@ public class ObjectService {
      *
      * @param id идентификатор объекта
      * @return объект, если найден
+     * @throws ObjectNotFoundException если объект не найден
      */
-    public Optional<ObjectEntity> getObjectsById(Long id) {
-        log.info("Запрос на получение объекта с ID: {}", id);
+    public Optional<ObjectEntity> getObjectById(Long id) {
         return objectRepository.findById(id);
     }
+
 
     /**
      * Получить объекты по типу.
@@ -85,9 +89,13 @@ public class ObjectService {
      * @param updatedObject обновленные данные объекта
      * @return обновленный объект
      * @throws ObjectNotFoundException если объект не найден
+     * @throws IllegalArgumentException если обновленные данные некорректны
      */
     public ObjectEntity updateObject(Long id, ObjectEntity updatedObject) {
         Assert.notNull(updatedObject, "Обновленный объект не должен быть null");
+        Assert.hasText(updatedObject.getName(), "Имя объекта не должно быть пустым");
+        Assert.notNull(updatedObject.getObjectType(), "Тип объекта не должен быть null");
+
         log.info("Обновление объекта с ID {}: {}", id, updatedObject);
 
         return objectRepository.findById(id)
@@ -109,14 +117,25 @@ public class ObjectService {
      * Удалить объект.
      *
      * @param id идентификатор удаляемого объекта
+     * @throws ObjectNotFoundException если объект не найден
      */
     public void deleteObject(Long id) {
         log.info("Запрос на удаление объекта с ID: {}", id);
-        if (!objectRepository.existsById(id)) {
-            log.warn("Попытка удаления несуществующего объекта с ID {}", id);
-            throw new ObjectNotFoundException("Объект не найден");
+
+        ObjectEntity object = objectRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Попытка удаления несуществующего объекта с ID {}", id);
+                    return new ObjectNotFoundException("Объект не найден");
+                });
+
+        // Проверяем, есть ли у объекта дочерние элементы
+        List<ObjectEntity> children = objectRepository.findByParentId(id);
+        if (!children.isEmpty()) {
+            log.warn("Объект с ID {} имеет дочерние объекты и не может быть удален", id);
+            throw new IllegalStateException("Удаление невозможно: у объекта есть дочерние элементы");
         }
-        objectRepository.deleteById(id);
+
+        objectRepository.delete(object);
         log.info("Объект с ID {} успешно удален", id);
     }
 }

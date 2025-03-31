@@ -44,7 +44,7 @@ public class ObjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ObjectEntity> getObjectsById(@PathVariable Long id) {
         log.info("Запрос на получение объекта с ID: {}", id);
-        return objectService.getObjectsById(id)
+        return objectService.getObjectById(id)
                 .map(object -> {
                     log.info("Объект найден: {}", object);
                     return ResponseEntity.ok(object);
