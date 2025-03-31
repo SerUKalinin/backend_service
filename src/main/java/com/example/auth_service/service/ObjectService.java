@@ -55,14 +55,10 @@ public class ObjectService {
      * @return объект, если найден
      * @throws ObjectNotFoundException если объект не найден
      */
-    public ObjectEntity getObjectById(Long id) {
-        log.info("Запрос на получение объекта с ID: {}", id);
-        return objectRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Объект с ID {} не найден", id);
-                    return new ObjectNotFoundException("Объект не найден");
-                });
+    public Optional<ObjectEntity> getObjectById(Long id) {
+        return objectRepository.findById(id);
     }
+
 
     /**
      * Получить объекты по типу.
