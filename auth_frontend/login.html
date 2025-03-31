@@ -29,10 +29,14 @@
             .then(data => {
                 if (data.jwtToken) {
                     document.cookie = `jwt=${data.jwtToken}; path=/`;
-                    window.location.href = "dashboard.html"; // Перенаправление после входа
+                    window.location.href = "dashboard.html";
                 } else {
                     alert("Ошибка входа");
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Ошибка входа");
             });
     }
 </script>

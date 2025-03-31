@@ -29,10 +29,16 @@
         })
             .then(response => {
                 if (response.ok) {
+                    // Сохраняем email в localStorage для использования на следующей странице
+                    localStorage.setItem('registeredEmail', email);
                     window.location.href = "verify-email.html";
                 } else {
                     alert("Ошибка при регистрации");
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Ошибка при регистрации");
             });
     }
 </script>
