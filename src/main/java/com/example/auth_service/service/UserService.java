@@ -31,7 +31,7 @@ public class UserService {
     public UserDto getUserInfo(String username) {
         log.info("Запрос информации о пользователе: {}", username);
         return userRepository.findByUsername(username)
-                .map(user -> new UserDto(user.getUsername(), user.getEmail()))
+                .map(user -> new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName()))
                 .orElseThrow(() -> {
                     log.warn("Пользователь {} не найден", username);
                     return new UserNotFoundException("Пользователь не найден");
@@ -46,7 +46,7 @@ public class UserService {
     public List<UserDto> getAllUsersInfo() {
         log.info("Запрос информации о всех пользователях");
         return userRepository.findAll().stream()
-                .map(user -> new UserDto(user.getUsername(), user.getEmail()))
+                .map(user -> new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName()))
                 .toList(); // Java 16+
     }
 
@@ -60,7 +60,7 @@ public class UserService {
     public UserDto getUserById(Long id) {
         log.info("Запрос информации о пользователе с ID: {}", id);
         return userRepository.findById(id)
-                .map(user -> new UserDto(user.getUsername(), user.getEmail()))
+                .map(user -> new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName()))
                 .orElseThrow(() -> {
                     log.warn("Пользователь с ID {} не найден", id);
                     return new UserNotFoundException("Пользователь не найден");
@@ -71,22 +71,41 @@ public class UserService {
      * Обновить информацию о пользователе.
      *
      * @param username имя пользователя, которого нужно обновить
-     * @param userDto  данные для обновления
+     * @param firstName  данные для обновления
      * @return обновленный {@link UserDto}
      * @throws UserNotFoundException если пользователь не найден
      */
     @Transactional
-    public UserDto updateUserInfo(String username, UserDto userDto) {
-        log.info("Обновление информации пользователя: {}", username);
+    public UserDto updateFirstName(String username, String firstName) {
+        log.info("Обновление имени пользователя: {}", username);
         return userRepository.findByUsername(username)
                 .map(user -> {
-                    user.setEmail(userDto.getEmail());
-                    return new UserDto(user.getUsername(), user.getEmail());
+                    user.setFirstName(firstName);
+                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName());
                 })
-                .orElseThrow(() -> {
-                    log.warn("Не удалось обновить. Пользователь {} не найден", username);
-                    return new UserNotFoundException("Пользователь не найден");
-                });
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+    }
+
+    @Transactional
+    public UserDto updateLastName(String username, String lastName) {
+        log.info("Обновление фамилии пользователя: {}", username);
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    user.setLastName(lastName);
+                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName());
+                })
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+    }
+
+    @Transactional
+    public UserDto updateEmail(String username, String email) {
+        log.info("Обновление почты пользователя: {}", username);
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    user.setEmail(email);
+                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName());
+                })
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
     }
 
     /**
