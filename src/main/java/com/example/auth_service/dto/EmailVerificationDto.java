@@ -1,14 +1,17 @@
 package com.example.auth_service.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * DTO для верификации email.
  * Содержит email пользователя и код верификации.
  */
-@Slf4j
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmailVerificationDto {
 
     /**
