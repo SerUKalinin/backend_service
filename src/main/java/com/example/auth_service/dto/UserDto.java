@@ -23,4 +23,9 @@ public class UserDto {
      * Должна быть в формате email.
      */
     private String email;
+
+    private String firstName;   // Добавлено поле для имени
+    private String lastName;
+
+
 }

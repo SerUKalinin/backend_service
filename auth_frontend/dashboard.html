@@ -3,204 +3,511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет</title>
+    <title>RealEstate PRO | Личный кабинет</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Общие стили */
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --dark: #1b263b;
+            --light: #f8f9fa;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --gray: #adb5bd;
+            --card-bg: #ffffff;
+            --sidebar-bg: #2b2d42;
+            --header-bg: #3a0ca3;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #1e1e2e, #3a3a5a);
-            color: #ffffff;
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
             min-height: 100vh;
         }
 
-        /* Контейнеры */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Шапка */
-        header {
-            background: rgba(44, 62, 80, 0.8);
-            padding: 20px 0;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-        }
-
-        header h1 {
-            margin: 0;
-            padding: 0;
-            font-size: 24px;
-        }
-
-        /* Блоки */
-        .section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(5px);
-        }
-
-        .section h2 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #ffffff;
-            font-size: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 10px;
-        }
-
-        /* Информация о пользователе */
-        .user-info {
+        /* Сайдбар */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            color: white;
+            padding: 2rem 1rem;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .sidebar-header {
+            display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
         }
 
-        .user-details h2 {
-            font-size: 22px;
-            margin-bottom: 5px;
+        .sidebar-header i {
+            font-size: 1.8rem;
+            margin-right: 1rem;
+            color: var(--accent);
         }
 
-        .user-details p {
-            opacity: 0.8;
-            font-size: 14px;
+        .sidebar-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
         }
 
-        /* Таблицы */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
+        .nav-menu {
+            flex-grow: 1;
         }
 
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: rgba(255,255,255,0.8);
         }
 
-        th {
-            background: rgba(255, 255, 255, 0.1);
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            margin-right: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .user-profile {
+            padding: 1rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
             font-weight: bold;
         }
 
-        tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Основное содержимое */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Шапка */
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: #f1f3f5;
+            border-radius: 30px;
+            padding: 0.5rem 1rem;
+            width: 300px;
+        }
+
+        .search-bar input {
+            border: none;
+            background: transparent;
+            margin-left: 0.5rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-bell {
+            position: relative;
+            margin-right: 1.5rem;
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--warning);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+        }
+
+        .logout-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: var(--secondary);
+        }
+
+        .logout-btn i {
+            margin-right: 0.5rem;
+        }
+
+        /* Контент */
+        .content {
+            padding: 2rem;
+            flex-grow: 1;
+            background: #f5f7fa;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: var(--secondary);
+        }
+
+        .add-btn i {
+            margin-right: 0.5rem;
+        }
+
+        /* Карточки */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .card-badge {
+            background: var(--accent);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .card-body p {
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .card-date {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .edit-btn {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .edit-btn:hover {
+            background: rgba(67, 97, 238, 0.2);
+        }
+
+        .delete-btn {
+            background: rgba(247, 37, 133, 0.1);
+            color: var(--warning);
+        }
+
+        .delete-btn:hover {
+            background: rgba(247, 37, 133, 0.2);
+        }
+
+        /* Таблицы */
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .table-filters {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            outline: none;
+        }
+
+        .table-body {
+            padding: 0;
+        }
+
+        .table-row {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s;
+        }
+
+        .table-row:hover {
+            background: #f9f9f9;
+        }
+
+        .table-row.header {
+            font-weight: 600;
+            background: #f5f7fa;
+        }
+
+        .table-cell {
+            flex: 1;
+            padding: 0 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-new {
+            background: rgba(76, 201, 240, 0.1);
+            color: var(--success);
+        }
+
+        .status-in-progress {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .status-completed {
+            background: rgba(72, 149, 239, 0.1);
+            color: var(--accent);
+        }
+
+        .status-expired {
+            background: rgba(247, 37, 133, 0.1);
+            color: var(--warning);
         }
 
         /* Формы */
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1.5rem;
         }
 
-        label {
+        .form-label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            opacity: 0.8;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
         }
 
-        input, select {
+        .form-input {
             width: 100%;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 6px;
-            color: #ffffff;
-            font-size: 14px;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
 
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
+        .form-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
         }
 
-        /* Кнопки */
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
+        .form-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
+            border: none;
         }
 
         .btn-primary {
-            background: #4caf50;
+            background: var(--primary);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #45a049;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
+            background: var(--secondary);
         }
 
         .btn-secondary {
-            background: #3498db;
-            color: white;
+            background: #f1f3f5;
+            color: #333;
         }
 
         .btn-secondary:hover {
-            background: #2980b9;
-        }
-
-        .btn-gray {
-            background: #7f8c8d;
-            color: white;
-        }
-
-        .btn-gray:hover {
-            background: #95a5a6;
-        }
-
-        /* Вкладки */
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: all 0.3s ease;
-        }
-
-        .tab:hover {
-            opacity: 1;
-        }
-
-        .tab.active {
-            opacity: 1;
-            border-bottom: 2px solid #4caf50;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
+            background: #e9ecef;
         }
 
         /* Модальные окна */
@@ -211,651 +518,1120 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.5);
             z-index: 1000;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
         .modal-content {
-            background: rgba(30, 30, 46, 0.95);
-            padding: 25px;
-            border-radius: 10px;
+            background: white;
+            border-radius: 12px;
             width: 90%;
-            max-width: 500px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: modalFadeIn 0.3s;
         }
 
-        .modal-content h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .modal-actions {
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #eee;
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 1rem;
         }
 
         /* Адаптивность */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+                padding: 1rem 0.5rem;
+            }
+            .sidebar-header h2, .nav-item span, .user-info {
+                display: none;
+            }
+            .sidebar-header {
+                justify-content: center;
+                padding: 0;
+            }
+            .nav-item {
+                justify-content: center;
+                padding: 1rem 0;
+            }
+            .nav-item i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+            .user-profile {
+                justify-content: center;
+            }
+        }
+
         @media (max-width: 768px) {
-            .user-info {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .table-filters {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
+                gap: 0.5rem;
             }
-
-            .tabs {
-                overflow-x: auto;
-                white-space: nowrap;
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
             }
-
-            th, td {
-                padding: 8px 10px;
-                font-size: 14px;
+            .search-bar {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-<header>
-    <div class="container">
-        <h1>Личный кабинет</h1>
+<!-- Сайдбар -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <i class="fas fa-building"></i>
+        <h2>RealEstate PRO</h2>
     </div>
-</header>
 
-<div class="container">
-    <div class="section user-info">
-        <div class="user-details">
-            <h2 id="username">Загрузка...</h2>
-            <p id="user-email"></p>
+    <nav class="nav-menu">
+        <div class="nav-item active" data-section="dashboard">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Главная</span>
         </div>
-        <button id="logout-btn" class="btn-danger">Выйти</button>
-    </div>
+        <div class="nav-item" data-section="objects">
+            <i class="fas fa-home"></i>
+            <span>Объекты</span>
+        </div>
+        <div class="nav-item" data-section="tasks">
+            <i class="fas fa-tasks"></i>
+            <span>Задачи</span>
+        </div>
+        <div class="nav-item" data-section="profile">
+            <i class="fas fa-user"></i>
+            <span>Профиль</span>
+        </div>
+        <div class="nav-item admin-only" data-section="users" style="display: none;">
+            <i class="fas fa-users-cog"></i>
+            <span>Пользователи</span>
+        </div>
+    </nav>
 
-    <div class="tabs">
-        <div class="tab active" data-tab="profile">Профиль</div>
-        <div class="tab" data-tab="objects">Объекты</div>
-        <div class="tab admin-only" data-tab="users">Пользователи (админ)</div>
-    </div>
-
-    <!-- Вкладка профиля -->
-    <div class="tab-content active" id="profile-tab">
-        <div class="section">
-            <h2>Редактирование профиля</h2>
-            <form id="update-profile-form">
-                <div class="form-group">
-                    <label for="profile-username">Имя пользователя</label>
-                    <input type="text" id="profile-username" required>
-                </div>
-                <div class="form-group">
-                    <label for="profile-email">Email</label>
-                    <input type="email" id="profile-email" required>
-                </div>
-                <button type="submit" class="btn-primary">Сохранить изменения</button>
-            </form>
+    <div class="user-profile">
+        <div class="user-avatar" id="user-avatar">JD</div>
+        <div class="user-info">
+            <div class="user-name" id="user-name">John Doe</div>
+            <div class="user-role" id="user-role">Администратор</div>
         </div>
     </div>
+</aside>
 
-    <!-- Вкладка объектов -->
-    <div class="tab-content" id="objects-tab">
-        <div class="section">
-            <h2>Создать новый объект</h2>
-            <form id="create-object-form">
-                <div class="form-group">
-                    <label for="object-name">Название</label>
-                    <input type="text" id="object-name" required>
-                </div>
-                <div class="form-group">
-                    <label for="object-type">Тип объекта</label>
-                    <select id="object-type" required>
-                        <option value="PROJECT">Проект</option>
-                        <option value="BUILDING">Здание</option>
-                        <option value="FLOOR">Этаж</option>
-                        <option value="APARTMENT">Квартира</option>
-                        <option value="ROOM">Комната</option>
-                        <option value="TASK">Задача</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="object-parent">Родительский объект (необязательно)</label>
-                    <select id="object-parent">
-                        <option value="">Нет родительского объекта</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-primary">Создать объект</button>
-            </form>
+<!-- Основное содержимое -->
+<main class="main-content">
+    <!-- Шапка -->
+    <header class="header">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Поиск...">
         </div>
 
-        <div class="section">
-            <h2>Список объектов</h2>
+        <div class="header-actions">
+            <div class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <div class="notification-badge">3</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Выйти
+            </button>
+        </div>
+    </header>
+
+    <!-- Контент -->
+    <div class="content">
+        <!-- Дашборд -->
+        <section id="dashboard-section" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Главная панель</h1>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Объекты недвижимости</h3>
+                        <span class="card-badge" id="objects-count">0</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Всего объектов в системе</p>
+                    </div>
+                    <div class="card-footer">
+                        <span class="card-date">Обновлено только что</span>
+                        <div class="card-actions">
+                            <div class="action-btn edit-btn" onclick="showSection('objects')">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Активные задачи</h3>
+                        <span class="card-badge" id="active-tasks-count">0</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Задачи в работе</p>
+                    </div>
+                    <div class="card-footer">
+                        <span class="card-date">Обновлено только что</span>
+                        <div class="card-actions">
+                            <div class="action-btn edit-btn" onclick="showSection('tasks')">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Просроченные</h3>
+                        <span class="card-badge" id="expired-tasks-count">0</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Просроченные задачи</p>
+                    </div>
+                    <div class="card-footer">
+                        <span class="card-date">Обновлено только что</span>
+                        <div class="card-actions">
+                            <div class="action-btn edit-btn" onclick="showSection('tasks')">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Последние задачи</h3>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Название</div>
+                        <div class="table-cell">Объект</div>
+                        <div class="table-cell">Статус</div>
+                        <div class="table-cell">Дедлайн</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div id="recent-tasks-list">
+                        <!-- Задачи будут загружены через JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Объекты недвижимости -->
+        <section id="objects-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Объекты недвижимости</h1>
+                <button class="add-btn" onclick="showAddObjectModal()">
+                    <i class="fas fa-plus"></i>
+                    Добавить объект
+                </button>
+            </div>
+
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Список объектов</h3>
+                    <div class="table-filters">
+                        <select class="filter-select" id="object-type-filter">
+                            <option value="">Все типы</option>
+                            <option value="PROJECT">Проект</option>
+                            <option value="BUILDING">Здание</option>
+                            <option value="FLOOR">Этаж</option>
+                            <option value="APARTMENT">Квартира</option>
+                            <option value="ROOM">Комната</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadObjects()">Применить</button>
+                    </div>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Название</div>
+                        <div class="table-cell">Тип</div>
+                        <div class="table-cell">Родитель</div>
+                        <div class="table-cell">Дата создания</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div id="objects-list">
+                        <!-- Объекты будут загружены через JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Задачи -->
+        <section id="tasks-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Задачи</h1>
+                <button class="add-btn" onclick="showAddTaskModal()">
+                    <i class="fas fa-plus"></i>
+                    Добавить задачу
+                </button>
+            </div>
+
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Список задач</h3>
+                    <div class="table-filters">
+                        <select class="filter-select" id="task-status-filter">
+                            <option value="">Все статусы</option>
+                            <option value="NEW">Новая</option>
+                            <option value="IN_PROGRESS">В процессе</option>
+                            <option value="EXPIRED">Просроченная</option>
+                            <option value="URGENT">Срочная</option>
+                            <option value="COMPLETED">Завершённая</option>
+                        </select>
+                        <select class="filter-select" id="task-object-filter">
+                            <option value="">Все объекты</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadTasks()">Применить</button>
+                    </div>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Название</div>
+                        <div class="table-cell">Объект</div>
+                        <div class="table-cell">Статус</div>
+                        <div class="table-cell">Дедлайн</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div id="tasks-list">
+                        <!-- Задачи будут загружены через JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Профиль -->
+        <section id="profile-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Мой профиль</h1>
+            </div>
+
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label">Логин</label>
+                    <input type="text" class="form-input" id="profile-username" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="profile-email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Новый пароль (оставьте пустым, если не хотите менять)</label>
+                    <input type="password" class="form-input" id="profile-password">
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')">Отмена</button>
+                    <button class="btn btn-primary" onclick="updateProfile()">Сохранить</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Пользователи (админ) -->
+        <section id="users-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Управление пользователями</h1>
+            </div>
+
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Список пользователей</h3>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Логин</div>
+                        <div class="table-cell">Email</div>
+                        <div class="table-cell">Роли</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div id="users-list">
+                        <!-- Пользователи будут загружены через JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Модальное окно добавления объекта -->
+<div id="object-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Добавить объект</h3>
+            <button class="modal-close" onclick="closeModal('object-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
             <div class="form-group">
-                <label for="filter-type">Фильтр по типу:</label>
-                <select id="filter-type">
-                    <option value="">Все типы</option>
+                <label class="form-label">Название</label>
+                <input type="text" class="form-input" id="object-name" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Тип объекта</label>
+                <select class="form-input" id="object-type" required>
                     <option value="PROJECT">Проект</option>
                     <option value="BUILDING">Здание</option>
                     <option value="FLOOR">Этаж</option>
                     <option value="APARTMENT">Квартира</option>
                     <option value="ROOM">Комната</option>
-                    <option value="TASK">Задача</option>
                 </select>
             </div>
-            <table id="objects-table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Название</th>
-                    <th>Тип</th>
-                    <th>Родитель</th>
-                    <th>Дата создания</th>
-                    <th>Действия</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="form-group">
+                <label class="form-label">Родительский объект (необязательно)</label>
+                <select class="form-input" id="object-parent">
+                    <option value="">Нет</option>
+                </select>
+            </div>
         </div>
-    </div>
-
-    <!-- Вкладка пользователей (для админа) -->
-    <div class="tab-content admin-only" id="users-tab">
-        <div class="section">
-            <h2>Все пользователи</h2>
-            <table id="users-table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Имя пользователя</th>
-                    <th>Email</th>
-                    <th>Действия</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('object-modal')">Отмена</button>
+            <button class="btn btn-primary" onclick="addObject()">Сохранить</button>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно редактирования объекта -->
-<div id="edit-object-modal" class="modal">
+<!-- Модальное окно добавления задачи -->
+<div id="task-modal" class="modal">
     <div class="modal-content">
-        <h2>Редактировать объект</h2>
-        <form id="edit-object-form">
-            <input type="hidden" id="edit-object-id">
+        <div class="modal-header">
+            <h3 class="modal-title">Добавить задачу</h3>
+            <button class="modal-close" onclick="closeModal('task-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
             <div class="form-group">
-                <label for="edit-object-name">Название</label>
-                <input type="text" id="edit-object-name" required>
+                <label class="form-label">Название</label>
+                <input type="text" class="form-input" id="task-title" required>
             </div>
             <div class="form-group">
-                <label for="edit-object-type">Тип объекта</label>
-                <select id="edit-object-type" required>
-                    <option value="PROJECT">Проект</option>
-                    <option value="BUILDING">Здание</option>
-                    <option value="FLOOR">Этаж</option>
-                    <option value="APARTMENT">Квартира</option>
-                    <option value="ROOM">Комната</option>
-                    <option value="TASK">Задача</option>
+                <label class="form-label">Описание</label>
+                <textarea class="form-textarea" id="task-description"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Статус</label>
+                <select class="form-input" id="task-status" required>
+                    <option value="NEW">Новая</option>
+                    <option value="IN_PROGRESS">В процессе</option>
+                    <option value="URGENT">Срочная</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="edit-object-parent">Родительский объект</label>
-                <select id="edit-object-parent">
-                    <option value="">Нет родительского объекта</option>
+                <label class="form-label">Объект недвижимости</label>
+                <select class="form-input" id="task-object" required>
                 </select>
             </div>
-            <div class="modal-actions">
-                <button type="button" id="cancel-edit" class="btn-gray">Отмена</button>
-                <button type="submit" class="btn-primary">Сохранить</button>
+            <div class="form-group">
+                <label class="form-label">Дедлайн</label>
+                <input type="datetime-local" class="form-input" id="task-deadline">
             </div>
-        </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('task-modal')">Отмена</button>
+            <button class="btn btn-primary" onclick="addTask()">Сохранить</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // Текущий пользователь и его роль
+    // Токен и данные пользователя
+    let jwtToken = '';
     let currentUser = null;
     let isAdmin = false;
 
-    // DOM элементы
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const logoutBtn = document.getElementById('logout-btn');
-    const updateProfileForm = document.getElementById('update-profile-form');
-    const createObjectForm = document.getElementById('create-object-form');
-    const editObjectForm = document.getElementById('edit-object-form');
-    const editObjectModal = document.getElementById('edit-object-modal');
-    const cancelEditBtn = document.getElementById('cancel-edit');
-    const filterType = document.getElementById('filter-type');
-    const objectParentSelect = document.getElementById('object-parent');
-    const editObjectParentSelect = document.getElementById('edit-object-parent');
-
-    // API базовый URL
-    const API_BASE_URL = 'http://localhost:8080';
-
     // Инициализация при загрузке страницы
-    document.addEventListener('DOMContentLoaded', () => {
-        checkAuth();
-        setupTabs();
-        setupEventHandlers();
-        loadUserInfo();
-        loadObjects();
-        loadParentObjects();
-    });
-
-    // Проверка аутентификации
-    function checkAuth() {
-        const token = getCookie('jwt');
-        if (!token) {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Проверяем наличие JWT токена
+        jwtToken = getCookie('jwt');
+        if (!jwtToken) {
             window.location.href = 'login.html';
             return;
         }
 
-        // Проверка роли (в реальном приложении это должно приходить с сервера)
-        isAdmin = localStorage.getItem('role') === 'ADMIN';
-        if (isAdmin) {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-            loadAllUsers();
-        }
-    }
+        // Загружаем данные пользователя
+        loadUserData();
 
-    // Получение куки по имени
+        // Настройка навигации
+        setupNavigation();
+
+        // Загружаем данные для дашборда
+        loadDashboardData();
+
+        // Загружаем данные для фильтров
+        loadObjectsForFilters();
+    });
+
+    // Получение куки
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
         if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    // Настройка вкладок
-    function setupTabs() {
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
+    // Загрузка данных пользователя
+    function loadUserData() {
+        fetch("http://localhost:8080/users/info", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                currentUser = data;
+                document.getElementById('user-name').textContent = data.username;
+                document.getElementById('user-avatar').textContent = getInitials(data.username);
+                document.getElementById('profile-username').value = data.username;
+                document.getElementById('profile-email').value = data.email;
 
-                tab.classList.add('active');
-                const tabId = tab.getAttribute('data-tab');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
+                // Проверяем, является ли пользователь администратором
+                isAdmin = data.roles && data.roles.some(role => role.roleType === 'ROLE_ADMIN');
+                if (isAdmin) {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    document.getElementById('user-role').textContent = 'Администратор';
+                } else {
+                    document.getElementById('user-role').textContent = 'Пользователь';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = 'login.html';
+            });
+    }
+
+    // Получение инициалов из имени
+    function getInitials(username) {
+        const parts = username.split(' ');
+        if (parts.length > 1) {
+            return parts[0].charAt(0) + parts[1].charAt(0);
+        }
+        return username.substring(0, 2).toUpperCase();
+    }
+
+    // Настройка навигации
+    function setupNavigation() {
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Удаляем активный класс у всех элементов
+                navItems.forEach(i => i.classList.remove('active'));
+                // Добавляем активный класс текущему элементу
+                this.classList.add('active');
+
+                // Получаем секцию для отображения
+                const section = this.getAttribute('data-section');
+                showSection(section);
             });
         });
     }
 
-    // Настройка обработчиков событий
-    function setupEventHandlers() {
-        logoutBtn.addEventListener('click', logout);
-        updateProfileForm.addEventListener('submit', handleUpdateProfile);
-        createObjectForm.addEventListener('submit', handleCreateObject);
-        filterType.addEventListener('change', loadObjects);
-        cancelEditBtn.addEventListener('click', () => editObjectModal.style.display = 'none');
-        editObjectForm.addEventListener('submit', handleUpdateObject);
+    // Показать секцию
+    function showSection(section) {
+        // Скрываем все секции
+        document.querySelectorAll('.content-section').forEach(sec => {
+            sec.style.display = 'none';
+        });
+
+        // Показываем выбранную секцию
+        document.getElementById(`${section}-section`).style.display = 'block';
+
+        // Загружаем данные для секции
+        if (section === 'objects') {
+            loadObjects();
+        } else if (section === 'tasks') {
+            loadTasks();
+        } else if (section === 'users' && isAdmin) {
+            loadUsers();
+        } else if (section === 'dashboard') {
+            loadDashboardData();
+        }
+    }
+
+    // Загрузка данных для дашборда
+    function loadDashboardData() {
+        // Загружаем все объекты
+        fetch("http://localhost:8080/real-estate-objects", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(objects => {
+                document.getElementById('objects-count').textContent = objects.length;
+            });
+
+        // Загружаем все задачи
+        fetch("http://localhost:8080/tasks", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(tasks => {
+                const activeTasks = tasks.filter(task =>
+                    task.status === 'NEW' || task.status === 'IN_PROGRESS' || task.status === 'URGENT');
+                const expiredTasks = tasks.filter(task => task.status === 'EXPIRED');
+
+                document.getElementById('active-tasks-count').textContent = activeTasks.length;
+                document.getElementById('expired-tasks-count').textContent = expiredTasks.length;
+
+                // Показываем последние 5 задач
+                const recentTasks = tasks.slice(0, 5);
+                renderRecentTasks(recentTasks);
+            });
+    }
+
+    // Отображение последних задач
+    function renderRecentTasks(tasks) {
+        const container = document.getElementById('recent-tasks-list');
+        container.innerHTML = '';
+
+        if (tasks.length === 0) {
+            container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="5">Задачи не найдены</div></div>';
+            return;
+        }
+
+        tasks.forEach(task => {
+            const row = document.createElement('div');
+            row.className = 'table-row';
+
+            // Форматируем дату дедлайна
+            let deadline = 'Не указан';
+            if (task.deadline) {
+                const deadlineDate = new Date(task.deadline);
+                deadline = deadlineDate.toLocaleDateString() + ' ' + deadlineDate.toLocaleTimeString();
+            }
+
+            // Определяем класс статуса
+            let statusClass = '';
+            if (task.status === 'NEW') statusClass = 'status-new';
+            else if (task.status === 'IN_PROGRESS') statusClass = 'status-in-progress';
+            else if (task.status === 'COMPLETED') statusClass = 'status-completed';
+            else if (task.status === 'EXPIRED') statusClass = 'status-expired';
+
+            row.innerHTML = `
+                    <div class="table-cell">${task.title}</div>
+                    <div class="table-cell">${task.realEstateObject ? task.realEstateObject.name : 'Не указан'}</div>
+                    <div class="table-cell"><span class="status-badge ${statusClass}">${task.status}</span></div>
+                    <div class="table-cell">${deadline}</div>
+                    <div class="table-cell">
+                        <div class="action-btn edit-btn" onclick="editTask('${task.id}')">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                `;
+            container.appendChild(row);
+        });
+    }
+
+    // Обновление профиля
+    function updateProfile() {
+        const email = document.getElementById('profile-email').value;
+        const password = document.getElementById('profile-password').value;
+
+        const userData = { email };
+        if (password) {
+            userData.password = password;
+        }
+
+        fetch("http://localhost:8080/users/update", {
+            method: "PUT",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    alert('Профиль успешно обновлен');
+                    loadUserData();
+                } else {
+                    alert('Ошибка при обновлении профиля');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при обновлении профиля');
+            });
+    }
+
+    // Загрузка объектов недвижимости
+    function loadObjects() {
+        const typeFilter = document.getElementById('object-type-filter').value;
+        let url = "http://localhost:8080/real-estate-objects";
+
+        if (typeFilter) {
+            url += `/by-type?type=${typeFilter}`;
+        }
+
+        fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(objects => {
+                const container = document.getElementById('objects-list');
+                container.innerHTML = '';
+
+                if (objects.length === 0) {
+                    container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="5">Объекты не найдены</div></div>';
+                    return;
+                }
+
+                objects.forEach(object => {
+                    const row = document.createElement('div');
+                    row.className = 'table-row';
+
+                    const parentName = object.parent ? object.parent.name : 'Нет';
+                    const createdAt = new Date(object.createdAt).toLocaleDateString();
+
+                    row.innerHTML = `
+                        <div class="table-cell">${object.name}</div>
+                        <div class="table-cell">${object.objectType}</div>
+                        <div class="table-cell">${parentName}</div>
+                        <div class="table-cell">${createdAt}</div>
+                        <div class="table-cell">
+                            ${isAdmin ? `
+                            <div class="action-btn edit-btn" onclick="editObject('${object.id}')">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="action-btn delete-btn" onclick="deleteObject('${object.id}')">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                            ` : ''}
+                            <div class="action-btn" onclick="viewObjectDetails('${object.id}')">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('objects-list').innerHTML =
+                    '<div class="table-row"><div class="table-cell" colspan="5">Ошибка загрузки объектов</div></div>';
+            });
+    }
+
+    // Загрузка задач
+    function loadTasks() {
+        const statusFilter = document.getElementById('task-status-filter').value;
+        const objectFilter = document.getElementById('task-object-filter').value;
+
+        let url = "http://localhost:8080/tasks";
+
+        if (statusFilter && objectFilter) {
+            url += `/status/${statusFilter}/object/${objectFilter}`;
+        } else if (statusFilter) {
+            url += `/status/${statusFilter}`;
+        } else if (objectFilter) {
+            url += `/object/${objectFilter}`;
+        }
+
+        fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(tasks => {
+                const container = document.getElementById('tasks-list');
+                container.innerHTML = '';
+
+                if (tasks.length === 0) {
+                    container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="5">Задачи не найдены</div></div>';
+                    return;
+                }
+
+                tasks.forEach(task => {
+                    const row = document.createElement('div');
+                    row.className = 'table-row';
+
+                    // Форматируем дату дедлайна
+                    let deadline = 'Не указан';
+                    if (task.deadline) {
+                        const deadlineDate = new Date(task.deadline);
+                        deadline = deadlineDate.toLocaleDateString() + ' ' + deadlineDate.toLocaleTimeString();
+                    }
+
+                    // Определяем класс статуса
+                    let statusClass = '';
+                    if (task.status === 'NEW') statusClass = 'status-new';
+                    else if (task.status === 'IN_PROGRESS') statusClass = 'status-in-progress';
+                    else if (task.status === 'COMPLETED') statusClass = 'status-completed';
+                    else if (task.status === 'EXPIRED') statusClass = 'status-expired';
+
+                    row.innerHTML = `
+                        <div class="table-cell">${task.title}</div>
+                        <div class="table-cell">${task.realEstateObject ? task.realEstateObject.name : 'Не указан'}</div>
+                        <div class="table-cell"><span class="status-badge ${statusClass}">${task.status}</span></div>
+                        <div class="table-cell">${deadline}</div>
+                        <div class="table-cell">
+                            ${isAdmin ? `
+                            <div class="action-btn edit-btn" onclick="editTask('${task.id}')">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="action-btn delete-btn" onclick="deleteTask('${task.id}')">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                            ` : ''}
+                            <div class="action-btn" onclick="viewTaskDetails('${task.id}')">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('tasks-list').innerHTML =
+                    '<div class="table-row"><div class="table-cell" colspan="5">Ошибка загрузки задач</div></div>';
+            });
+    }
+
+    // Загрузка пользователей (для администратора)
+    function loadUsers() {
+        if (!isAdmin) return;
+
+        fetch("http://localhost:8080/users/info/all", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(users => {
+                const container = document.getElementById('users-list');
+                container.innerHTML = '';
+
+                if (users.length === 0) {
+                    container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="4">Пользователи не найдены</div></div>';
+                    return;
+                }
+
+                users.forEach(user => {
+                    const row = document.createElement('div');
+                    row.className = 'table-row';
+
+                    const roles = user.roles.map(role =>
+                        role.roleType === 'ROLE_ADMIN' ? 'Администратор' : 'Пользователь'
+                    ).join(', ');
+
+                    row.innerHTML = `
+                        <div class="table-cell">${user.username}</div>
+                        <div class="table-cell">${user.email}</div>
+                        <div class="table-cell">${roles}</div>
+                        <div class="table-cell">
+                            <div class="action-btn delete-btn" onclick="deleteUser('${user.id}')">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('users-list').innerHTML =
+                    '<div class="table-row"><div class="table-cell" colspan="4">Ошибка загрузки пользователей</div></div>';
+            });
+    }
+
+    // Загрузка объектов для фильтров задач
+    function loadObjectsForFilters() {
+        fetch("http://localhost:8080/real-estate-objects", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(objects => {
+                const objectFilter = document.getElementById('task-object-filter');
+                const taskObjectSelect = document.getElementById('task-object');
+                const objectParentSelect = document.getElementById('object-parent');
+
+                // Очищаем и добавляем опции
+                [objectFilter, taskObjectSelect, objectParentSelect].forEach(select => {
+                    select.innerHTML = '<option value="">Выберите объект</option>';
+                    objects.forEach(object => {
+                        const option = document.createElement('option');
+                        option.value = object.id;
+                        option.textContent = `${object.name} (${object.objectType})`;
+                        select.appendChild(option);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Показать модальное окно добавления объекта
+    function showAddObjectModal() {
+        document.getElementById('object-modal').style.display = 'flex';
+    }
+
+    // Добавление нового объекта
+    function addObject() {
+        const name = document.getElementById('object-name').value;
+        const type = document.getElementById('object-type').value;
+        const parentId = document.getElementById('object-parent').value;
+
+        const objectData = {
+            name,
+            objectType: type
+        };
+
+        if (parentId) {
+            objectData.parent = { id: parentId };
+        }
+
+        fetch("http://localhost:8080/real-estate-objects", {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(objectData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    closeModal('object-modal');
+                    loadObjects();
+                    loadObjectsForFilters();
+                    loadDashboardData();
+                    alert('Объект успешно добавлен');
+                } else {
+                    alert('Ошибка при добавлении объекта');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при добавлении объекта');
+            });
+    }
+
+    // Показать модальное окно добавления задачи
+    function showAddTaskModal() {
+        document.getElementById('task-modal').style.display = 'flex';
+    }
+
+    // Добавление новой задачи
+    function addTask() {
+        const title = document.getElementById('task-title').value;
+        const description = document.getElementById('task-description').value;
+        const status = document.getElementById('task-status').value;
+        const objectId = document.getElementById('task-object').value;
+        const deadline = document.getElementById('task-deadline').value;
+
+        const taskData = {
+            title,
+            description,
+            status,
+            realEstateObject: { id: objectId }
+        };
+
+        if (deadline) {
+            taskData.deadline = deadline;
+        }
+
+        fetch("http://localhost:8080/tasks", {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    closeModal('task-modal');
+                    loadTasks();
+                    loadDashboardData();
+                    alert('Задача успешно добавлена');
+                } else {
+                    alert('Ошибка при добавлении задачи');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при добавлении задачи');
+            });
+    }
+
+    // Удаление объекта
+    function deleteObject(id) {
+        if (!confirm('Вы уверены, что хотите удалить этот объект?')) return;
+
+        fetch(`http://localhost:8080/real-estate-objects/${id}`, {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadObjects();
+                    loadObjectsForFilters();
+                    loadDashboardData();
+                    alert('Объект успешно удален');
+                } else {
+                    alert('Ошибка при удалении объекта');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при удалении объекта');
+            });
+    }
+
+    // Удаление задачи
+    function deleteTask(id) {
+        if (!confirm('Вы уверены, что хотите удалить эту задачу?')) return;
+
+        fetch(`http://localhost:8080/tasks/${id}`, {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadTasks();
+                    loadDashboardData();
+                    alert('Задача успешно удалена');
+                } else {
+                    alert('Ошибка при удалении задачи');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при удалении задачи');
+            });
+    }
+
+    // Удаление пользователя
+    function deleteUser(id) {
+        if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
+
+        fetch(`http://localhost:8080/users/${id}`, {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadUsers();
+                    alert('Пользователь успешно удален');
+                } else {
+                    alert('Ошибка при удалении пользователя');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при удалении пользователя');
+            });
+    }
+
+    // Закрытие модального окна
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        // Очищаем поля формы
+        document.querySelectorAll(`#${modalId} input, #${modalId} select, #${modalId} textarea`).forEach(field => {
+            field.value = '';
+        });
     }
 
     // Выход из системы
     function logout() {
-        document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        localStorage.removeItem('role');
+        document.cookie = 'jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         window.location.href = 'login.html';
     }
 
-    // Загрузка информации о пользователе
-    async function loadUserInfo() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/info`, {
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка загрузки данных пользователя');
-
-            const user = await response.json();
-            currentUser = user;
-
-            document.getElementById('username').textContent = user.username;
-            document.getElementById('user-email').textContent = user.email;
-            document.getElementById('profile-username').value = user.username;
-            document.getElementById('profile-email').value = user.email;
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось загрузить информацию о пользователе');
-        }
+    // Просмотр деталей объекта
+    function viewObjectDetails(id) {
+        // Здесь можно реализовать просмотр деталей объекта
+        alert(`Просмотр деталей объекта с ID: ${id}`);
     }
 
-    // Обновление профиля пользователя
-    async function handleUpdateProfile(e) {
-        e.preventDefault();
-        const username = document.getElementById('profile-username').value;
-        const email = document.getElementById('profile-email').value;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/update`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                },
-                body: JSON.stringify({ username, email })
-            });
-
-            if (!response.ok) throw new Error('Ошибка обновления данных пользователя');
-
-            const updatedUser = await response.json();
-            currentUser = updatedUser;
-
-            document.getElementById('username').textContent = updatedUser.username;
-            document.getElementById('user-email').textContent = updatedUser.email;
-
-            alert('Данные успешно обновлены');
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось обновить информацию о пользователе');
-        }
+    // Просмотр деталей задачи
+    function viewTaskDetails(id) {
+        // Здесь можно реализовать просмотр деталей задачи
+        alert(`Просмотр деталей задачи с ID: ${id}`);
     }
 
-    // Загрузка всех пользователей (для админа)
-    async function loadAllUsers() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/info/all`, {
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка загрузки списка пользователей');
-
-            const users = await response.json();
-            const tbody = document.querySelector('#users-table tbody');
-            tbody.innerHTML = '';
-
-            users.forEach(user => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                        <td>${user.id || '-'}</td>
-                        <td>${user.username}</td>
-                        <td>${user.email}</td>
-                        <td>
-                            <button class="btn-danger" onclick="deleteUser(${user.id})">Удалить</button>
-                        </td>
-                    `;
-                tbody.appendChild(tr);
-            });
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось загрузить список пользователей');
-        }
+    // Редактирование объекта
+    function editObject(id) {
+        // Здесь можно реализовать редактирование объекта
+        alert(`Редактирование объекта с ID: ${id}`);
     }
 
-    // Удаление пользователя (для админа)
-    async function deleteUser(userId) {
-        if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка удаления пользователя');
-
-            alert('Пользователь успешно удален');
-            loadAllUsers();
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось удалить пользователя');
-        }
+    // Редактирование задачи
+    function editTask(id) {
+        // Здесь можно реализовать редактирование задачи
+        alert(`Редактирование задачи с ID: ${id}`);
     }
-
-    // Загрузка объектов
-    async function loadObjects() {
-        const type = filterType.value;
-        let url = `${API_BASE_URL}/real-estate-objects`;
-
-        if (type) url = `${API_BASE_URL}/real-estate-objects/by-type?type=${type}`;
-
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка загрузки объектов');
-
-            const objects = await response.json();
-            const tbody = document.querySelector('#objects-table tbody');
-            tbody.innerHTML = '';
-
-            objects.forEach(obj => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                        <td>${obj.id}</td>
-                        <td>${obj.name}</td>
-                        <td>${translateObjectType(obj.objectType)}</td>
-                        <td>${obj.parent ? obj.parent.name : '-'}</td>
-                        <td>${new Date(obj.createdAt).toLocaleString()}</td>
-                        <td>
-                            <button class="btn-secondary" onclick="showEditObjectModal(${obj.id}, '${obj.name}', '${obj.objectType}', ${obj.parent ? obj.parent.id : null})">Ред.</button>
-                            <button class="btn-danger" onclick="deleteObject(${obj.id})">Удал.</button>
-                            ${obj.objectType !== 'TASK' ? `<button class="btn-gray" onclick="showChildren(${obj.id})">Дочерние</button>` : ''}
-                        </td>
-                    `;
-                tbody.appendChild(tr);
-            });
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось загрузить объекты');
-        }
-    }
-
-    // Загрузка родительских объектов для выпадающих списков
-    async function loadParentObjects() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/real-estate-objects`, {
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка загрузки объектов');
-
-            const objects = await response.json();
-
-            // Для формы создания
-            objectParentSelect.innerHTML = '<option value="">Нет родительского объекта</option>';
-            // Для формы редактирования
-            editObjectParentSelect.innerHTML = '<option value="">Нет родительского объекта</option>';
-
-            objects.forEach(obj => {
-                const option = document.createElement('option');
-                option.value = obj.id;
-                option.textContent = `${obj.name} (${translateObjectType(obj.objectType)})`;
-
-                objectParentSelect.appendChild(option.cloneNode(true));
-                editObjectParentSelect.appendChild(option);
-            });
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-        }
-    }
-
-    // Создание объекта
-    async function handleCreateObject(e) {
-        e.preventDefault();
-        const name = document.getElementById('object-name').value;
-        const objectType = document.getElementById('object-type').value;
-        const parentId = document.getElementById('object-parent').value || null;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/real-estate-objects`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                },
-                body: JSON.stringify({
-                    name,
-                    objectType,
-                    parent: parentId ? { id: parentId } : null
-                })
-            });
-
-            if (!response.ok) throw new Error('Ошибка создания объекта');
-
-            await response.json();
-            alert('Объект успешно создан');
-
-            document.getElementById('create-object-form').reset();
-            loadObjects();
-            loadParentObjects();
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось создать объект');
-        }
-    }
-
-    // Показать модальное окно редактирования объекта
-    async function showEditObjectModal(id, name, type, parentId) {
-        document.getElementById('edit-object-id').value = id;
-        document.getElementById('edit-object-name').value = name;
-        document.getElementById('edit-object-type').value = type;
-        document.getElementById('edit-object-parent').value = parentId || '';
-
-        editObjectModal.style.display = 'flex';
-    }
-
-    // Обновление объекта
-    async function handleUpdateObject(e) {
-        e.preventDefault();
-        const id = document.getElementById('edit-object-id').value;
-        const name = document.getElementById('edit-object-name').value;
-        const objectType = document.getElementById('edit-object-type').value;
-        const parentId = document.getElementById('edit-object-parent').value || null;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/real-estate-objects/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                },
-                body: JSON.stringify({
-                    name,
-                    objectType,
-                    parent: parentId ? { id: parentId } : null
-                })
-            });
-
-            if (!response.ok) throw new Error('Ошибка обновления объекта');
-
-            await response.json();
-            alert('Объект успешно обновлен');
-
-            editObjectModal.style.display = 'none';
-            loadObjects();
-            loadParentObjects();
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось обновить объект');
-        }
-    }
-
-    // Удаление объекта
-    async function deleteObject(id) {
-        if (!confirm('Вы уверены, что хотите удалить этот объект?')) return;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/real-estate-objects/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка удаления объекта');
-
-            alert('Объект успешно удален');
-            loadObjects();
-            loadParentObjects();
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось удалить объект');
-        }
-    }
-
-    // Показать дочерние объекты
-    async function showChildren(parentId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/real-estate-objects/${parentId}/children`, {
-                headers: {
-                    'Authorization': `Bearer ${getCookie('jwt')}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Ошибка загрузки дочерних объектов');
-
-            const children = await response.json();
-            const tbody = document.querySelector('#objects-table tbody');
-            tbody.innerHTML = '';
-
-            if (children.length === 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = '<td colspan="6" style="text-align: center;">Нет дочерних объектов</td>';
-                tbody.appendChild(tr);
-                return;
-            }
-
-            children.forEach(obj => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                        <td>${obj.id}</td>
-                        <td>${obj.name}</td>
-                        <td>${translateObjectType(obj.objectType)}</td>
-                        <td>${obj.parent ? obj.parent.name : '-'}</td>
-                        <td>${new Date(obj.createdAt).toLocaleString()}</td>
-                        <td>
-                            <button class="btn-secondary" onclick="showEditObjectModal(${obj.id}, '${obj.name}', '${obj.objectType}', ${obj.parent ? obj.parent.id : null})">Ред.</button>
-                            <button class="btn-danger" onclick="deleteObject(${obj.id})">Удал.</button>
-                            ${obj.objectType !== 'TASK' ? `<button class="btn-gray" onclick="showChildren(${obj.id})">Дочерние</button>` : ''}
-                        </td>
-                    `;
-                tbody.appendChild(tr);
-            });
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось загрузить дочерние объекты');
-        }
-    }
-
-    // Перевод типов объектов
-    function translateObjectType(type) {
-        const types = {
-            'PROJECT': 'Проект',
-            'BUILDING': 'Здание',
-            'FLOOR': 'Этаж',
-            'APARTMENT': 'Квартира',
-            'ROOM': 'Комната',
-            'TASK': 'Задача'
-        };
-        return types[type] || type;
-    }
-
-    // Делаем функции доступными глобально
-    window.showEditObjectModal = showEditObjectModal;
-    window.deleteObject = deleteObject;
-    window.deleteUser = deleteUser;
-    window.showChildren = showChildren;
 </script>
 </body>
 </html>

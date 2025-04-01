@@ -57,6 +57,12 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "first_name")
+    private String firstName;  // Поле для имени
+
+    @Column(name = "last_name")
+    private String lastName;
+
     /**
      * Роли пользователя.
      * Связь "многие ко многим" с таблицей ролей.

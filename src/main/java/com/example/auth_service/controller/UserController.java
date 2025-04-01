@@ -32,13 +32,33 @@ public class UserController {
     }
 
     /**
-     * Обновляет информацию о текущем пользователе.
+     * Обновляет имя текущего пользователя.
      */
-    @PutMapping("/update")
-    public UserDto updateUserInfo(@RequestBody UserDto userDto, Authentication authentication) {
+    @PutMapping("/update/first-name")
+    public UserDto updateFirstName(@RequestBody String firstName, Authentication authentication) {
         String username = authentication.getName();
-        log.info("Обновление информации о пользователе: {}", username);
-        return userService.updateUserInfo(username, userDto);
+        log.info("Обновление имени пользователя: {}", username);
+        return userService.updateFirstName(username, firstName);
+    }
+
+    /**
+     * Обновляет фамилию текущего пользователя.
+     */
+    @PutMapping("/update/last-name")
+    public UserDto updateLastName(@RequestBody String lastName, Authentication authentication) {
+        String username = authentication.getName();
+        log.info("Обновление фамилии пользователя: {}", username);
+        return userService.updateLastName(username, lastName);
+    }
+
+    /**
+     * Обновляет почту текущего пользователя.
+     */
+    @PutMapping("/update/email")
+    public UserDto updateEmail(@RequestBody String email, Authentication authentication) {
+        String username = authentication.getName();
+        log.info("Обновление почты пользователя: {}", username);
+        return userService.updateEmail(username, email);
     }
 
     /**
