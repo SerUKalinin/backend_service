@@ -53,7 +53,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /auth/register-user - Успешная регистрация пользователя")
     void registerUser_Success() throws MessagingException {
-        UserSignupDto userSignupDto = new UserSignupDto("user", "user@example.com", "password");
+        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/user", "user@example.com", "password");
 
         assertDoesNotThrow(() -> authController.register(userSignupDto));
         verify(authService, times(1)).register(userSignupDto, false);
@@ -75,7 +75,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /auth/login - Успешная аутентификация")
     void login_Success() {
-        UserSigninDto userSigninDto = new UserSigninDto("user", "password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "password");
         AuthResponse authResponse = new AuthResponse("jwt-token");
 
         when(authService.login(userSigninDto)).thenReturn(authResponse);
@@ -100,7 +100,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /auth/login - Ошибка: неверный пароль")
     void login_BadCredentials() {
-        UserSigninDto userSigninDto = new UserSigninDto("user", "wrong-password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "wrong-password");
 
         when(authService.login(userSigninDto)).thenThrow(new BadCredentialsException("Bad credentials"));
 
@@ -110,7 +110,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /auth/login - Ошибка: пользователь не активирован")
     void login_UserNotActivated() {
-        UserSigninDto userSigninDto = new UserSigninDto("user", "password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "password");
 
         when(authService.login(userSigninDto)).thenThrow(new UserNotActivatedException("User not activated"));
 
