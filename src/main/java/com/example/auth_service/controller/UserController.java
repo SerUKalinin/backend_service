@@ -1,11 +1,16 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.UpdateEmailRequest;
+import com.example.auth_service.dto.UpdateFirstNameRequest;
+import com.example.auth_service.dto.UpdateLastNameRequest;
 import com.example.auth_service.dto.UserDto;
 import com.example.auth_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,49 +26,34 @@ public class UserController {
 
     private final UserService userService;
 
-    /**
-     * Получает информацию о текущем пользователе.
-     */
     @GetMapping("/info")
-    public UserDto getUserInfo(Authentication authentication) {
+    public UserDto getUserInfo(@AuthenticationPrincipal Authentication authentication) {
         String username = authentication.getName();
         log.info("Запрос информации о пользователе: {}", username);
         return userService.getUserInfo(username);
     }
 
-    /**
-     * Обновляет имя текущего пользователя.
-     */
     @PutMapping("/update/first-name")
-    public UserDto updateFirstName(@RequestBody String firstName, Authentication authentication) {
+    public UserDto updateFirstName(@RequestBody UpdateFirstNameRequest request, @AuthenticationPrincipal Authentication authentication) {
         String username = authentication.getName();
         log.info("Обновление имени пользователя: {}", username);
-        return userService.updateFirstName(username, firstName);
+        return userService.updateFirstName(username, request.firstName());
     }
 
-    /**
-     * Обновляет фамилию текущего пользователя.
-     */
     @PutMapping("/update/last-name")
-    public UserDto updateLastName(@RequestBody String lastName, Authentication authentication) {
+    public UserDto updateLastName(@RequestBody UpdateLastNameRequest request, @AuthenticationPrincipal Authentication authentication) {
         String username = authentication.getName();
         log.info("Обновление фамилии пользователя: {}", username);
-        return userService.updateLastName(username, lastName);
+        return userService.updateLastName(username, request.lastName());
     }
 
-    /**
-     * Обновляет почту текущего пользователя.
-     */
     @PutMapping("/update/email")
-    public UserDto updateEmail(@RequestBody String email, Authentication authentication) {
+    public UserDto updateEmail(@RequestBody UpdateEmailRequest request, @AuthenticationPrincipal Authentication authentication) {
         String username = authentication.getName();
         log.info("Обновление почты пользователя: {}", username);
-        return userService.updateEmail(username, email);
+        return userService.updateEmail(username, request.email());
     }
 
-    /**
-     * Получает информацию обо всех пользователях (только для администратора).
-     */
     @GetMapping("/info/all")
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> getAllUsersInfo() {
@@ -71,9 +61,6 @@ public class UserController {
         return userService.getAllUsersInfo();
     }
 
-    /**
-     * Получает информацию о конкретном пользователе по ID (только для администратора).
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public UserDto getUserById(@PathVariable Long id) {
@@ -81,13 +68,11 @@ public class UserController {
         return userService.getUserById(id);
     }
 
-    /**
-     * Удаляет пользователя (только для администратора).
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         log.warn("Администратор удаляет пользователя с ID: {}", id);
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }
