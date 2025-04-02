@@ -1,4 +1,4 @@
-package com.example.auth_service.auth;
+package com.example.auth_service.service.auth;
 
 import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
@@ -67,11 +67,11 @@ class AuthServiceTest {
     @Test
     @DisplayName("register - Успешная регистрация пользователя")
     void registerUser_Success() throws MessagingException {
-        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/user", "user@example.com", "password");
+        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/service/user", "user@example.com", "password");
         Role userRole = new Role();
         userRole.setRoleType(Role.RoleType.ROLE_USER);
 
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.empty());
         when(roleRepository.findByRoleType(Role.RoleType.ROLE_USER)).thenReturn(Optional.of(userRole));
         when(passwordEncoder.encode("password")).thenReturn("encoded-password");
@@ -83,8 +83,8 @@ class AuthServiceTest {
     @Test
     @DisplayName("register - Ошибка: пользователь уже существует")
     void register_UserAlreadyExists() {
-        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/user", "user@example.com", "password");
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.of(new User()));
+        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/service/user", "user@example.com", "password");
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.of(new User()));
 
         assertThrows(UserAlreadyExistsException.class,
                 () -> authService.register(userSignupDto, false));
@@ -93,7 +93,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("register - Ошибка: email уже зарегистрирован")
     void register_EmailAlreadyExists() {
-        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/user", "user@example.com", "password");
+        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/service/user", "user@example.com", "password");
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(new User()));
 
         assertThrows(EmailAlreadyExistsException.class,
@@ -103,9 +103,9 @@ class AuthServiceTest {
     @Test
     @DisplayName("register - Ошибка: роль пользователя не найдена")
     void register_RoleNotFound() {
-        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/user", "user@example.com", "password");
+        UserSignupDto userSignupDto = new UserSignupDto("com/example/auth_service/service/user", "user@example.com", "password");
 
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.empty());
         when(roleRepository.findByRoleType(Role.RoleType.ROLE_USER)).thenReturn(Optional.empty());
 
@@ -120,17 +120,17 @@ class AuthServiceTest {
     @Test
     @DisplayName("login - Успешная аутентификация")
     void login_Success() {
-        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/service/user", "password");
         User user = new User();
-        user.setUsername("com/example/auth_service/user");
+        user.setUsername("com/example/auth_service/service/user");
         user.setPassword("encoded-password");
         user.setActive(true);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(
-                "com/example/auth_service/user", "password", Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                "com/example/auth_service/service/user", "password", Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
         );
 
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any())).thenReturn(auth);
         when(jwtUtil.generateToken(any(), any())).thenReturn("jwt-token");
 
@@ -147,9 +147,9 @@ class AuthServiceTest {
     @Test
     @DisplayName("login - Ошибка: пользователь не найден")
     void login_UserNotFound() {
-        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/service/user", "password");
 
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class,
                 () -> authService.login(userSigninDto));
@@ -158,12 +158,12 @@ class AuthServiceTest {
     @Test
     @DisplayName("login - Ошибка: пользователь не активирован")
     void login_UserNotActivated() {
-        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/service/user", "password");
         User user = new User();
-        user.setUsername("com/example/auth_service/user");
+        user.setUsername("com/example/auth_service/service/user");
         user.setActive(false);
 
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.of(user));
 
         assertThrows(UserNotActivatedException.class,
                 () -> authService.login(userSigninDto));
@@ -172,13 +172,13 @@ class AuthServiceTest {
     @Test
     @DisplayName("login - Ошибка: неверный пароль")
     void login_IncorrectPassword() {
-        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/user", "wrong-password");
+        UserSigninDto userSigninDto = new UserSigninDto("com/example/auth_service/service/user", "wrong-password");
         User user = new User();
-        user.setUsername("com/example/auth_service/user");
+        user.setUsername("com/example/auth_service/service/user");
         user.setPassword("encoded-password");
         user.setActive(true);
 
-        when(userRepository.findByUsername("com/example/auth_service/user")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("com/example/auth_service/service/user")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
