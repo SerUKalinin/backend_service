@@ -4,6 +4,7 @@ import com.example.auth_service.dto.UserDto;
 import com.example.auth_service.service.user.UserInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,33 +25,27 @@ public class UserInfoController {
 
     private final UserInfoService userInfoService;
 
-    /**
-     * Получает информацию о текущем пользователе.
-     */
     @GetMapping
-    public UserDto getUserInfo(Authentication authentication) {
+    public ResponseEntity<UserDto> getUserInfo(Authentication authentication) {
         String username = authentication.getName();
         log.info("Запрос информации о пользователе: {}", username);
-        return userInfoService.getUserInfo(username);
+        UserDto userInfo = userInfoService.getUserInfo(username);
+        return ResponseEntity.ok(userInfo);
     }
 
-    /**
-     * Получает информацию обо всех пользователях (только для администратора).
-     */
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<UserDto> getAllUsersInfo() {
+    public ResponseEntity<List<UserDto>> getAllUsersInfo() {
         log.info("Запрос списка всех пользователей администратором");
-        return userInfoService.getAllUserInfo();
+        List<UserDto> allUsersInfo = userInfoService.getAllUserInfo();
+        return ResponseEntity.ok(allUsersInfo);
     }
 
-    /**
-     * Получает информацию о конкретном пользователе по ID (только для администратора).
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public UserDto getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         log.info("Администратор запросил информацию о пользователе с ID: {}", id);
-        return userInfoService.getUserById(id);
+        UserDto userById = userInfoService.getUserById(id);
+        return ResponseEntity.ok(userById);
     }
 }

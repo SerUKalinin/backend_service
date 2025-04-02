@@ -4,6 +4,7 @@ import com.example.auth_service.dto.UserDto;
 import com.example.auth_service.service.user.UserUpdateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,33 +19,27 @@ public class UserUpdateController {
 
     private final UserUpdateService userUpdateService;
 
-    /**
-     * Обновляет имя текущего пользователя.
-     */
     @PutMapping("/first-name")
-    public UserDto updateFirstName(@RequestBody UserDto userDto, Authentication authentication) {
+    public ResponseEntity<UserDto> updateFirstName(@RequestBody UserDto userDto, Authentication authentication) {
         String username = authentication.getName();
         log.info("Обновление имени пользователя: {}", username);
-        return userUpdateService.updateFirstName(username, userDto.getFirstName());
+        UserDto updatedUser = userUpdateService.updateFirstName(username, userDto.getFirstName());
+        return ResponseEntity.ok(updatedUser);
     }
 
-    /**
-     * Обновляет фамилию текущего пользователя.
-     */
     @PutMapping("/last-name")
-    public UserDto updateLastName(@RequestBody UserDto userDto, Authentication authentication) {
+    public ResponseEntity<UserDto> updateLastName(@RequestBody UserDto userDto, Authentication authentication) {
         String username = authentication.getName();
         log.info("Обновление фамилии пользователя: {}", username);
-        return userUpdateService.updateLastName(username, userDto.getLastName());
+        UserDto updatedUser = userUpdateService.updateLastName(username, userDto.getLastName());
+        return ResponseEntity.ok(updatedUser);
     }
 
-    /**
-     * Обновляет почту текущего пользователя.
-     */
     @PutMapping("/email")
-    public UserDto updateEmail(@RequestBody UserDto userDto, Authentication authentication) {
+    public ResponseEntity<UserDto> updateEmail(@RequestBody UserDto userDto, Authentication authentication) {
         String username = authentication.getName();
         log.info("Обновление почты пользователя: {}", username);
-        return userUpdateService.updateEmail(username, userDto.getEmail());
+        UserDto updatedUser = userUpdateService.updateEmail(username, userDto.getEmail());
+        return ResponseEntity.ok(updatedUser);
     }
 }

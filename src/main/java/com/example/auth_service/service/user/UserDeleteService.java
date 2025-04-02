@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class UserDeleteService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     /**
      * Удалить пользователя по его ID.
