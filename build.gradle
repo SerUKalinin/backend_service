@@ -26,6 +26,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation") // Валидация
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server") // SSO
 	implementation("org.springframework.boot:spring-boot-starter-mail") // Email отправка
+	implementation("org.modelmapper:modelmapper:3.1.0")
+
 
 	// JWT
 	implementation("com.auth0:java-jwt:4.4.0") // Если используете Auth0 вместо JJWT, удалите JJWT

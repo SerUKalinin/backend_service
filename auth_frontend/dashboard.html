@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RealEstate PRO | Личный кабинет</title>
+    <title>RealEstate PRO - Личный кабинет</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #4361ee;
             --secondary: #3f37c9;
-            --accent: #4895ef;
             --dark: #1b263b;
             --light: #f8f9fa;
+            --gray: #adb5bd;
             --success: #4cc9f0;
             --warning: #f72585;
-            --gray: #adb5bd;
             --card-bg: #ffffff;
             --sidebar-bg: #2b2d42;
             --header-bg: #3a0ca3;
@@ -56,7 +55,7 @@
         .sidebar-header i {
             font-size: 1.8rem;
             margin-right: 1rem;
-            color: var(--accent);
+            color: var(--primary);
         }
 
         .sidebar-header h2 {
@@ -106,12 +105,13 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--accent);
+            background: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-right: 1rem;
             font-weight: bold;
+            color: white;
         }
 
         .user-name {
@@ -279,7 +279,7 @@
         }
 
         .card-badge {
-            background: var(--accent);
+            background: var(--primary);
             color: white;
             padding: 0.3rem 0.8rem;
             border-radius: 20px;
@@ -422,162 +422,12 @@
 
         .status-completed {
             background: rgba(72, 149, 239, 0.1);
-            color: var(--accent);
+            color: #4895ef;
         }
 
         .status-expired {
             background: rgba(247, 37, 133, 0.1);
             color: var(--warning);
-        }
-
-        /* Формы */
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--dark);
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-        }
-
-        .form-textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            resize: vertical;
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary);
-        }
-
-        .btn-secondary {
-            background: #f1f3f5;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e9ecef;
-        }
-
-        /* Модальные окна */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: modalFadeIn 0.3s;
-        }
-
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray);
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        .modal-footer {
-            padding: 1.5rem;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
         }
 
         /* Адаптивность */
@@ -660,7 +510,7 @@
         <div class="user-avatar" id="user-avatar">JD</div>
         <div class="user-info">
             <div class="user-name" id="user-name">John Doe</div>
-            <div class="user-role" id="user-role">Администратор</div>
+            <div class="user-role" id="user-role">Пользователь</div>
         </div>
     </div>
 </aside>
@@ -769,7 +619,7 @@
             </div>
         </section>
 
-        <!-- Объекты недвижимости -->
+        <!-- Секция объектов -->
         <section id="objects-section" class="content-section" style="display: none;">
             <div class="page-header">
                 <h1 class="page-title">Объекты недвижимости</h1>
@@ -778,38 +628,12 @@
                     Добавить объект
                 </button>
             </div>
-
-            <div class="data-table">
-                <div class="table-header">
-                    <h3 class="table-title">Список объектов</h3>
-                    <div class="table-filters">
-                        <select class="filter-select" id="object-type-filter">
-                            <option value="">Все типы</option>
-                            <option value="PROJECT">Проект</option>
-                            <option value="BUILDING">Здание</option>
-                            <option value="FLOOR">Этаж</option>
-                            <option value="APARTMENT">Квартира</option>
-                            <option value="ROOM">Комната</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="loadObjects()">Применить</button>
-                    </div>
-                </div>
-                <div class="table-body">
-                    <div class="table-row header">
-                        <div class="table-cell">Название</div>
-                        <div class="table-cell">Тип</div>
-                        <div class="table-cell">Родитель</div>
-                        <div class="table-cell">Дата создания</div>
-                        <div class="table-cell">Действия</div>
-                    </div>
-                    <div id="objects-list">
-                        <!-- Объекты будут загружены через JS -->
-                    </div>
-                </div>
+            <div id="objects-content">
+                <!-- Содержимое будет загружено через JS -->
             </div>
         </section>
 
-        <!-- Задачи -->
+        <!-- Секция задач -->
         <section id="tasks-section" class="content-section" style="display: none;">
             <div class="page-header">
                 <h1 class="page-title">Задачи</h1>
@@ -818,179 +642,46 @@
                     Добавить задачу
                 </button>
             </div>
-
-            <div class="data-table">
-                <div class="table-header">
-                    <h3 class="table-title">Список задач</h3>
-                    <div class="table-filters">
-                        <select class="filter-select" id="task-status-filter">
-                            <option value="">Все статусы</option>
-                            <option value="NEW">Новая</option>
-                            <option value="IN_PROGRESS">В процессе</option>
-                            <option value="EXPIRED">Просроченная</option>
-                            <option value="URGENT">Срочная</option>
-                            <option value="COMPLETED">Завершённая</option>
-                        </select>
-                        <select class="filter-select" id="task-object-filter">
-                            <option value="">Все объекты</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="loadTasks()">Применить</button>
-                    </div>
-                </div>
-                <div class="table-body">
-                    <div class="table-row header">
-                        <div class="table-cell">Название</div>
-                        <div class="table-cell">Объект</div>
-                        <div class="table-cell">Статус</div>
-                        <div class="table-cell">Дедлайн</div>
-                        <div class="table-cell">Действия</div>
-                    </div>
-                    <div id="tasks-list">
-                        <!-- Задачи будут загружены через JS -->
-                    </div>
-                </div>
+            <div id="tasks-content">
+                <!-- Содержимое будет загружено через JS -->
             </div>
         </section>
 
-        <!-- Профиль -->
+        <!-- Секция профиля -->
         <section id="profile-section" class="content-section" style="display: none;">
             <div class="page-header">
-                <h1 class="page-title">Мой профиль</h1>
+                <h1 class="page-title">Профиль пользователя</h1>
             </div>
-
-            <div class="form-container">
-                <div class="form-group">
-                    <label class="form-label">Логин</label>
-                    <input type="text" class="form-input" id="profile-username" disabled>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-input" id="profile-email">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Новый пароль (оставьте пустым, если не хотите менять)</label>
-                    <input type="password" class="form-input" id="profile-password">
-                </div>
-                <div class="form-actions">
-                    <button class="btn btn-secondary" onclick="showSection('dashboard')">Отмена</button>
-                    <button class="btn btn-primary" onclick="updateProfile()">Сохранить</button>
-                </div>
+            <div id="profile-content">
+                <!-- Содержимое будет загружено через JS -->
             </div>
         </section>
 
-        <!-- Пользователи (админ) -->
+        <!-- Секция пользователей (только для админа) -->
         <section id="users-section" class="content-section" style="display: none;">
             <div class="page-header">
                 <h1 class="page-title">Управление пользователями</h1>
+                <button class="add-btn" onclick="showAddUserModal()">
+                    <i class="fas fa-plus"></i>
+                    Добавить пользователя
+                </button>
             </div>
-
-            <div class="data-table">
-                <div class="table-header">
-                    <h3 class="table-title">Список пользователей</h3>
-                </div>
-                <div class="table-body">
-                    <div class="table-row header">
-                        <div class="table-cell">Логин</div>
-                        <div class="table-cell">Email</div>
-                        <div class="table-cell">Роли</div>
-                        <div class="table-cell">Действия</div>
-                    </div>
-                    <div id="users-list">
-                        <!-- Пользователи будут загружены через JS -->
-                    </div>
-                </div>
+            <div id="users-content">
+                <!-- Содержимое будет загружено через JS -->
             </div>
         </section>
     </div>
 </main>
 
-<!-- Модальное окно добавления объекта -->
-<div id="object-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title">Добавить объект</h3>
-            <button class="modal-close" onclick="closeModal('object-modal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Название</label>
-                <input type="text" class="form-input" id="object-name" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Тип объекта</label>
-                <select class="form-input" id="object-type" required>
-                    <option value="PROJECT">Проект</option>
-                    <option value="BUILDING">Здание</option>
-                    <option value="FLOOR">Этаж</option>
-                    <option value="APARTMENT">Квартира</option>
-                    <option value="ROOM">Комната</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Родительский объект (необязательно)</label>
-                <select class="form-input" id="object-parent">
-                    <option value="">Нет</option>
-                </select>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('object-modal')">Отмена</button>
-            <button class="btn btn-primary" onclick="addObject()">Сохранить</button>
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно добавления задачи -->
-<div id="task-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title">Добавить задачу</h3>
-            <button class="modal-close" onclick="closeModal('task-modal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Название</label>
-                <input type="text" class="form-input" id="task-title" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Описание</label>
-                <textarea class="form-textarea" id="task-description"></textarea>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Статус</label>
-                <select class="form-input" id="task-status" required>
-                    <option value="NEW">Новая</option>
-                    <option value="IN_PROGRESS">В процессе</option>
-                    <option value="URGENT">Срочная</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Объект недвижимости</label>
-                <select class="form-input" id="task-object" required>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Дедлайн</label>
-                <input type="datetime-local" class="form-input" id="task-deadline">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('task-modal')">Отмена</button>
-            <button class="btn btn-primary" onclick="addTask()">Сохранить</button>
-        </div>
-    </div>
-</div>
-
 <script>
     // Токен и данные пользователя
-    let jwtToken = '';
+    let jwtToken = localStorage.getItem('jwt');
     let currentUser = null;
     let isAdmin = false;
 
-    // Инициализация при загрузке страницы
+    // Проверка авторизации при загрузке
     document.addEventListener('DOMContentLoaded', function() {
-        // Проверяем наличие JWT токена
-        jwtToken = getCookie('jwt');
+        // Если токена нет - редирект на страницу входа
         if (!jwtToken) {
             window.location.href = 'login.html';
             return;
@@ -1004,17 +695,7 @@
 
         // Загружаем данные для дашборда
         loadDashboardData();
-
-        // Загружаем данные для фильтров
-        loadObjectsForFilters();
     });
-
-    // Получение куки
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-    }
 
     // Загрузка данных пользователя
     function loadUserData() {
@@ -1024,34 +705,43 @@
                 'Content-Type': 'application/json'
             }
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка авторизации');
+                }
+                return response.json();
+            })
             .then(data => {
                 currentUser = data;
-                document.getElementById('user-name').textContent = data.username;
-                document.getElementById('user-avatar').textContent = getInitials(data.username);
-                document.getElementById('profile-username').value = data.username;
-                document.getElementById('profile-email').value = data.email;
-
-                // Проверяем, является ли пользователь администратором
-                isAdmin = data.roles && data.roles.some(role => role.roleType === 'ROLE_ADMIN');
-                if (isAdmin) {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    document.getElementById('user-role').textContent = 'Администратор';
-                } else {
-                    document.getElementById('user-role').textContent = 'Пользователь';
-                }
+                updateUIWithUserData(data);
             })
             .catch(error => {
-                console.error('Error:', error);
-                window.location.href = 'login.html';
+                console.error('Ошибка:', error);
+                logout();
             });
     }
 
-    // Получение инициалов из имени
+    // Обновление UI с данными пользователя
+    function updateUIWithUserData(userData) {
+        document.getElementById('user-name').textContent = userData.username || 'Пользователь';
+        document.getElementById('user-avatar').textContent = getInitials(userData.username || 'П');
+
+        // Проверяем, является ли пользователь администратором
+        isAdmin = userData.roles && userData.roles.some(role => role.roleType === 'ROLE_ADMIN');
+        document.getElementById('user-role').textContent = isAdmin ? 'Администратор' : 'Пользователь';
+
+        // Показываем/скрываем административные разделы
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = isAdmin ? 'flex' : 'none';
+        });
+    }
+
+    // Получение инициалов
     function getInitials(username) {
+        if (!username) return 'U';
         const parts = username.split(' ');
         if (parts.length > 1) {
-            return parts[0].charAt(0) + parts[1].charAt(0);
+            return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
         }
         return username.substring(0, 2).toUpperCase();
     }
@@ -1092,42 +782,59 @@
             loadUsers();
         } else if (section === 'dashboard') {
             loadDashboardData();
+        } else if (section === 'profile') {
+            loadProfile();
         }
     }
 
     // Загрузка данных для дашборда
     function loadDashboardData() {
-        // Загружаем все объекты
+        // Загружаем объекты недвижимости
         fetch("http://localhost:8080/real-estate-objects", {
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
                 'Content-Type': 'application/json'
             }
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Ошибка загрузки объектов');
+                return response.json();
+            })
             .then(objects => {
-                document.getElementById('objects-count').textContent = objects.length;
+                document.getElementById('objects-count').textContent = objects.length || 0;
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки объектов:', error);
+                document.getElementById('objects-count').textContent = '0';
             });
 
-        // Загружаем все задачи
+        // Загружаем задачи
         fetch("http://localhost:8080/tasks", {
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
                 'Content-Type': 'application/json'
             }
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Ошибка загрузки задач');
+                return response.json();
+            })
             .then(tasks => {
                 const activeTasks = tasks.filter(task =>
                     task.status === 'NEW' || task.status === 'IN_PROGRESS' || task.status === 'URGENT');
                 const expiredTasks = tasks.filter(task => task.status === 'EXPIRED');
 
-                document.getElementById('active-tasks-count').textContent = activeTasks.length;
-                document.getElementById('expired-tasks-count').textContent = expiredTasks.length;
+                document.getElementById('active-tasks-count').textContent = activeTasks.length || 0;
+                document.getElementById('expired-tasks-count').textContent = expiredTasks.length || 0;
 
-                // Показываем последние 5 задач
-                const recentTasks = tasks.slice(0, 5);
-                renderRecentTasks(recentTasks);
+                // Отображаем последние задачи
+                renderRecentTasks(tasks.slice(0, 5));
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки задач:', error);
+                document.getElementById('active-tasks-count').textContent = '0';
+                document.getElementById('expired-tasks-count').textContent = '0';
+                renderRecentTasks([]);
             });
     }
 
@@ -1136,7 +843,7 @@
         const container = document.getElementById('recent-tasks-list');
         container.innerHTML = '';
 
-        if (tasks.length === 0) {
+        if (!tasks || tasks.length === 0) {
             container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="5">Задачи не найдены</div></div>';
             return;
         }
@@ -1154,483 +861,213 @@
 
             // Определяем класс статуса
             let statusClass = '';
-            if (task.status === 'NEW') statusClass = 'status-new';
-            else if (task.status === 'IN_PROGRESS') statusClass = 'status-in-progress';
-            else if (task.status === 'COMPLETED') statusClass = 'status-completed';
-            else if (task.status === 'EXPIRED') statusClass = 'status-expired';
+            let statusText = '';
+            if (task.status === 'NEW') {
+                statusClass = 'status-new';
+                statusText = 'Новая';
+            } else if (task.status === 'IN_PROGRESS') {
+                statusClass = 'status-in-progress';
+                statusText = 'В работе';
+            } else if (task.status === 'COMPLETED') {
+                statusClass = 'status-completed';
+                statusText = 'Завершена';
+            } else if (task.status === 'EXPIRED') {
+                statusClass = 'status-expired';
+                statusText = 'Просрочена';
+            } else if (task.status === 'URGENT') {
+                statusClass = 'status-expired';
+                statusText = 'Срочная';
+            }
 
             row.innerHTML = `
-                    <div class="table-cell">${task.title}</div>
-                    <div class="table-cell">${task.realEstateObject ? task.realEstateObject.name : 'Не указан'}</div>
-                    <div class="table-cell"><span class="status-badge ${statusClass}">${task.status}</span></div>
-                    <div class="table-cell">${deadline}</div>
-                    <div class="table-cell">
-                        <div class="action-btn edit-btn" onclick="editTask('${task.id}')">
-                            <i class="fas fa-edit"></i>
-                        </div>
+                <div class="table-cell">${task.title || 'Без названия'}</div>
+                <div class="table-cell">${task.realEstateObject ? task.realEstateObject.name : 'Не указан'}</div>
+                <div class="table-cell"><span class="status-badge ${statusClass}">${statusText}</span></div>
+                <div class="table-cell">${deadline}</div>
+                <div class="table-cell">
+                    <div class="action-btn edit-btn" onclick="editTask('${task.id}')">
+                        <i class="fas fa-edit"></i>
                     </div>
-                `;
+                </div>
+            `;
             container.appendChild(row);
-        });
-    }
-
-    // Обновление профиля
-    function updateProfile() {
-        const email = document.getElementById('profile-email').value;
-        const password = document.getElementById('profile-password').value;
-
-        const userData = { email };
-        if (password) {
-            userData.password = password;
-        }
-
-        fetch("http://localhost:8080/users/update", {
-            method: "PUT",
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        })
-            .then(response => {
-                if (response.ok) {
-                    alert('Профиль успешно обновлен');
-                    loadUserData();
-                } else {
-                    alert('Ошибка при обновлении профиля');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка при обновлении профиля');
-            });
-    }
-
-    // Загрузка объектов недвижимости
-    function loadObjects() {
-        const typeFilter = document.getElementById('object-type-filter').value;
-        let url = "http://localhost:8080/real-estate-objects";
-
-        if (typeFilter) {
-            url += `/by-type?type=${typeFilter}`;
-        }
-
-        fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(objects => {
-                const container = document.getElementById('objects-list');
-                container.innerHTML = '';
-
-                if (objects.length === 0) {
-                    container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="5">Объекты не найдены</div></div>';
-                    return;
-                }
-
-                objects.forEach(object => {
-                    const row = document.createElement('div');
-                    row.className = 'table-row';
-
-                    const parentName = object.parent ? object.parent.name : 'Нет';
-                    const createdAt = new Date(object.createdAt).toLocaleDateString();
-
-                    row.innerHTML = `
-                        <div class="table-cell">${object.name}</div>
-                        <div class="table-cell">${object.objectType}</div>
-                        <div class="table-cell">${parentName}</div>
-                        <div class="table-cell">${createdAt}</div>
-                        <div class="table-cell">
-                            ${isAdmin ? `
-                            <div class="action-btn edit-btn" onclick="editObject('${object.id}')">
-                                <i class="fas fa-edit"></i>
-                            </div>
-                            <div class="action-btn delete-btn" onclick="deleteObject('${object.id}')">
-                                <i class="fas fa-trash"></i>
-                            </div>
-                            ` : ''}
-                            <div class="action-btn" onclick="viewObjectDetails('${object.id}')">
-                                <i class="fas fa-eye"></i>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(row);
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('objects-list').innerHTML =
-                    '<div class="table-row"><div class="table-cell" colspan="5">Ошибка загрузки объектов</div></div>';
-            });
-    }
-
-    // Загрузка задач
-    function loadTasks() {
-        const statusFilter = document.getElementById('task-status-filter').value;
-        const objectFilter = document.getElementById('task-object-filter').value;
-
-        let url = "http://localhost:8080/tasks";
-
-        if (statusFilter && objectFilter) {
-            url += `/status/${statusFilter}/object/${objectFilter}`;
-        } else if (statusFilter) {
-            url += `/status/${statusFilter}`;
-        } else if (objectFilter) {
-            url += `/object/${objectFilter}`;
-        }
-
-        fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(tasks => {
-                const container = document.getElementById('tasks-list');
-                container.innerHTML = '';
-
-                if (tasks.length === 0) {
-                    container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="5">Задачи не найдены</div></div>';
-                    return;
-                }
-
-                tasks.forEach(task => {
-                    const row = document.createElement('div');
-                    row.className = 'table-row';
-
-                    // Форматируем дату дедлайна
-                    let deadline = 'Не указан';
-                    if (task.deadline) {
-                        const deadlineDate = new Date(task.deadline);
-                        deadline = deadlineDate.toLocaleDateString() + ' ' + deadlineDate.toLocaleTimeString();
-                    }
-
-                    // Определяем класс статуса
-                    let statusClass = '';
-                    if (task.status === 'NEW') statusClass = 'status-new';
-                    else if (task.status === 'IN_PROGRESS') statusClass = 'status-in-progress';
-                    else if (task.status === 'COMPLETED') statusClass = 'status-completed';
-                    else if (task.status === 'EXPIRED') statusClass = 'status-expired';
-
-                    row.innerHTML = `
-                        <div class="table-cell">${task.title}</div>
-                        <div class="table-cell">${task.realEstateObject ? task.realEstateObject.name : 'Не указан'}</div>
-                        <div class="table-cell"><span class="status-badge ${statusClass}">${task.status}</span></div>
-                        <div class="table-cell">${deadline}</div>
-                        <div class="table-cell">
-                            ${isAdmin ? `
-                            <div class="action-btn edit-btn" onclick="editTask('${task.id}')">
-                                <i class="fas fa-edit"></i>
-                            </div>
-                            <div class="action-btn delete-btn" onclick="deleteTask('${task.id}')">
-                                <i class="fas fa-trash"></i>
-                            </div>
-                            ` : ''}
-                            <div class="action-btn" onclick="viewTaskDetails('${task.id}')">
-                                <i class="fas fa-eye"></i>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(row);
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('tasks-list').innerHTML =
-                    '<div class="table-row"><div class="table-cell" colspan="5">Ошибка загрузки задач</div></div>';
-            });
-    }
-
-    // Загрузка пользователей (для администратора)
-    function loadUsers() {
-        if (!isAdmin) return;
-
-        fetch("http://localhost:8080/users/info/all", {
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(users => {
-                const container = document.getElementById('users-list');
-                container.innerHTML = '';
-
-                if (users.length === 0) {
-                    container.innerHTML = '<div class="table-row"><div class="table-cell" colspan="4">Пользователи не найдены</div></div>';
-                    return;
-                }
-
-                users.forEach(user => {
-                    const row = document.createElement('div');
-                    row.className = 'table-row';
-
-                    const roles = user.roles.map(role =>
-                        role.roleType === 'ROLE_ADMIN' ? 'Администратор' : 'Пользователь'
-                    ).join(', ');
-
-                    row.innerHTML = `
-                        <div class="table-cell">${user.username}</div>
-                        <div class="table-cell">${user.email}</div>
-                        <div class="table-cell">${roles}</div>
-                        <div class="table-cell">
-                            <div class="action-btn delete-btn" onclick="deleteUser('${user.id}')">
-                                <i class="fas fa-trash"></i>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(row);
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('users-list').innerHTML =
-                    '<div class="table-row"><div class="table-cell" colspan="4">Ошибка загрузки пользователей</div></div>';
-            });
-    }
-
-    // Загрузка объектов для фильтров задач
-    function loadObjectsForFilters() {
-        fetch("http://localhost:8080/real-estate-objects", {
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(objects => {
-                const objectFilter = document.getElementById('task-object-filter');
-                const taskObjectSelect = document.getElementById('task-object');
-                const objectParentSelect = document.getElementById('object-parent');
-
-                // Очищаем и добавляем опции
-                [objectFilter, taskObjectSelect, objectParentSelect].forEach(select => {
-                    select.innerHTML = '<option value="">Выберите объект</option>';
-                    objects.forEach(object => {
-                        const option = document.createElement('option');
-                        option.value = object.id;
-                        option.textContent = `${object.name} (${object.objectType})`;
-                        select.appendChild(option);
-                    });
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    }
-
-    // Показать модальное окно добавления объекта
-    function showAddObjectModal() {
-        document.getElementById('object-modal').style.display = 'flex';
-    }
-
-    // Добавление нового объекта
-    function addObject() {
-        const name = document.getElementById('object-name').value;
-        const type = document.getElementById('object-type').value;
-        const parentId = document.getElementById('object-parent').value;
-
-        const objectData = {
-            name,
-            objectType: type
-        };
-
-        if (parentId) {
-            objectData.parent = { id: parentId };
-        }
-
-        fetch("http://localhost:8080/real-estate-objects", {
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(objectData)
-        })
-            .then(response => {
-                if (response.ok) {
-                    closeModal('object-modal');
-                    loadObjects();
-                    loadObjectsForFilters();
-                    loadDashboardData();
-                    alert('Объект успешно добавлен');
-                } else {
-                    alert('Ошибка при добавлении объекта');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка при добавлении объекта');
-            });
-    }
-
-    // Показать модальное окно добавления задачи
-    function showAddTaskModal() {
-        document.getElementById('task-modal').style.display = 'flex';
-    }
-
-    // Добавление новой задачи
-    function addTask() {
-        const title = document.getElementById('task-title').value;
-        const description = document.getElementById('task-description').value;
-        const status = document.getElementById('task-status').value;
-        const objectId = document.getElementById('task-object').value;
-        const deadline = document.getElementById('task-deadline').value;
-
-        const taskData = {
-            title,
-            description,
-            status,
-            realEstateObject: { id: objectId }
-        };
-
-        if (deadline) {
-            taskData.deadline = deadline;
-        }
-
-        fetch("http://localhost:8080/tasks", {
-            method: "POST",
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(taskData)
-        })
-            .then(response => {
-                if (response.ok) {
-                    closeModal('task-modal');
-                    loadTasks();
-                    loadDashboardData();
-                    alert('Задача успешно добавлена');
-                } else {
-                    alert('Ошибка при добавлении задачи');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка при добавлении задачи');
-            });
-    }
-
-    // Удаление объекта
-    function deleteObject(id) {
-        if (!confirm('Вы уверены, что хотите удалить этот объект?')) return;
-
-        fetch(`http://localhost:8080/real-estate-objects/${id}`, {
-            method: "DELETE",
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => {
-                if (response.ok) {
-                    loadObjects();
-                    loadObjectsForFilters();
-                    loadDashboardData();
-                    alert('Объект успешно удален');
-                } else {
-                    alert('Ошибка при удалении объекта');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка при удалении объекта');
-            });
-    }
-
-    // Удаление задачи
-    function deleteTask(id) {
-        if (!confirm('Вы уверены, что хотите удалить эту задачу?')) return;
-
-        fetch(`http://localhost:8080/tasks/${id}`, {
-            method: "DELETE",
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => {
-                if (response.ok) {
-                    loadTasks();
-                    loadDashboardData();
-                    alert('Задача успешно удалена');
-                } else {
-                    alert('Ошибка при удалении задачи');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка при удалении задачи');
-            });
-    }
-
-    // Удаление пользователя
-    function deleteUser(id) {
-        if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
-
-        fetch(`http://localhost:8080/users/${id}`, {
-            method: "DELETE",
-            headers: {
-                'Authorization': `Bearer ${jwtToken}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => {
-                if (response.ok) {
-                    loadUsers();
-                    alert('Пользователь успешно удален');
-                } else {
-                    alert('Ошибка при удалении пользователя');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка при удалении пользователя');
-            });
-    }
-
-    // Закрытие модального окна
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-        // Очищаем поля формы
-        document.querySelectorAll(`#${modalId} input, #${modalId} select, #${modalId} textarea`).forEach(field => {
-            field.value = '';
         });
     }
 
     // Выход из системы
     function logout() {
-        document.cookie = 'jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        window.location.href = 'login.html';
+        // Отправляем запрос на сервер для выхода
+        fetch("http://localhost:8080/auth/logout", {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .finally(() => {
+                // Очищаем локальное хранилище и перенаправляем на страницу входа
+                localStorage.removeItem('jwt');
+                window.location.href = 'login.html';
+            });
     }
 
-    // Просмотр деталей объекта
-    function viewObjectDetails(id) {
-        // Здесь можно реализовать просмотр деталей объекта
-        alert(`Просмотр деталей объекта с ID: ${id}`);
+    // Загрузка объектов (заглушка)
+    function loadObjects() {
+        document.getElementById('objects-content').innerHTML = `
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Список объектов</h3>
+                    <div class="table-filters">
+                        <select class="filter-select">
+                            <option>Все объекты</option>
+                            <option>Активные</option>
+                            <option>Архивные</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Название</div>
+                        <div class="table-cell">Адрес</div>
+                        <div class="table-cell">Тип</div>
+                        <div class="table-cell">Статус</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-cell">ЖК "Солнечный"</div>
+                        <div class="table-cell">ул. Ленина, 10</div>
+                        <div class="table-cell">Квартира</div>
+                        <div class="table-cell"><span class="status-badge status-in-progress">Активен</span></div>
+                        <div class="table-cell">
+                            <div class="action-btn edit-btn">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="action-btn delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    // Просмотр деталей задачи
-    function viewTaskDetails(id) {
-        // Здесь можно реализовать просмотр деталей задачи
-        alert(`Просмотр деталей задачи с ID: ${id}`);
+    // Загрузка задач (заглушка)
+    function loadTasks() {
+        document.getElementById('tasks-content').innerHTML = `
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Список задач</h3>
+                    <div class="table-filters">
+                        <select class="filter-select">
+                            <option>Все задачи</option>
+                            <option>Новые</option>
+                            <option>В работе</option>
+                            <option>Завершенные</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Название</div>
+                        <div class="table-cell">Объект</div>
+                        <div class="table-cell">Статус</div>
+                        <div class="table-cell">Дедлайн</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-cell">Проверить документы</div>
+                        <div class="table-cell">ЖК "Солнечный"</div>
+                        <div class="table-cell"><span class="status-badge status-new">Новая</span></div>
+                        <div class="table-cell">15.04.2023</div>
+                        <div class="table-cell">
+                            <div class="action-btn edit-btn">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="action-btn delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    // Редактирование объекта
-    function editObject(id) {
-        // Здесь можно реализовать редактирование объекта
-        alert(`Редактирование объекта с ID: ${id}`);
+    // Загрузка профиля (заглушка)
+    function loadProfile() {
+        document.getElementById('profile-content').innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Личные данные</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Имя пользователя:</strong> ${currentUser?.username || 'Не указано'}</p>
+                    <p><strong>Email:</strong> ${currentUser?.email || 'Не указан'}</p>
+                    <p><strong>Роль:</strong> ${isAdmin ? 'Администратор' : 'Пользователь'}</p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" onclick="showEditProfileModal()">
+                        Редактировать профиль
+                    </button>
+                </div>
+            </div>
+        `;
     }
 
-    // Редактирование задачи
-    function editTask(id) {
-        // Здесь можно реализовать редактирование задачи
-        alert(`Редактирование задачи с ID: ${id}`);
+    // Загрузка пользователей (заглушка, только для админа)
+    function loadUsers() {
+        document.getElementById('users-content').innerHTML = `
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">Список пользователей</h3>
+                </div>
+                <div class="table-body">
+                    <div class="table-row header">
+                        <div class="table-cell">Имя</div>
+                        <div class="table-cell">Email</div>
+                        <div class="table-cell">Роль</div>
+                        <div class="table-cell">Статус</div>
+                        <div class="table-cell">Действия</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-cell">admin</div>
+                        <div class="table-cell">admin@example.com</div>
+                        <div class="table-cell">Администратор</div>
+                        <div class="table-cell"><span class="status-badge status-completed">Активен</span></div>
+                        <div class="table-cell">
+                            <div class="action-btn edit-btn">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="action-btn delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Функции для модальных окон (заглушки)
+    function showAddObjectModal() {
+        alert('Функция добавления объекта будет реализована позже');
+    }
+
+    function showAddTaskModal() {
+        alert('Функция добавления задачи будет реализована позже');
+    }
+
+    function showAddUserModal() {
+        alert('Функция добавления пользователя будет реализована позже');
+    }
+
+    function showEditProfileModal() {
+        alert('Функция редактирования профиля будет реализована позже');
+    }
+
+    function editTask(taskId) {
+        alert(`Редактирование задачи с ID: ${taskId} будет реализовано позже`);
     }
 </script>
 </body>
