@@ -1,5 +1,6 @@
 package com.example.auth_service.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * Глобальный обработчик исключений для обработки специфических ошибок в приложении.
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /**
@@ -19,6 +21,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<String> handleAuthException(AuthException ex) {
+        log.error("Ошибка аутентификации: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 
@@ -34,6 +37,7 @@ public class GlobalExceptionHandler {
             TaskAlreadyExistsException.class
     })
     public ResponseEntity<String> handleConflictExceptions(RuntimeException ex) {
+        log.error("Конфликт при создании сущности: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
@@ -49,6 +53,7 @@ public class GlobalExceptionHandler {
             TaskNotFoundException.class
     })
     public ResponseEntity<String> handleNotFoundExceptions(RuntimeException ex) {
+        log.error("Не найдена сущность: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
@@ -60,6 +65,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(UserNotActivatedException.class)
     public ResponseEntity<String> handleUserNotActivatedException(UserNotActivatedException ex) {
+        log.error("Неактивированный пользователь: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 
@@ -71,6 +77,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(InvalidConfirmationCodeException.class)
     public ResponseEntity<String> handleInvalidConfirmationCodeException(InvalidConfirmationCodeException ex) {
+        log.error("Неверный код подтверждения: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
@@ -82,6 +89,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(InvalidCorsConfigurationException.class)
     public ResponseEntity<String> handleInvalidCorsConfigurationException(InvalidCorsConfigurationException ex) {
+        log.error("Некорректная конфигурация CORS: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
 
@@ -93,6 +101,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RedisConfigurationException.class)
     public ResponseEntity<String> handleRedisConfigurationException(RedisConfigurationException ex) {
+        log.error("Ошибка конфигурации Redis: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
 
@@ -104,6 +113,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {
+        log.error("Неизвестная ошибка: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Внутренняя ошибка сервера");
     }
 }

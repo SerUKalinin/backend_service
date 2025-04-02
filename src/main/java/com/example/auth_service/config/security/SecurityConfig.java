@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Доступ к аутентификации и регистрации открыт
                         .requestMatchers(
-                                "/auth/**", "/users/info"
+                                "/auth/**"
                         ).permitAll()
                         // Доступ к объектам недвижимости
                         .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")
@@ -69,7 +69,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated() // обновление имени
                         .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated() // обновление фамилии
                         .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated() // обновление почты
-                        .requestMatchers(HttpMethod.PUT, "/users/password").authenticated() // смена пароля
                         .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN") // удаление пользователей
 
 
