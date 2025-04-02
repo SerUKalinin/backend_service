@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -46,12 +48,33 @@ public class SecurityConfig {
         log.info("Настройка SecurityFilterChain");
 
         http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register-user", "/auth/register-admin", "/auth/login", "/auth/logout", "/auth/verify-email").permitAll()
-                        .requestMatchers("/posts", "/posts/**", "/users/info").hasRole("USER")
-                        .requestMatchers("/users/info/all").hasRole("ADMIN")
-                        .anyRequest().hasAnyRole("USER", "ADMIN")
+                        // Доступ к аутентификации и регистрации открыт
+                        .requestMatchers(
+                                "/auth/**", "/users/info"
+                        ).permitAll()
+                        // Доступ к объектам недвижимости
+                        .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/real-estate-objects/{id}").hasRole("ADMIN")
+
+                        // Доступ к пользователям
+                        .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN") // создание пользователя
+                        .requestMatchers(HttpMethod.GET, "/users/info").authenticated() // инфо о себе
+                        .requestMatchers(HttpMethod.GET, "/users/info/all").hasRole("ADMIN") // инфо обо всех
+                        .requestMatchers(HttpMethod.GET, "/users/info/{id}").hasRole("ADMIN") // инфо по ID
+                        .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated() // обновление имени
+                        .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated() // обновление фамилии
+                        .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated() // обновление почты
+                        .requestMatchers(HttpMethod.PUT, "/users/password").authenticated() // смена пароля
+                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN") // удаление пользователей
+
+
+                        // Любые другие запросы требуют авторизации
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

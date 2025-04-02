@@ -15,7 +15,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -58,6 +57,12 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "first_name")
+    private String firstName;  // Поле для имени
+
+    @Column(name = "last_name")
+    private String lastName;
+
     /**
      * Роли пользователя.
      * Связь "многие ко многим" с таблицей ролей.
@@ -68,14 +73,6 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private Set<Role> roles;
-
-    /**
-     * Посты пользователя.
-     * Связь "один ко многим" с таблицей постов.
-     * Используется eager загрузка для немедленной загрузки постов.
-     */
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    private List<Post> posts;
 
     /**
      * Статус активации пользователя.

@@ -1,54 +1,47 @@
-package com.example.auth_service.controller;
+package com.example.auth_service.controller.user;
 
 import com.example.auth_service.dto.UserDto;
-import com.example.auth_service.service.UserService;
+import com.example.auth_service.service.user.UserInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
- * Контроллер для работы с пользователями.
+ * Контроллер для получения информации о пользователях.
  */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users")
-public class UserController {
+@RequestMapping("/users/info")
+public class UserInfoController {
 
-    private final UserService userService;
+    private final UserInfoService userInfoService;
 
     /**
      * Получает информацию о текущем пользователе.
      */
-    @GetMapping("/info")
+    @GetMapping
     public UserDto getUserInfo(Authentication authentication) {
         String username = authentication.getName();
         log.info("Запрос информации о пользователе: {}", username);
-        return userService.getUserInfo(username);
-    }
-
-    /**
-     * Обновляет информацию о текущем пользователе.
-     */
-    @PutMapping("/update")
-    public UserDto updateUserInfo(@RequestBody UserDto userDto, Authentication authentication) {
-        String username = authentication.getName();
-        log.info("Обновление информации о пользователе: {}", username);
-        return userService.updateUserInfo(username, userDto);
+        return userInfoService.getUserInfo(username);
     }
 
     /**
      * Получает информацию обо всех пользователях (только для администратора).
      */
-    @GetMapping("/info/all")
+    @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> getAllUsersInfo() {
         log.info("Запрос списка всех пользователей администратором");
-        return userService.getAllUsersInfo();
+        return userInfoService.getAllUserInfo();
     }
 
     /**
@@ -58,16 +51,6 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public UserDto getUserById(@PathVariable Long id) {
         log.info("Администратор запросил информацию о пользователе с ID: {}", id);
-        return userService.getUserById(id);
-    }
-
-    /**
-     * Удаляет пользователя (только для администратора).
-     */
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUser(@PathVariable Long id) {
-        log.warn("Администратор удаляет пользователя с ID: {}", id);
-        userService.deleteUser(id);
+        return userInfoService.getUserById(id);
     }
 }

@@ -1,33 +1,292 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+/* Общие стили */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
 }
 
-.container {
-    max-width: 400px;
-    margin: 50px auto;
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e1e2e, #3a3a5a);
+    color: #ffffff;
     padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0px 0px 10px #ccc;
-    text-align: center;
 }
 
-input, button {
+/* Контейнер */
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     width: 100%;
-    padding: 10px;
-    margin: 5px 0;
+    max-width: 600px;
+    text-align: center;
+    backdrop-filter: blur(10px);
 }
 
+/* Заголовки */
+h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+h3 {
+    margin: 20px 0 10px;
+    font-size: 20px;
+    text-align: left;
+}
+
+/* Поля ввода */
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 16px;
+    outline: none;
+    transition: background 0.3s ease;
+}
+
+input::placeholder {
+    color: #dddddd;
+}
+
+input:focus, select:focus {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Кнопки */
 button {
-    background-color: #4CAF50;
+    width: 100%;
+    padding: 12px;
+    background: #4caf50;
     color: white;
     border: none;
+    border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
 }
 
 button:hover {
-    background-color: #45a049;
+    background: #45a049;
+}
+
+/* Ссылки */
+a {
+    display: inline-block;
+    color: #90caf9;
+    margin-top: 15px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Сообщения */
+.message {
+    font-size: 14px;
+    margin-top: 15px;
+    opacity: 0.8;
+}
+
+/* Элементы списка */
+.item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+}
+
+.item p {
+    margin: 0;
+    font-size: 16px;
+}
+
+/* Кнопка удаления */
+.delete-btn {
+    background: #d32f2f;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: auto;
+}
+
+.delete-btn:hover {
+    background: #b71c1c;
+}
+
+/* Модальные окна */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 60px;
+}
+
+.modal-content {
+    background: rgba(30, 30, 46, 0.95);
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 80%;
+    max-width: 500px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.modal-content button {
+    margin-top: 15px;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+    }
+
+    .modal-content {
+        width: 90%;
+    }
+    /* Стили для личного кабинета */
+    .dashboard-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .content {
+        display: flex;
+        gap: 20px;
+    }
+
+    .sidebar {
+        width: 250px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .sidebar ul {
+        list-style: none;
+    }
+
+    .sidebar li {
+        padding: 12px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .sidebar li:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar li.active {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .main-content {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .content-section {
+        display: none;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .add-btn {
+        width: auto;
+        padding: 8px 15px;
+        background: #4caf50;
+    }
+
+    .filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .filters select, .filters button {
+        width: auto;
+    }
+
+    .items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .cancel-btn {
+        background: #757575;
+    }
+
+    .cancel-btn:hover {
+        background: #616161;
+    }
 }
