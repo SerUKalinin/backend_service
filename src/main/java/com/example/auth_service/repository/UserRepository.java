@@ -30,4 +30,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @throws IllegalArgumentException Если {@code email} равен null или пустой строке.
      */
     Optional<User> findByEmail(String email);
+
+    /**
+     * Проверяет, существует ли пользователь с указанным email.
+     *
+     * @param email Адрес электронной почты.
+     * @return {@link Boolean} true, если пользователь с данным email существует, иначе false.
+     */
+    boolean existsByEmail(String email);
 }

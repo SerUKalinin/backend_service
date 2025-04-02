@@ -61,21 +61,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/real-estate-objects/{id}").hasRole("ADMIN")
 
-                        // Доступ к задачам
-                        .requestMatchers(HttpMethod.GET, "/tasks").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/tasks").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/tasks/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/tasks/{id}").hasRole("ADMIN")
+                        // Доступ к пользователям
+                        .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN") // создание пользователя
+                        .requestMatchers(HttpMethod.GET, "/users/info").authenticated() // инфо о себе
+                        .requestMatchers(HttpMethod.GET, "/users/info/all").hasRole("ADMIN") // инфо обо всех
+                        .requestMatchers(HttpMethod.GET, "/users/info/{id}").hasRole("ADMIN") // инфо по ID
+                        .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated() // обновление имени
+                        .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated() // обновление фамилии
+                        .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated() // обновление почты
+                        .requestMatchers(HttpMethod.PUT, "/users/password").authenticated() // смена пароля
+                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN") // удаление пользователей
 
-                        // Доступ к подзадачам
-                        .requestMatchers(HttpMethod.GET, "/subtasks").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/subtasks").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/subtasks/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/subtasks/{id}").hasRole("ADMIN")
-
-                        // Доступ к постам и информации о пользователях
-                        .requestMatchers("/posts", "/posts/**", "/users/info").hasRole("USER")
-                        .requestMatchers("/users/info/all").hasRole("ADMIN")
 
                         // Любые другие запросы требуют авторизации
                         .anyRequest().authenticated()
