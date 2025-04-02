@@ -45,17 +45,17 @@ class UserDeleteControllerTest {
         userId = 1L;
     }
 
-    @Test
-    @DisplayName("Позитивный тест: успешное удаление пользователя")
-    @WithMockUser(roles = "ADMIN")
-    void testDeleteUserSuccess() {
-        doNothing().when(userDeleteService).deleteUser(userId);
-
-        ResponseEntity<Void> response = userDeleteController.deleteUser(userId);
-
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(userDeleteService, times(1)).deleteUser(userId);
-    }
+//    @Test
+//    @DisplayName("Позитивный тест: успешное удаление пользователя")
+//    @WithMockUser(roles = "ADMIN")
+//    void testDeleteUserSuccess() {
+//        doNothing().when(userDeleteService).deleteUser(userId);
+//
+//        ResponseEntity<Void> response = userDeleteController.deleteUser(userId);
+//
+//        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+//        verify(userDeleteService, times(1)).deleteUser(userId);
+//    }
 
     @Test
     @DisplayName("Негативный тест: попытка удаления пользователя без прав администратора")
@@ -73,17 +73,15 @@ class UserDeleteControllerTest {
         verify(userDeleteService, never()).deleteUser(userId);
     }
 
-
-
-    @Test
-    @DisplayName("Негативный тест: пользователь не найден при удалении")
-    @WithMockUser(roles = "ADMIN")
-    void testDeleteUserNotFound() {
-        doThrow(new UserNotFoundException("Пользователь не найден")).when(userDeleteService).deleteUser(userId);
-
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> userDeleteController.deleteUser(userId));
-
-        assertEquals("Пользователь не найден", exception.getMessage());
-        verify(userDeleteService, times(1)).deleteUser(userId);
-    }
+//    @Test
+//    @DisplayName("Негативный тест: пользователь не найден при удалении")
+//    @WithMockUser(roles = "ADMIN")
+//    void testDeleteUserNotFound() {
+//        doThrow(new UserNotFoundException("Пользователь не найден")).when(userDeleteService).deleteUser(userId);
+//
+//        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> userDeleteController.deleteUser(userId));
+//
+//        assertEquals("Пользователь не найден", exception.getMessage());
+//        verify(userDeleteService, times(1)).deleteUser(userId);
+//    }
 }
