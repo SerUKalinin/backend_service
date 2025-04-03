@@ -1662,75 +1662,97 @@
             // Обновляем заголовок секции
             const pageTitle = document.querySelector('#objects-section .page-title');
             pageTitle.textContent = object.name;
-            
-            // Обновляем содержимое секции
-            const container = document.getElementById('objects-content');
-            container.innerHTML = `
-                <div class="object-details">
-                    <div class="data-table">
-                        <div class="table-header">
-                            <h3 class="table-title">Детали объекта</h3>
+
+            // Формируем хлебные крошки
+            let breadcrumbsHtml = '';
+            if (object.parentId) {
+                fetch(`http://localhost:8080/real-estate-objects/${object.parentId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(parentObject => {
+                    breadcrumbsHtml = `
+                        <div class="breadcrumbs">
+                            <a href="#" onclick="showObjectDetails(${parentObject.id})" class="object-name-link">
+                                ${parentObject.name}
+                            </a>
+                            <span class="breadcrumb-separator"> / </span>
+                            <span class="current-object">${object.name}</span>
                         </div>
-                        <div class="table-body">
-                            <div class="table-row">
-                                <div class="table-cell">
-                                    <div class="detail-item">
-                                        <span class="detail-label">Название:</span>
-                                        <span>${object.name}</span>
+                    `;
+                    updateContent();
+                });
+            } else {
+                updateContent();
+            }
+
+            function updateContent() {
+                // Обновляем содержимое секции
+                const container = document.getElementById('objects-content');
+                container.innerHTML = `
+                    <div class="object-details">
+                        <div class="data-table">
+                            <div class="table-header">
+                                <h3 class="table-title">Детали объекта</h3>
+                            </div>
+                            <div class="table-body">
+                                <div class="table-row">
+                                    <div class="table-cell">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Название:</span>
+                                            <span>${object.name}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="table-row">
-                                <div class="table-cell">
-                                    <div class="detail-item">
-                                        <span class="detail-label">Тип:</span>
-                                        <span>${getObjectTypeName(object.objectType)}</span>
+                                <div class="table-row">
+                                    <div class="table-cell">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Тип:</span>
+                                            <span>${getObjectTypeName(object.objectType)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="table-row">
-                                <div class="table-cell">
-                                    <div class="detail-item">
-                                        <span class="detail-label">Дата создания:</span>
-                                        <span>${new Date(object.createdAt).toLocaleString()}</span>
+                                <div class="table-row">
+                                    <div class="table-cell">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Дата создания:</span>
+                                            <span>${new Date(object.createdAt).toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="children-section">
-                    <div class="children-header">
-                        <h3>Дочерние объекты</h3>
-                        <button class="add-btn" onclick="showAddChildObjectModal()">
-                            <i class="fas fa-plus"></i>
-                            Добавить дочерний объект
+                    <div class="children-section">
+                        <div class="children-header">
+                            ${object.parentId ? breadcrumbsHtml : `<h3>${object.name}</h3>`}
+                            <button class="add-btn" onclick="showAddChildObjectModal()">
+                                <i class="fas fa-plus"></i>
+                                Добавить объект
+                            </button>
+                        </div>
+                        <div id="children-list" class="children-grid">
+                            <!-- Дочерние объекты будут загружены через loadChildren -->
+                        </div>
+                    </div>
+                    <div class="back-button">
+                        <button class="btn btn-primary" onclick="loadObjects()">
+                            <i class="fas fa-arrow-left"></i>
+                            Вернуться к списку
                         </button>
                     </div>
-                    <div id="children-list" class="children-grid">
-                        <!-- Дочерние объекты будут загружены через loadChildren -->
-                    </div>
-                </div>
-                <div class="back-button">
-                    ${object.parentId ? `
-                        <button class="btn btn-primary" onclick="showObjectDetails(${object.parentId})" style="margin-right: 10px;">
-                            <i class="fas fa-arrow-up"></i>
-                            Назад
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-primary" onclick="loadObjects()">
-                        <i class="fas fa-arrow-left"></i>
-                        Вернуться к списку
-                    </button>
-                </div>
-            `;
-            
-            // Сохраняем ID текущего объекта
-            currentParentId = objectId;
-            console.log('Set currentParentId to:', currentParentId);
-            
-            // Загружаем дочерние объекты
-            loadChildren(objectId);
+                `;
+                
+                // Сохраняем ID текущего объекта
+                currentParentId = objectId;
+                console.log('Set currentParentId to:', currentParentId);
+                
+                // Загружаем дочерние объекты
+                loadChildren(objectId);
+            }
         })
         .catch(error => {
             console.error('Ошибка загрузки деталей объекта:', error);
