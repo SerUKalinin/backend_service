@@ -27,12 +27,6 @@ public class ObjectService {
     private final ObjectRepository objectRepository;
     private final ObjectMapper objectMapper;
 
-    /**
-     * Создать новый объект недвижимости.
-     *
-     * @param objectDto данные нового объекта недвижимости
-     * @return созданный объект недвижимости
-     */
     public ObjectResponseDto createObject(ObjectResponseDto objectDto) {
         Assert.notNull(objectDto, "Объект не должен быть null");
         Assert.hasText(objectDto.getName(), "Имя объекта не должно быть пустым");
@@ -42,12 +36,20 @@ public class ObjectService {
 
         // Преобразуем DTO в сущность
         ObjectEntity entity = objectMapper.toEntity(objectDto);
+
+        // Если родительский объект задан (parentId != null), то связываем с родителем
+        if (objectDto.getParentId() != null) {
+            Optional<ObjectEntity> parentEntity = objectRepository.findById(objectDto.getParentId());
+            parentEntity.ifPresent(entity::setParent);  // Устанавливаем родителя, если он найден
+        }
+
         ObjectEntity savedEntity = objectRepository.save(entity);
 
         log.info("Объект сохранен: {}", savedEntity);
         // Преобразуем сохраненную сущность обратно в DTO и возвращаем
         return objectMapper.toDto(savedEntity);
     }
+
 
     /**
      * Получить все объекты недвижимости.
