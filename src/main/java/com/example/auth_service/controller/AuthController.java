@@ -5,6 +5,8 @@ import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.dto.EmailVerificationDto;
 import com.example.auth_service.service.AuthService;
+import com.example.auth_service.service.SessionService;
+import com.example.auth_service.service.security.jwt.JwtUtil;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -13,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import java.time.Duration;
 
 /**
  * Контроллер для аутентификации и регистрации пользователей.
@@ -24,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtUtil jwtUtil;
+    private final SessionService sessionService;
 
     /**
      * Регистрация нового пользователя.
@@ -98,6 +104,37 @@ public class AuthController {
     public void resendEmailVerification(@RequestParam String email) throws MessagingException {
         log.info("Запрос на повторную отправку кода подтверждения на email: {}", email);
         authService.resendConfirmationCode(email);
+    }
+
+    /**
+     * Обновляет токен пользователя.
+     *
+     * @param authHeader Заголовок Authorization с текущим токеном.
+     * @return ResponseEntity с новым токеном или ошибкой.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        log.info("Запрос на обновление токена");
+        
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
+                String username = decodedJWT.getSubject();
+                
+                // Проверяем сессию
+                if (sessionService.isSessionValid(username, token)) {
+                    // Обновляем сессию
+                    sessionService.refreshSession(username, Duration.ofHours(2));
+                    log.info("Токен успешно обновлен для пользователя: {}", username);
+                    return ResponseEntity.ok(new AuthResponse(token));
+                }
+            } catch (Exception e) {
+                log.error("Ошибка при обновлении токена: {}", e.getMessage());
+            }
+        }
+        log.warn("Не удалось обновить токен");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
 }

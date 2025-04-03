@@ -35,9 +35,17 @@ public class CustomUserDetails implements UserDetails {
             log.error("Пользователь {} не имеет назначенных ролей!", username);
             throw new IllegalStateException("Пользователю должна быть назначена хотя бы одна роль.");
         }
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getRoleType().toString()))
+        
+        Collection<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(role -> {
+                    String roleType = role.getRoleType().toString();
+                    log.info("Добавление роли {} для пользователя {}", roleType, username);
+                    return new SimpleGrantedAuthority(roleType);
+                })
                 .collect(Collectors.toList());
+                
+        log.info("Пользователь {} имеет роли: {}", username, authorities);
+        return authorities;
     }
 
     /**

@@ -58,6 +58,9 @@ public class JwtUtil {
         String roles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+                
+        log.info("Генерация токена для пользователя {} с ролями: {}", username, roles);
+        
         String token = JWT.create()
                 .withSubject(username)
                 .withIssuer(issuer)

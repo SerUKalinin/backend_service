@@ -17,6 +17,7 @@ import java.util.Date;
 public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private static final String SESSION_PREFIX = "session:";
 
     /**
      * Сохраняет значение в Redis с указанным ключом и временем истечения.
@@ -97,5 +98,42 @@ public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
         log.info("Получаем значение для ключа из Redis: ключ = {}", key);
 
         return this.redisTemplate.opsForValue().get(key);
+    }
+
+    /**
+     * Получает время истечения сессии.
+     *
+     * @param username Имя пользователя.
+     * @return Время истечения сессии или null, если сессия не найдена.
+     */
+    @Override
+    public Date getSessionExpiry(String username) {
+        String key = SESSION_PREFIX + username;
+        if (redisTemplate.hasKey(key)) {
+            String expiryStr = (String) redisTemplate.opsForHash().get(key, "expiry");
+            if (expiryStr != null) {
+                return new Date(Long.parseLong(expiryStr));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Обновляет время жизни сессии.
+     *
+     * @param username Имя пользователя.
+     * @param duration Новая длительность сессии.
+     */
+    @Override
+    public void refreshSession(String username, java.time.Duration duration) {
+        String key = SESSION_PREFIX + username;
+        if (redisTemplate.hasKey(key)) {
+            String token = (String) redisTemplate.opsForHash().get(key, "token");
+            if (token != null) {
+                redisTemplate.opsForHash().put(key, "expiry", String.valueOf(System.currentTimeMillis() + duration.toMillis()));
+                redisTemplate.expire(key, duration);
+                log.info("Сессия пользователя {} обновлена на {}", username, duration);
+            }
+        }
     }
 }
