@@ -1382,6 +1382,7 @@
     let jwtToken = localStorage.getItem('jwt');
     let currentUser = null;
     let isAdmin = false;
+    let currentParentId = null; // Добавляем глобальную переменную для хранения ID текущего родительского объекта
 
     // Проверка авторизации при загрузке
     document.addEventListener('DOMContentLoaded', function() {
@@ -1699,13 +1700,16 @@
                                     </div>
                                     <div class="table-cell">${getObjectTypeName(object.objectType)}</div>
                                     <div class="table-cell">
-                                        ${object.parentId ? `<button class="view-hierarchy-btn" onclick="event.stopPropagation(); showHierarchyModal(${object.id})">
-                                            <i class="fas fa-sitemap"></i> Просмотреть иерархию
-                                        </button>` : '-'}
+                                        ${object.parentId ? 
+                                            `<button class="view-hierarchy-btn" onclick="event.stopPropagation(); showHierarchyModal(${object.id})">
+                                                <i class="fas fa-sitemap"></i> Просмотреть иерархию
+                                            </button>` : 
+                                            '-'
+                                        }
                                     </div>
                                     <div class="table-cell">${new Date(object.createdAt).toLocaleString()}</div>
                                     <div class="table-cell">
-                                        <div class="action-btn edit-btn" onclick="showObjectDetails(${object.id})" title="Редактировать">
+                                        <div class="action-btn edit-btn" onclick="editObject(${object.id})" title="Редактировать">
                                             <i class="fas fa-edit"></i>
                                         </div>
                                         <div class="action-btn delete-btn" onclick="deleteObject(${object.id})" title="Удалить">
@@ -1782,6 +1786,10 @@
             // Обновляем заголовок секции
             const pageTitle = document.querySelector('#objects-section .page-title');
             pageTitle.textContent = object.name;
+
+            // Устанавливаем текущий родительский ID
+            currentParentId = object.parentId;
+            console.log('Set currentParentId to:', currentParentId);
 
             // Формируем хлебные крошки
             let breadcrumbsHtml = '';
@@ -1909,7 +1917,7 @@
                             </div>
                             <div class="child-type">${getObjectTypeName(child.objectType)}</div>
                             <div class="child-actions">
-                                <div class="action-btn edit-btn" onclick="showObjectDetails(${child.id})" title="Редактировать">
+                                <div class="action-btn edit-btn" onclick="editObject(${child.id})" title="Редактировать">
                                     <i class="fas fa-edit"></i>
                                 </div>
                                 <div class="action-btn delete-btn" onclick="deleteObject(${child.id})" title="Удалить">
@@ -1941,15 +1949,21 @@
     // Добавляем новую функцию для показа модального окна создания дочернего объекта
     function showAddChildObjectModal(parentId) {
         const modal = document.getElementById('object-modal');
-        if (!modal) {
-            console.error('Modal element not found');
-            return;
-        }
-        
-        // Устанавливаем заголовок
         document.getElementById('modal-title').textContent = 'Создание дочернего объекта';
-        
-        // Получаем информацию о родительском объекте
+        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать'; // Устанавливаем текст кнопки
+
+        // Очищаем форму и сбрасываем обработчик
+        const form = document.getElementById('object-form');
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        const currentForm = document.getElementById('object-form');
+        currentForm.reset(); 
+        currentForm.onsubmit = null; // Очищаем обработчик
+        document.getElementById('object-id').value = '';
+        document.getElementById('parent-select').disabled = true; // Блокируем выбор родителя
+
+        // Загружаем родителя
+        const parentSelect = document.getElementById('parent-select');
         fetch(`http://localhost:8080/real-estate-objects/${parentId}`, {
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
@@ -1958,23 +1972,43 @@
         })
         .then(response => response.json())
         .then(parentObject => {
-            // Устанавливаем значение родительского объекта
-            const parentSelect = document.getElementById('parent-select');
             parentSelect.innerHTML = `<option value="${parentId}" selected>${parentObject.name} (${getObjectTypeName(parentObject.objectType)})</option>`;
-            parentSelect.disabled = true; // Блокируем изменение родительского объекта
-            
-            // Очищаем остальные поля формы
-            document.getElementById('object-id').value = '';
-            document.getElementById('object-name').value = '';
-            document.getElementById('object-type').value = '';
-            
-            // Показываем модальное окно
-            modal.style.display = 'block';
         })
         .catch(error => {
             console.error('Error loading parent object:', error);
-            alert('Ошибка загрузки информации о родительском объекте');
+            parentSelect.innerHTML = '<option value="">Ошибка загрузки родителя</option>';
         });
+
+        // Назначаем обработчик для СОЗДАНИЯ ДОЧЕРНЕГО
+        currentForm.onsubmit = function(e) {
+            e.preventDefault();
+            const objectName = document.getElementById('object-name').value;
+            const objectType = document.getElementById('object-type').value;
+            const data = { name: objectName, objectType: objectType, parentId: parentId };
+
+            fetch('http://localhost:8080/real-estate-objects', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) { return response.text().then(text => { throw new Error(text || 'Ошибка при создании объекта'); }); }
+                return response.json();
+            })
+            .then(data => {
+                closeObjectModal();
+                loadChildren(parentId); // Обновляем список дочерних объектов
+            })
+            .catch(error => {
+                console.error('Ошибка при создании объекта:', error);
+                alert('Ошибка при создании объекта: ' + error.message);
+            });
+        };
+
+        modal.style.display = 'block';
     }
 
     // Обновляем обработчик формы
@@ -2036,7 +2070,19 @@
 
     // Функция для закрытия модального окна
     function closeObjectModal() {
-        document.getElementById('object-modal').style.display = 'none';
+        const modal = document.getElementById('object-modal');
+        modal.style.display = 'none';
+        const form = document.getElementById('object-form');
+        // Клонируем форму, чтобы удалить все слушатели событий
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        // Сбрасываем значения новой формы
+        newForm.reset(); 
+        newForm.onsubmit = null; // Явно удаляем обработчик
+        document.getElementById('object-id').value = '';
+        document.getElementById('parent-select').disabled = false;
+        document.getElementById('parent-select').innerHTML = '<option value="">Загрузка...</option>';
+        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать'; // Возвращаем текст кнопки по умолчанию
     }
 
     // Функция для возврата к списку объектов
@@ -2143,46 +2189,21 @@
                     throw new Error(text || 'Ошибка при удалении объекта');
                 });
             }
-            // После успешного удаления загружаем актуальный список объектов
-            return fetch("http://localhost:8080/real-estate-objects", {
-                headers: {
-                    'Authorization': `Bearer ${jwtToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-        })
-        .then(response => response.json())
-        .then(objects => {
-            const objectsList = document.getElementById('objects-list');
-            if (objectsList) {
-                objectsList.innerHTML = objects.map(object => `
-                    <div class="table-row" data-type="${object.objectType}">
-                        <div class="table-cell">
-                            <a href="#" onclick="showObjectDetails(${object.id})" class="object-name-link">
-                                ${object.name}
-                            </a>
-                        </div>
-                        <div class="table-cell">${getObjectTypeName(object.objectType)}</div>
-                        <div class="table-cell">
-                            ${object.parentId ? 
-                                `<button class="view-hierarchy-btn" onclick="event.stopPropagation(); showHierarchyModal(${object.id})">
-                                    <i class="fas fa-sitemap"></i> Просмотреть иерархию
-                                </button>` : 
-                                '-'
-                            }
-                        </div>
-                        <div class="table-cell">${new Date(object.createdAt).toLocaleString()}</div>
-                        <div class="table-cell">
-                            <div class="action-btn edit-btn" onclick="showObjectDetails(${object.id})" title="Редактировать">
-                                <i class="fas fa-edit"></i>
-                            </div>
-                            <div class="action-btn delete-btn" onclick="deleteObject(${object.id})" title="Удалить">
-                                <i class="fas fa-trash"></i>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+            
+            // Проверяем, находимся ли мы в деталях объекта
+            const objectsContent = document.getElementById('objects-content');
+            const isInDetailsView = objectsContent.querySelector('.children-section') !== null;
+            
+            if (isInDetailsView) {
+                console.log('Updating children list for parent:', currentParentId);
+                loadChildren(currentParentId);
+            } else {
+                console.log('Updating main objects list');
+                loadObjects();
             }
+            
+            // Обновляем данные на дашборде
+            loadDashboardData();
         })
         .catch(error => {
             console.error('Ошибка при удалении объекта:', error);
@@ -2234,6 +2255,208 @@
 
     function closeHierarchyModal() {
         document.getElementById('hierarchy-modal').style.display = 'none';
+    }
+
+    function editObject(objectId) {
+        console.log('Editing object:', objectId);
+        
+        // Устанавливаем заголовок модального окна
+        document.getElementById('modal-title').textContent = 'Редактирование объекта';
+        
+        // Меняем текст кнопки
+        document.querySelector('#object-form button[type="submit"]').textContent = 'Сохранить';
+        
+        // Клонируем форму, чтобы удалить старые обработчики
+        const form = document.getElementById('object-form');
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Получаем данные объекта
+        fetch(`http://localhost:8080/real-estate-objects/${objectId}`, {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных объекта');
+            }
+            return response.json();
+        })
+        .then(object => {
+            console.log('Loaded object data:', object);
+            
+            // Заполняем форму данными объекта
+            const form = document.getElementById('object-form');
+            form.querySelector('#object-name').value = object.name;
+            form.querySelector('#object-type').value = object.objectType;
+            
+            // Если есть родительский объект, загружаем его данные
+            if (object.parentId) {
+                fetch(`http://localhost:8080/real-estate-objects/${object.parentId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка загрузки данных родительского объекта');
+                    }
+                    return response.json();
+                })
+                .then(parentObject => {
+                    const parentSelect = form.querySelector('#parent-select');
+                    parentSelect.innerHTML = `<option value="${parentObject.id}">${parentObject.name} (${getObjectTypeName(parentObject.objectType)})</option>`;
+                    parentSelect.value = parentObject.id;
+                    parentSelect.disabled = true; // Блокируем изменение родителя при редактировании
+                })
+                .catch(error => {
+                    console.error('Error loading parent object:', error);
+                    const parentSelect = form.querySelector('#parent-select');
+                    parentSelect.innerHTML = '<option value="">Ошибка загрузки родительского объекта</option>';
+                });
+            } else {
+                // Если родителя нет, очищаем селект
+                const parentSelect = form.querySelector('#parent-select');
+                parentSelect.innerHTML = '<option value="">Без родительского объекта</option>';
+                parentSelect.value = '';
+            }
+            
+            // Устанавливаем обработчик отправки формы
+            form.onsubmit = function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    name: form.querySelector('#object-name').value,
+                    objectType: form.querySelector('#object-type').value,
+                    parentId: object.parentId // Сохраняем текущего родителя
+                };
+                
+                console.log('Sending update request with data:', formData);
+                
+                fetch(`http://localhost:8080/real-estate-objects/${objectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка обновления объекта');
+                    }
+                    return response.json();
+                })
+                .then(updatedObject => {
+                    console.log('Object updated successfully:', updatedObject);
+                    closeObjectModal();
+                    
+                    // Проверяем, находимся ли мы в деталях объекта
+                    const objectsContent = document.getElementById('objects-content');
+                    const isInDetailsView = objectsContent.querySelector('.children-section') !== null;
+                    
+                    if (isInDetailsView) {
+                        console.log('Updating children list for parent:', currentParentId);
+                        loadChildren(currentParentId);
+                    } else {
+                        console.log('Updating main objects list');
+                        loadObjects();
+                    }
+                    
+                    // Обновляем данные на дашборде
+                    loadDashboardData();
+                })
+                .catch(error => {
+                    console.error('Error updating object:', error);
+                    alert('Ошибка при обновлении объекта: ' + error.message);
+                });
+            };
+        })
+        .catch(error => {
+            console.error('Error loading object:', error);
+            alert('Ошибка при загрузке данных объекта: ' + error.message);
+        });
+        
+        // Показываем модальное окно
+        document.getElementById('object-modal').style.display = 'block';
+    }
+
+    // Функция для показа модального окна создания объекта (главного)
+    function showAddObjectModal() {
+        const modal = document.getElementById('object-modal');
+        document.getElementById('modal-title').textContent = 'Создание объекта';
+        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать'; // Устанавливаем текст кнопки
+
+        // Очищаем форму и сбрасываем обработчик
+        const form = document.getElementById('object-form');
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        const currentForm = document.getElementById('object-form');
+        currentForm.reset(); 
+        currentForm.onsubmit = null; // Очищаем обработчик
+        document.getElementById('object-id').value = '';
+        document.getElementById('parent-select').disabled = false; // Разблокируем выбор родителя
+
+        // Загружаем список родительских объектов
+        const parentSelect = document.getElementById('parent-select');
+        parentSelect.innerHTML = '<option value="">Загрузка...</option>';
+
+        fetch('http://localhost:8080/real-estate-objects', {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(objects => {
+            parentSelect.innerHTML = '<option value="">Без родительского объекта</option>';
+            objects.forEach(obj => {
+                const option = document.createElement('option');
+                option.value = obj.id;
+                option.textContent = `${obj.name} (${getObjectTypeName(obj.objectType)})`;
+                parentSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading parent objects:', error);
+            parentSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+        });
+
+        // Назначаем обработчик для СОЗДАНИЯ
+        currentForm.onsubmit = function(e) {
+            e.preventDefault();
+            const objectName = document.getElementById('object-name').value;
+            const objectType = document.getElementById('object-type').value;
+            const parentId = document.getElementById('parent-select').value;
+            const data = { name: objectName, objectType: objectType };
+            if (parentId) { data.parentId = parseInt(parentId); }
+
+            fetch('http://localhost:8080/real-estate-objects', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) { return response.text().then(text => { throw new Error(text || 'Ошибка при создании объекта'); }); }
+                return response.json();
+            })
+            .then(data => {
+                closeObjectModal();
+                loadObjects(); // Обновляем главный список
+            })
+            .catch(error => {
+                console.error('Ошибка при создании объекта:', error);
+                alert('Ошибка при создании объекта: ' + error.message);
+            });
+        };
+
+        modal.style.display = 'block';
     }
 </script>
 </body>
