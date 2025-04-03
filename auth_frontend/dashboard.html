@@ -984,6 +984,63 @@
             color: var(--primary);
             margin-bottom: 10px;
         }
+
+        /* Стили для иерархии объекта */
+        .hierarchy-content {
+            padding: 20px;
+        }
+
+        .hierarchy-path {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hierarchy-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+        .hierarchy-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 20px;
+            bottom: -15px;
+            width: 2px;
+            height: 20px;
+            background: var(--primary);
+        }
+
+        .hierarchy-name {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .hierarchy-type {
+            color: var(--gray);
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .view-hierarchy-btn {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .view-hierarchy-btn:hover {
+            background: rgba(67, 97, 238, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -1303,6 +1360,21 @@
             </div>
         </div>
     </div>
+
+    <!-- Модальное окно для иерархии объекта -->
+    <div id="hierarchy-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Иерархия объекта</h3>
+                <button class="close-btn" onclick="closeHierarchyModal()">&times;</button>
+            </div>
+            <div class="hierarchy-content">
+                <div id="hierarchy-path" class="hierarchy-path">
+                    <!-- Путь объекта будет загружен здесь -->
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <script>
@@ -1325,8 +1397,11 @@
         // Настройка навигации
         setupNavigation();
 
-        // Загружаем данные для дашборда
+        // Загружаем начальные данные для дашборда
         loadDashboardData();
+
+        // Запускаем автоматическое обновление
+        startDashboardAutoRefresh();
     });
 
     // Загрузка данных пользователя
@@ -1450,8 +1525,10 @@
             return response.json();
         })
         .then(objects => {
-            // Показываем общее количество всех объектов
-            document.getElementById('objects-count').textContent = objects.length;
+            // Показываем общее количество всех объектов, включая дочерние
+            let totalObjects = objects.length;
+            console.log('Total objects found:', totalObjects);
+            document.getElementById('objects-count').textContent = totalObjects;
         })
         .catch(error => {
             console.error('Ошибка загрузки объектов:', error);
@@ -1486,6 +1563,12 @@
             document.getElementById('expired-tasks-count').textContent = '0';
             renderRecentTasks([]);
         });
+    }
+
+    // Функция для автоматического обновления данных дашборда
+    function startDashboardAutoRefresh() {
+        // Обновляем данные каждые 5 секунд
+        setInterval(loadDashboardData, 5000);
     }
 
     // Отображение последних задач
@@ -1563,7 +1646,6 @@
 
     // Загрузка объектов (заглушка)
     function loadObjects() {
-        // Возвращаем заголовок к исходному состоянию
         const pageTitle = document.querySelector('#objects-section .page-title');
         pageTitle.textContent = 'Объекты недвижимости';
         
@@ -1617,7 +1699,9 @@
                                     </div>
                                     <div class="table-cell">${getObjectTypeName(object.objectType)}</div>
                                     <div class="table-cell">
-                                        ${object.parentId ? `<a href="#" onclick="showObjectDetails(${object.parentId})" class="object-name-link">Просмотреть родителя</a>` : '-'}
+                                        ${object.parentId ? `<button class="view-hierarchy-btn" onclick="event.stopPropagation(); showHierarchyModal(${object.id})">
+                                            <i class="fas fa-sitemap"></i> Просмотреть иерархию
+                                        </button>` : '-'}
                                     </div>
                                     <div class="table-cell">${new Date(object.createdAt).toLocaleString()}</div>
                                     <div class="table-cell">
@@ -2059,50 +2143,97 @@
                     throw new Error(text || 'Ошибка при удалении объекта');
                 });
             }
-            
-            // После успешного удаления обновляем список объектов
-            if (document.querySelector('#objects-section .page-title').textContent === 'Объекты недвижимости') {
-                // Если мы находимся на странице списка всех объектов
-                fetch("http://localhost:8080/real-estate-objects", {
-                    headers: {
-                        'Authorization': `Bearer ${jwtToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(objects => {
-                    const objectsList = document.getElementById('objects-list');
-                    if (objectsList) {
-                        objectsList.innerHTML = objects.map(object => `
-                            <div class="table-row" data-type="${object.objectType}">
-                                <div class="table-cell">
-                                    <a href="#" onclick="showObjectDetails(${object.id})" class="object-name-link">
-                                        ${object.name}
-                                    </a>
-                                </div>
-                                <div class="table-cell">${getObjectTypeName(object.objectType)}</div>
-                                <div class="table-cell">${new Date(object.createdAt).toLocaleString()}</div>
-                                <div class="table-cell">
-                                    <div class="action-btn edit-btn" onclick="showObjectDetails(${object.id})" title="Редактировать">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <div class="action-btn delete-btn" onclick="deleteObject(${object.id})" title="Удалить">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
-                                </div>
+            // После успешного удаления загружаем актуальный список объектов
+            return fetch("http://localhost:8080/real-estate-objects", {
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        })
+        .then(response => response.json())
+        .then(objects => {
+            const objectsList = document.getElementById('objects-list');
+            if (objectsList) {
+                objectsList.innerHTML = objects.map(object => `
+                    <div class="table-row" data-type="${object.objectType}">
+                        <div class="table-cell">
+                            <a href="#" onclick="showObjectDetails(${object.id})" class="object-name-link">
+                                ${object.name}
+                            </a>
+                        </div>
+                        <div class="table-cell">${getObjectTypeName(object.objectType)}</div>
+                        <div class="table-cell">
+                            ${object.parentId ? 
+                                `<button class="view-hierarchy-btn" onclick="event.stopPropagation(); showHierarchyModal(${object.id})">
+                                    <i class="fas fa-sitemap"></i> Просмотреть иерархию
+                                </button>` : 
+                                '-'
+                            }
+                        </div>
+                        <div class="table-cell">${new Date(object.createdAt).toLocaleString()}</div>
+                        <div class="table-cell">
+                            <div class="action-btn edit-btn" onclick="showObjectDetails(${object.id})" title="Редактировать">
+                                <i class="fas fa-edit"></i>
                             </div>
-                        `).join('');
-                    }
-                });
-            } else if (currentParentId) {
-                // Если мы находимся в деталях объекта
-                loadChildren(currentParentId);
+                            <div class="action-btn delete-btn" onclick="deleteObject(${object.id})" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
             }
         })
         .catch(error => {
             console.error('Ошибка при удалении объекта:', error);
             alert('Ошибка при удалении объекта: ' + error.message);
         });
+    }
+
+    // Функции для работы с иерархией объектов
+    function showHierarchyModal(objectId) {
+        const modal = document.getElementById('hierarchy-modal');
+        const hierarchyPath = document.getElementById('hierarchy-path');
+        hierarchyPath.innerHTML = '<div class="loading">Загрузка иерархии...</div>';
+        modal.style.display = 'block';
+
+        // Рекурсивная функция для получения цепочки родителей
+        async function getParentChain(id, chain = []) {
+            try {
+                const response = await fetch(`http://localhost:8080/real-estate-objects/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const object = await response.json();
+                chain.unshift(object); // Добавляем объект в начало массива
+
+                if (object.parentId) {
+                    return getParentChain(object.parentId, chain);
+                }
+                return chain;
+            } catch (error) {
+                console.error('Error loading object:', error);
+                return chain;
+            }
+        }
+
+        // Загружаем и отображаем цепочку родителей
+        getParentChain(objectId).then(chain => {
+            hierarchyPath.innerHTML = chain.map((obj, index) => `
+                <div class="hierarchy-item">
+                    <div class="hierarchy-name">${obj.name}</div>
+                    <div class="hierarchy-type">${getObjectTypeName(obj.objectType)}</div>
+                </div>
+            `).join('');
+        }).catch(error => {
+            hierarchyPath.innerHTML = '<div class="error">Ошибка загрузки иерархии</div>';
+        });
+    }
+
+    function closeHierarchyModal() {
+        document.getElementById('hierarchy-modal').style.display = 'none';
     }
 </script>
 </body>
