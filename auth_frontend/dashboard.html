@@ -1693,6 +1693,14 @@
                 // Обновляем содержимое секции
                 const container = document.getElementById('objects-content');
                 container.innerHTML = `
+                    <div class="children-section">
+                        <div class="children-header">
+                            ${object.parentId ? breadcrumbsHtml : `<h3>${object.name}</h3>`}
+                        </div>
+                        <div id="children-list" class="children-grid">
+                            <!-- Дочерние объекты будут загружены через loadChildren -->
+                        </div>
+                    </div>
                     <div class="object-details">
                         <div class="data-table">
                             <div class="table-header">
@@ -1724,18 +1732,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="children-section">
-                        <div class="children-header">
-                            ${object.parentId ? breadcrumbsHtml : `<h3>${object.name}</h3>`}
-                            <button class="add-btn" onclick="showAddChildObjectModal()">
-                                <i class="fas fa-plus"></i>
-                                Добавить объект
-                            </button>
-                        </div>
-                        <div id="children-list" class="children-grid">
-                            <!-- Дочерние объекты будут загружены через loadChildren -->
                         </div>
                     </div>
                     <div class="back-button">
@@ -1883,20 +1879,16 @@
         });
     }
 
-    // Функция для открытия модального окна создания дочернего объекта
-    function showAddChildObjectModal() {
-        if (!currentParentId) {
-            console.error('No parent ID set for child object');
-            alert('Ошибка: не выбран родительский объект');
-            return;
-        }
-        
+    // Обновляем функцию showAddObjectModal
+    function showAddObjectModal() {
         const modal = document.getElementById('object-modal');
         if (!modal) {
             console.error('Modal element not found');
             return;
         }
         
+        // Устанавливаем заголовок в зависимости от контекста
+        document.getElementById('modal-title').textContent = currentParentId ? 'Создание дочернего объекта' : 'Создание объекта';
         // Устанавливаем заголовок
         document.getElementById('modal-title').textContent = 'Создание дочернего объекта';
         
