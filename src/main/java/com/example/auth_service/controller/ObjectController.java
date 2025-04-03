@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.ObjectType;
 import com.example.auth_service.service.ObjectService;
@@ -27,42 +28,34 @@ public class ObjectController {
     /**
      * Получить все объекты недвижимости.
      *
-     * @return список всех объектов
+     * @return список всех объектов недвижимости
      */
     @GetMapping
-    public ResponseEntity<List<ObjectEntity>> getAllObjects() {
+    public ResponseEntity<List<ObjectResponseDto>> getAllObjects() {
         log.info("Получение всех объектов");
-        return ResponseEntity.ok(objectService.getAllObjects());
+        List<ObjectResponseDto> objects = objectService.getAllObjects();
+        return ResponseEntity.ok(objects);
     }
 
     /**
      * Получить объект недвижимости по его ID.
      *
      * @param id идентификатор объекта
-     * @return объект недвижимости, если найден, иначе 404 Not Found
+     * @return объект недвижимости, если найден
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ObjectEntity> getObjectsById(@PathVariable Long id) {
-        log.info("Запрос на получение объекта с ID: {}", id);
-        return objectService.getObjectById(id)
-                .map(object -> {
-                    log.info("Объект найден: {}", object);
-                    return ResponseEntity.ok(object);
-                })
-                .orElseGet(() -> {
-                    log.warn("Объект с ID {} не найден", id);
-                    return ResponseEntity.notFound().build();
-                });
+    public ResponseEntity<ObjectResponseDto> getObjectById(@PathVariable Long id) {
+        return objectService.getObjectById(id);
     }
 
     /**
      * Получить объекты по их типу.
      *
-     * @param type тип объекта {@link ObjectType}
+     * @param type тип объекта
      * @return список объектов данного типа
      */
     @GetMapping("/by-type")
-    public ResponseEntity<List<ObjectEntity>> getObjectsByType(@RequestParam ObjectType type) {
+    public ResponseEntity<List<ObjectResponseDto>> getObjectsByType(@RequestParam ObjectType type) {
         log.info("Запрос на получение объектов типа: {}", type);
         return ResponseEntity.ok(objectService.getObjectsByType(type));
     }
@@ -74,7 +67,7 @@ public class ObjectController {
      * @return список дочерних объектов
      */
     @GetMapping("/{id}/children")
-    public ResponseEntity<List<ObjectEntity>> getChildren(@PathVariable Long id) {
+    public ResponseEntity<List<ObjectResponseDto>> getChildren(@PathVariable Long id) {
         log.info("Запрос на получение дочерних объектов для ID: {}", id);
         return ResponseEntity.ok(objectService.getChildren(id));
     }
@@ -82,13 +75,13 @@ public class ObjectController {
     /**
      * Создать новый объект недвижимости.
      *
-     * @param object данные нового объекта недвижимости
+     * @param objectDto данные нового объекта недвижимости
      * @return созданный объект
      */
     @PostMapping
-    public ResponseEntity<ObjectEntity> createObject(@RequestBody ObjectEntity object) {
-        log.info("Запрос на создание объекта: {}", object);
-        ObjectEntity createdObject = objectService.createObject(object);
+    public ResponseEntity<ObjectResponseDto> createObject(@RequestBody ObjectResponseDto objectDto) {
+        log.info("Запрос на создание объекта: {}", objectDto);
+        ObjectResponseDto createdObject = objectService.createObject(objectDto);
         log.info("Объект создан: {}", createdObject);
         return ResponseEntity.ok(createdObject);
     }
@@ -101,9 +94,9 @@ public class ObjectController {
      * @return обновленный объект недвижимости
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ObjectEntity> updateObject(@PathVariable Long id, @RequestBody ObjectEntity object) {
+    public ResponseEntity<ObjectResponseDto> updateObject(@PathVariable Long id, @RequestBody ObjectResponseDto object) {
         log.info("Запрос на обновление объекта с ID {}: {}", id, object);
-        ObjectEntity updatedObject = objectService.updateObject(id, object);
+        ObjectResponseDto updatedObject = objectService.updateObject(id, object);
         log.info("Объект обновлен: {}", updatedObject);
         return ResponseEntity.ok(updatedObject);
     }

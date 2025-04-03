@@ -225,4 +225,30 @@ public class AuthService {
         }
         return authHeader.substring(7);
     }
+
+    public void resendConfirmationCode(String email) throws MessagingException {
+        log.info("Запрос на повторную отправку кода подтверждения для email: {}", email);
+
+        // Проверка, существует ли пользователь с таким email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с таким email не найден"));
+
+        // Проверка, активирован ли уже пользователь
+        if (user.isActive()) {
+            log.warn("Пользователь с email {} уже активирован", email);
+            throw new UserAlreadyExistsException("Пользователь с таким email уже активирован");
+        }
+
+        // Генерация нового кода подтверждения
+        String code = generateConfirmationCode();
+
+        // Сохранение нового кода в Redis
+        redisService.saveConfirmationCode(email, code);
+
+        // Отправка нового кода подтверждения на email
+        emailService.sendConfirmationCode(email, code);
+
+        log.info("Новый код подтверждения был успешно отправлен на email: {}", email);
+    }
+
 }

@@ -87,4 +87,17 @@ public class AuthController {
         log.info("Получен запрос на проверку email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
         authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
     }
+
+    /**
+     * Повторная отправка кода подтверждения на email.
+     *
+     * @param email адрес электронной почты пользователя.
+     */
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.OK)
+    public void resendEmailVerification(@RequestParam String email) throws MessagingException {
+        log.info("Запрос на повторную отправку кода подтверждения на email: {}", email);
+        authService.resendConfirmationCode(email);
+    }
+
 }
