@@ -1223,6 +1223,126 @@
             border-bottom: none;
             opacity: 1;
         }
+
+        /* Стили для профиля */
+        .profile-container {
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .profile-sidebar {
+            width: 300px;
+            flex-shrink: 0;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .profile-role {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .profile-content {
+            flex-grow: 1;
+        }
+
+        .profile-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .profile-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .change-password-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        .change-password-btn:hover {
+            background: #e01e5a;
+        }
     </style>
 </head>
 <body>
@@ -3129,6 +3249,306 @@
             notification.style.animation = 'slideOut 0.3s ease-out';
             setTimeout(() => notification.remove(), 300);
         }, 5000);
+    }
+
+    // Функция загрузки профиля
+    function loadProfile() {
+        const container = document.getElementById('profile-content');
+        container.innerHTML = `
+            <div class="profile-container">
+                <div class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="profile-avatar" id="profile-avatar">JD</div>
+                        <h2 class="profile-name" id="profile-name">John Doe</h2>
+                        <div class="profile-role" id="profile-role">Пользователь</div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" id="objects-count">0</div>
+                                <div class="stat-label">Объектов</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="tasks-count">0</div>
+                                <div class="stat-label">Задач</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-content">
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <span>Личная информация</span>
+                        </div>
+                        <div class="profile-form" id="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Имя пользователя</label>
+                                    <input type="text" class="form-input" id="profile-username" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-input" id="profile-email">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Имя</label>
+                                    <input type="text" class="form-input" id="profile-firstname">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Фамилия</label>
+                                    <input type="text" class="form-input" id="profile-lastname">
+                                </div>
+                            </div>
+                            <div class="profile-actions">
+                                <button class="btn btn-primary" onclick="saveProfile()">
+                                    <i class="fas fa-save"></i>
+                                    Сохранить
+                                </button>
+                                <button class="btn change-password-btn" onclick="showChangePasswordModal()">
+                                    <i class="fas fa-key"></i>
+                                    Сменить пароль
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Загружаем данные пользователя
+        fetch("http://localhost:8080/users/info", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных профиля');
+            }
+            return response.json();
+        })
+        .then(user => {
+            // Обновляем информацию в профиле
+            document.getElementById('profile-avatar').textContent = getInitials(user.username);
+            document.getElementById('profile-name').textContent = user.username;
+            document.getElementById('profile-role').textContent = getRoleName(user.roles);
+            document.getElementById('profile-username').value = user.username;
+            document.getElementById('profile-email').value = user.email || '';
+            document.getElementById('profile-firstname').value = user.firstName || '';
+            document.getElementById('profile-lastname').value = user.lastName || '';
+
+            // Загружаем статистику
+            loadProfileStats();
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки профиля:', error);
+            showNotification('error', 'Ошибка', 'Не удалось загрузить данные профиля');
+        });
+    }
+
+    // Функция загрузки статистики профиля
+    function loadProfileStats() {
+        // Загружаем количество объектов
+        fetch("http://localhost:8080/real-estate-objects", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(objects => {
+            document.getElementById('objects-count').textContent = objects.length;
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки объектов:', error);
+        });
+
+        // Загружаем количество задач
+        fetch("http://localhost:8080/tasks", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(tasks => {
+            document.getElementById('tasks-count').textContent = tasks.length;
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки задач:', error);
+        });
+    }
+
+    // Функция получения названия роли
+    function getRoleName(role) {
+        switch(role) {
+            case 'ROLE_ADMIN': return 'Администратор';
+            case 'ROLE_DIRECTOR': return 'Директор';
+            case 'ROLE_CHIEF': return 'Начальник';
+            case 'ROLE_RESPONSIBLE': return 'Ответственный';
+            default: return 'Пользователь';
+        }
+    }
+
+    // Функция редактирования профиля
+    function editProfile() {
+        const inputs = document.querySelectorAll('#profile-form input:not([disabled])');
+        inputs.forEach(input => {
+            input.disabled = false;
+        });
+    }
+
+    // Функция сохранения профиля
+    function saveProfile() {
+        const email = document.getElementById('profile-email').value;
+        const firstName = document.getElementById('profile-firstname').value;
+        const lastName = document.getElementById('profile-lastname').value;
+
+        const updatePromises = [];
+        const updateTypes = [];
+
+        if (email !== currentUser.email) {
+            updatePromises.push(
+                fetch(`http://localhost:8080/users/update/${currentUser.id}/email`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                })
+            );
+            updateTypes.push('email');
+        }
+
+        if (firstName !== currentUser.firstName) {
+            updatePromises.push(
+                fetch(`http://localhost:8080/users/update/${currentUser.id}/first-name`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ firstName })
+                })
+            );
+            updateTypes.push('имя');
+        }
+
+        if (lastName !== currentUser.lastName) {
+            updatePromises.push(
+                fetch(`http://localhost:8080/users/update/${currentUser.id}/last-name`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ lastName })
+                })
+            );
+            updateTypes.push('фамилию');
+        }
+
+        if (updatePromises.length === 0) {
+            showNotification('info', 'Нет изменений', 'Не было внесено никаких изменений');
+            return;
+        }
+
+        Promise.all(updatePromises)
+            .then(responses => {
+                const allSuccessful = responses.every(response => response.ok);
+                if (allSuccessful) {
+                    const updatedFields = updateTypes.join(', ');
+                    showNotification('success', 'Успешно', `Обновлены поля: ${updatedFields}`);
+                    loadUserData(); // Обновляем данные пользователя
+                } else {
+                    throw new Error('Ошибка при обновлении данных');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении профиля:', error);
+                showNotification('error', 'Ошибка', 'Не удалось обновить профиль');
+            });
+    }
+
+    // Функция показа модального окна смены пароля
+    function showChangePasswordModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'change-password-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Смена пароля</h3>
+                    <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+                </div>
+                <form id="change-password-form" onsubmit="changePassword(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="current-password">Текущий пароль</label>
+                        <input type="password" class="form-input" id="current-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="new-password">Новый пароль</label>
+                        <input type="password" class="form-input" id="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirm-password">Подтвердите пароль</label>
+                        <input type="password" class="form-input" id="confirm-password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Сменить пароль</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+    }
+
+    // Функция закрытия модального окна смены пароля
+    function closeChangePasswordModal() {
+        const modal = document.getElementById('change-password-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Функция смены пароля
+    function changePassword(event) {
+        event.preventDefault();
+        
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        if (newPassword !== confirmPassword) {
+            showNotification('error', 'Ошибка', 'Новые пароли не совпадают');
+            return;
+        }
+
+        fetch(`http://localhost:8080/users/update/${currentUser.id}/password`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка при смене пароля');
+            }
+            showNotification('success', 'Успешно', 'Пароль успешно изменен');
+            closeChangePasswordModal();
+        })
+        .catch(error => {
+            console.error('Ошибка при смене пароля:', error);
+            showNotification('error', 'Ошибка', 'Не удалось изменить пароль');
+        });
     }
 </script>
 </body>
