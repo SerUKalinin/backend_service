@@ -1,6 +1,7 @@
 package com.example.auth_service.config.redis;
 
 import com.example.auth_service.exception.RedisConfigurationException;
+import com.example.auth_service.model.PasswordResetToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -17,6 +20,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  */
 @Slf4j
 @Configuration
+@EnableRedisRepositories(basePackages = "com.example.auth_service.repository.redis")
 public class RedisConfig {
 
     @Value("${spring.redis.data.host}")
@@ -81,5 +85,20 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(new StringRedisSerializer());
 
         return redisTemplate;
+    }
+
+    /**
+     * Создает и настраивает шаблон Redis для работы с объектами PasswordResetToken.
+     *
+     * @param connectionFactory Фабрика подключений к Redis.
+     * @return {@link RedisTemplate} для работы с PasswordResetToken.
+     */
+    @Bean
+    public RedisTemplate<String, PasswordResetToken> passwordResetTokenRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, PasswordResetToken> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(PasswordResetToken.class));
+        return template;
     }
 }

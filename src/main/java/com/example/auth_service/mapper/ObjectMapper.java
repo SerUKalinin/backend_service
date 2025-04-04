@@ -13,6 +13,14 @@ public class ObjectMapper {
         dto.setName(entity.getName());
         dto.setObjectType(entity.getObjectType());
         dto.setParentId(entity.getParent() != null ? entity.getParent().getId() : null);
+        dto.setCreatedAt(entity.getCreatedAt());
+        
+        if (entity.getCreatedBy() != null) {
+            dto.setCreatedById(entity.getCreatedBy().getId());
+            dto.setCreatedByFirstName(entity.getCreatedBy().getFirstName());
+            dto.setCreatedByLastName(entity.getCreatedBy().getLastName());
+        }
+        
         return dto;
     }
 

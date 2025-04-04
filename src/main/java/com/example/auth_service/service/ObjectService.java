@@ -5,10 +5,14 @@ import com.example.auth_service.exception.ObjectNotFoundException;
 import com.example.auth_service.mapper.ObjectMapper;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.ObjectType;
+import com.example.auth_service.model.User;
 import com.example.auth_service.repository.ObjectRepository;
+import com.example.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -26,6 +30,7 @@ public class ObjectService {
 
     private final ObjectRepository objectRepository;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
     public ObjectResponseDto createObject(ObjectResponseDto objectDto) {
         Assert.notNull(objectDto, "Объект не должен быть null");
@@ -43,10 +48,19 @@ public class ObjectService {
             parentEntity.ifPresent(entity::setParent);  // Устанавливаем родителя, если он найден
         }
 
-        ObjectEntity savedEntity = objectRepository.save(entity);
+        // Устанавливаем создателя объекта
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Optional<User> currentUser = userRepository.findByUsername(username);
+            currentUser.ifPresent(entity::setCreatedBy);
+        }
 
-        log.info("Объект сохранен: {}", savedEntity);
-        // Преобразуем сохраненную сущность обратно в DTO и возвращаем
+        // Сохраняем объект в базу данных
+        ObjectEntity savedEntity = objectRepository.save(entity);
+        log.info("Объект успешно создан с ID: {}", savedEntity.getId());
+
+        // Преобразуем сущность обратно в DTO и возвращаем
         return objectMapper.toDto(savedEntity);
     }
 
@@ -165,5 +179,27 @@ public class ObjectService {
 
         objectRepository.delete(object);
         log.info("Объект с ID {} успешно удален", id);
+    }
+
+    /**
+     * Получить все объекты, созданные текущим пользователем.
+     *
+     * @return список объектов, созданных текущим пользователем
+     */
+    public List<ObjectResponseDto> getCurrentUserObjects() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Optional<User> currentUser = userRepository.findByUsername(username);
+            
+            if (currentUser.isPresent()) {
+                log.info("Получение объектов, созданных пользователем: {}", currentUser.get().getId());
+                List<ObjectEntity> entities = objectRepository.findByCreatedById(currentUser.get().getId());
+                return entities.stream()
+                        .map(objectMapper::toDto)
+                        .collect(Collectors.toList());
+            }
+        }
+        return List.of();
     }
 }

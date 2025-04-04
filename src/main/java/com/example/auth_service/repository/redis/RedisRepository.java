@@ -44,4 +44,20 @@ public interface RedisRepository {
      * @throws IllegalArgumentException Если ключ пустой.
      */
     String getValue(String key);
+
+    /**
+     * Получает время истечения сессии.
+     *
+     * @param username Имя пользователя.
+     * @return Время истечения сессии или null, если сессия не найдена.
+     */
+    Date getSessionExpiry(String username);
+
+    /**
+     * Обновляет время жизни сессии.
+     *
+     * @param username Имя пользователя.
+     * @param duration Новая длительность сессии.
+     */
+    void refreshSession(String username, java.time.Duration duration);
 }

@@ -46,6 +46,9 @@ public class Role {
      */
     public enum RoleType {
         ROLE_USER,  // Роль пользователя с ограниченными правами
-        ROLE_ADMIN  // Роль администратора с расширенными правами
+        ROLE_ADMIN,
+        ROLE_DIRECTOR,
+        ROLE_CHIEF,
+        ROLE_RESPONSIBLE// Роль администратора с расширенными правами
     }
 }

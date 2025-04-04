@@ -70,6 +70,13 @@ public class ObjectEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    /**
+     * Пользователь, создавший объект.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
     // Новый конструктор для создания объекта с родительским объектом по ID
     public ObjectEntity(Long id) {
         this.id = id;

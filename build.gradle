@@ -27,6 +27,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-mail") // Email отправка
 	implementation("org.modelmapper:modelmapper:3.1.0")
 
+	// Jackson for Redis
+	implementation("com.fasterxml.jackson.core:jackson-databind")
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
 	// JWT
 	implementation("com.auth0:java-jwt:4.4.0")
