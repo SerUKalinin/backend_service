@@ -1,16 +1,24 @@
 package com.example.auth_service.service;
 
+import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.exception.ObjectNotFoundException;
+import com.example.auth_service.mapper.ObjectMapper;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.ObjectType;
+import com.example.auth_service.model.User;
 import com.example.auth_service.repository.ObjectRepository;
+import com.example.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Сервис для управления объектами недвижимости.
@@ -21,77 +29,112 @@ import java.util.Optional;
 public class ObjectService {
 
     private final ObjectRepository objectRepository;
+    private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
-    /**
-     * Создать новый объект.
-     *
-     * @param object объект для создания
-     * @return созданный объект
-     * @throws IllegalArgumentException если объект null или некорректен
-     */
-    public ObjectEntity createObject(ObjectEntity object) {
-        Assert.notNull(object, "Объект не должен быть null");
-        Assert.hasText(object.getName(), "Имя объекта не должно быть пустым");
-        Assert.notNull(object.getObjectType(), "Тип объекта не должен быть null");
+    public ObjectResponseDto createObject(ObjectResponseDto objectDto) {
+        Assert.notNull(objectDto, "Объект не должен быть null");
+        Assert.hasText(objectDto.getName(), "Имя объекта не должно быть пустым");
+        Assert.notNull(objectDto.getObjectType(), "Тип объекта не должен быть null");
 
-        log.info("Создание объекта: {}", object);
-        return objectRepository.save(object);
+        log.info("Создание объекта: {}", objectDto);
+
+        // Преобразуем DTO в сущность
+        ObjectEntity entity = objectMapper.toEntity(objectDto);
+
+        // Если родительский объект задан (parentId != null), то связываем с родителем
+        if (objectDto.getParentId() != null) {
+            Optional<ObjectEntity> parentEntity = objectRepository.findById(objectDto.getParentId());
+            parentEntity.ifPresent(entity::setParent);  // Устанавливаем родителя, если он найден
+        }
+
+        // Устанавливаем создателя объекта
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Optional<User> currentUser = userRepository.findByUsername(username);
+            currentUser.ifPresent(entity::setCreatedBy);
+        }
+
+        // Сохраняем объект в базу данных
+        ObjectEntity savedEntity = objectRepository.save(entity);
+        log.info("Объект успешно создан с ID: {}", savedEntity.getId());
+
+        // Преобразуем сущность обратно в DTO и возвращаем
+        return objectMapper.toDto(savedEntity);
     }
 
+
     /**
-     * Получить все объекты.
+     * Получить все объекты недвижимости.
      *
-     * @return список объектов
+     * @return список всех объектов недвижимости
      */
-    public List<ObjectEntity> getAllObjects() {
+    public List<ObjectResponseDto> getAllObjects() {
         log.info("Получение всех объектов");
-        return objectRepository.findAll();
+        List<ObjectEntity> entities = objectRepository.findAll();
+        // Преобразуем список сущностей в список DTO
+        return entities.stream()
+                .map(objectMapper::toDto)  // Преобразуем каждую сущность в DTO
+                .collect(Collectors.toList());
     }
 
     /**
-     * Получить объект по ID.
+     * Получить объект недвижимости по его ID и вернуть ResponseEntity.
      *
      * @param id идентификатор объекта
-     * @return объект, если найден
-     * @throws ObjectNotFoundException если объект не найден
+     * @return объект недвижимости в ResponseEntity
      */
-    public Optional<ObjectEntity> getObjectById(Long id) {
-        return objectRepository.findById(id);
+    public ResponseEntity<ObjectResponseDto> getObjectById(Long id) {
+        log.info("Запрос на получение объекта с ID: {}", id);
+        return objectRepository.findById(id)
+                .map(object -> {
+                    ObjectResponseDto objectDto = objectMapper.toDto(object); // Преобразуем сущность в DTO
+                    log.info("Объект найден: {}", objectDto);
+                    return ResponseEntity.ok(objectDto);
+                })
+                .orElseGet(() -> {
+                    log.warn("Объект с ID {} не найден", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
-
     /**
-     * Получить объекты по типу.
+     * Получить объекты по типу и вернуть в виде DTO.
      *
      * @param type тип объекта
-     * @return список объектов данного типа
+     * @return список объектов данного типа в формате DTO
      */
-    public List<ObjectEntity> getObjectsByType(ObjectType type) {
+    public List<ObjectResponseDto> getObjectsByType(ObjectType type) {
         log.info("Запрос на получение объектов типа: {}", type);
-        return objectRepository.findByObjectType(type);
+        List<ObjectEntity> entities = objectRepository.findByObjectType(type);
+        return entities.stream()
+                .map(objectMapper::toDto)  // Преобразуем сущности в DTO
+                .collect(Collectors.toList());
     }
 
     /**
-     * Получить дочерние объекты.
+     * Получить дочерние объекты по ID родительского объекта и вернуть в виде DTO.
      *
      * @param parentId ID родительского объекта
-     * @return список дочерних объектов
+     * @return список дочерних объектов в формате DTO
      */
-    public List<ObjectEntity> getChildren(Long parentId) {
+    public List<ObjectResponseDto> getChildren(Long parentId) {
         log.info("Запрос на получение дочерних объектов для ID: {}", parentId);
-        return objectRepository.findByParentId(parentId);
+        List<ObjectEntity> entities = objectRepository.findByParentId(parentId);
+        return entities.stream()
+                .map(objectMapper::toDto)  // Преобразуем сущности в DTO
+                .collect(Collectors.toList());
     }
 
     /**
-     * Обновить объект.
+     * Обновить объект недвижимости.
      *
      * @param id            идентификатор объекта
-     * @param updatedObject обновленные данные объекта
-     * @return обновленный объект
-     * @throws ObjectNotFoundException если объект не найден
-     * @throws IllegalArgumentException если обновленные данные некорректны
+     * @param updatedObject новые данные объекта
+     * @return обновленный объект недвижимости
      */
-    public ObjectEntity updateObject(Long id, ObjectEntity updatedObject) {
+    public ObjectResponseDto updateObject(Long id, ObjectResponseDto updatedObject) {
         Assert.notNull(updatedObject, "Обновленный объект не должен быть null");
         Assert.hasText(updatedObject.getName(), "Имя объекта не должно быть пустым");
         Assert.notNull(updatedObject.getObjectType(), "Тип объекта не должен быть null");
@@ -102,10 +145,10 @@ public class ObjectService {
                 .map(existing -> {
                     existing.setName(updatedObject.getName());
                     existing.setObjectType(updatedObject.getObjectType());
-                    existing.setParent(updatedObject.getParent());
+                    existing.setParent(updatedObject.getParentId() != null ? new ObjectEntity(updatedObject.getParentId()) : null);
                     ObjectEntity savedObject = objectRepository.save(existing);
                     log.info("Объект обновлен: {}", savedObject);
-                    return savedObject;
+                    return objectMapper.toDto(savedObject);
                 })
                 .orElseThrow(() -> {
                     log.warn("Объект с ID {} не найден", id);
@@ -114,10 +157,9 @@ public class ObjectService {
     }
 
     /**
-     * Удалить объект.
+     * Удалить объект недвижимости.
      *
      * @param id идентификатор удаляемого объекта
-     * @throws ObjectNotFoundException если объект не найден
      */
     public void deleteObject(Long id) {
         log.info("Запрос на удаление объекта с ID: {}", id);
@@ -137,5 +179,27 @@ public class ObjectService {
 
         objectRepository.delete(object);
         log.info("Объект с ID {} успешно удален", id);
+    }
+
+    /**
+     * Получить все объекты, созданные текущим пользователем.
+     *
+     * @return список объектов, созданных текущим пользователем
+     */
+    public List<ObjectResponseDto> getCurrentUserObjects() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Optional<User> currentUser = userRepository.findByUsername(username);
+            
+            if (currentUser.isPresent()) {
+                log.info("Получение объектов, созданных пользователем: {}", currentUser.get().getId());
+                List<ObjectEntity> entities = objectRepository.findByCreatedById(currentUser.get().getId());
+                return entities.stream()
+                        .map(objectMapper::toDto)
+                        .collect(Collectors.toList());
+            }
+        }
+        return List.of();
     }
 }

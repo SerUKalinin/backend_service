@@ -13,6 +13,11 @@ import lombok.NoArgsConstructor;
 public class UserDto {
 
     /**
+     * Идентификатор пользователя.
+     */
+    private Long id;
+
+    /**
      * Имя пользователя.
      * Не может быть пустым или состоящим только из пробелов.
      */
@@ -27,5 +32,14 @@ public class UserDto {
     private String firstName;   // Добавлено поле для имени
     private String lastName;
 
+    /**
+     * Роль пользователя.
+     */
+    private String roles;
 
+    /**
+     * Статус активации пользователя.
+     * true - пользователь активирован, false - заблокирован.
+     */
+    private boolean active;
 }

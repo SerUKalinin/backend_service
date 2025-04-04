@@ -22,4 +22,9 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, Long> {
      * Найти все объекты по типу.
      */
     List<ObjectEntity> findByObjectType(ObjectType objectType);
+
+    /**
+     * Найти все объекты, созданные пользователем с указанным ID.
+     */
+    List<ObjectEntity> findByCreatedById(Long userId);
 }

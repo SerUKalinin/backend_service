@@ -1,25 +1,30 @@
 package com.example.auth_service.config.security.filter;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.auth_service.repository.redis.RedisRepository;
-import com.example.auth_service.service.security.CustomUserDetailsService;
+import com.example.auth_service.service.SessionService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
+import com.example.auth_service.service.security.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Date;
 
 /**
- * Фильтр аутентификации, основанный на JWT.
+ * Фильтр для аутентификации JWT.
  * Проверяет наличие и валидность JWT в заголовке Authorization.
  */
 @Slf4j
@@ -30,6 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
     private final RedisRepository redisRepository;
+    private final SessionService sessionService;
 
     /**
      * Проверяет и обрабатывает JWT-токен из запроса.
@@ -43,74 +49,67 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws IOException, ServletException {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
+                String username = decodedJWT.getSubject();
+                String roles = decodedJWT.getClaim("roles").asString();
+                log.info("Декодированный JWT - username: {}, roles: {}", username, roles);
 
-        if (authHeader == null || authHeader.isBlank()) {
-            log.debug("Заголовок Authorization отсутствует");
-            filterChain.doFilter(request, response);
-            return;
+                // Проверяем, не истек ли токен
+                if (decodedJWT.getExpiresAt().before(new Date())) {
+                    log.warn("Токен истек: {}", token);
+                    throw new JWTVerificationException("Токен истек");
+                }
+
+                // Проверяем, не находится ли токен в черном списке
+                if (redisRepository.isExists(token)) {
+                    log.warn("Токен находится в черном списке: {}", token);
+                    throw new JWTVerificationException("Токен находится в черном списке");
+                }
+
+                // Проверяем валидность сессии
+                if (!sessionService.isSessionValid(username, token)) {
+                    log.warn("Сессия недействительна для пользователя: {}", username);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
+                // Проверяем, не истекла ли сессия
+                if (sessionService.isSessionExpired(username)) {
+                    log.warn("Сессия истекла для пользователя: {}", username);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
+                // Загружаем пользователя из базы данных
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+
+                // Создаем объект аутентификации
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                // Устанавливаем аутентификацию в контекст безопасности
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                // Обновляем время жизни сессии
+                sessionService.refreshSession(username, Duration.ofHours(2));
+
+                log.info("Успешная аутентификация для пользователя: {}", username);
+            } catch (JWTVerificationException e) {
+                log.error("Ошибка верификации JWT: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            } catch (Exception e) {
+                log.error("Ошибка обработки JWT: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
         }
-
-        if (!authHeader.startsWith("Bearer ")) {
-            log.warn("Неверный формат заголовка Authorization");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Authorization header format");
-            return;
-        }
-
-        String jwt = authHeader.substring(7);
-
-        if (!jwtUtil.isValid(jwt)) {
-            log.warn("Получен недействительный JWT-токен");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT in Bearer Header");
-            return;
-        }
-
-        // Проверка на наличие токена в blacklist
-        if (redisRepository.isExists(jwt)) {
-            log.warn("Токен {} был отозван (blacklisted)", jwt);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Токен отозван");
-            return;
-        }
-
-        String username = jwtUtil.decodeToken(jwt).getSubject();
-        if (username == null || username.isBlank()) {
-            log.warn("JWT не содержит имя пользователя");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token does not contain a valid username");
-            return;
-        }
-
-        if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            log.debug("Аутентификация уже установлена для пользователя: {}", username);
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        UserDetails userDetails;
-        try {
-            // Используем loadUserByUsername, который теперь работает для логина и почты
-            userDetails = customUserDetailsService.loadUserByUsername(username);
-        } catch (Exception e) {
-            log.error("Ошибка загрузки данных пользователя: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Пользователь не найден или не удалось выполнить проверку подлинности");
-            return;
-        }
-
-        if (userDetails == null) {
-            log.warn("Пользователь {} не найден", username);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Пользователь не найден");
-            return;
-        }
-
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-        log.info("Пользователь {} успешно аутентифицирован", username);
 
         filterChain.doFilter(request, response);
     }

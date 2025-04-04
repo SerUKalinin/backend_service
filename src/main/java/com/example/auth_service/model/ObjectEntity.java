@@ -1,5 +1,6 @@
 package com.example.auth_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Универсальная сущность для всех объектов (проекты, здания, этажи, квартиры, задачи и т. д.).
+ * Универсальная сущность для всех объектов (здания, подъезды, этажи, лестничные пролеты, лифты, коридоры, квартиры, комнаты, задачи и т. д.).
  */
 @Data
 @Entity
@@ -47,6 +48,7 @@ public class ObjectEntity {
      */
     @Column(name = "object_type", nullable = false)
     @Enumerated(EnumType.STRING)
+    @JsonIgnore
     private ObjectType objectType;
 
     /**
@@ -67,4 +69,16 @@ public class ObjectEntity {
      */
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    /**
+     * Пользователь, создавший объект.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    // Новый конструктор для создания объекта с родительским объектом по ID
+    public ObjectEntity(Long id) {
+        this.id = id;
+    }
 }

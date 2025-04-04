@@ -1,10 +1,13 @@
 package com.example.auth_service.service.redis;
 
+import com.example.auth_service.repository.redis.RedisPasswordResetTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import com.example.auth_service.model.PasswordResetToken;
 
 /**
  * Сервис для работы с Redis.
@@ -16,6 +19,9 @@ import java.util.concurrent.TimeUnit;
 public class RedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final RedisPasswordResetTokenRepository passwordResetTokenRepository;
+
+    private static final String PASSWORD_RESET_TOKEN_PREFIX = "password_reset:";
 
     /**
      * Сохранение кода подтверждения в Redis.
@@ -64,5 +70,43 @@ public class RedisService {
         redisTemplate.delete(email);
 
         log.info("Код подтверждения для email: {} успешно удален", email);
+    }
+
+    /**
+     * Сохраняет токен для сброса пароля в Redis.
+     *
+     * @param email Email пользователя.
+     * @param token Токен для сброса пароля.
+     * @param duration Время жизни токена.
+     */
+    public void savePasswordResetToken(String email, String token, Duration duration) {
+        String key = PASSWORD_RESET_TOKEN_PREFIX + email;
+        PasswordResetToken resetToken = new PasswordResetToken(key, token);
+        passwordResetTokenRepository.save(resetToken);
+        redisTemplate.expire(key, duration);
+    }
+
+    /**
+     * Проверяет токен для сброса пароля.
+     *
+     * @param email Email пользователя.
+     * @param token Токен для проверки.
+     * @return true, если токен действителен, false в противном случае.
+     */
+    public boolean checkPasswordResetToken(String email, String token) {
+        String key = PASSWORD_RESET_TOKEN_PREFIX + email;
+        return passwordResetTokenRepository.findById(key)
+                .map(resetToken -> token.equals(resetToken.getToken()))
+                .orElse(false);
+    }
+
+    /**
+     * Удаляет токен для сброса пароля из Redis.
+     *
+     * @param email Email пользователя.
+     */
+    public void deletePasswordResetToken(String email) {
+        String key = PASSWORD_RESET_TOKEN_PREFIX + email;
+        passwordResetTokenRepository.deleteById(key);
     }
 }

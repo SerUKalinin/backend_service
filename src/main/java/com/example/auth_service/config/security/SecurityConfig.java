@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/real-estate-objects/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/real-estate-objects/my-objects").authenticated() // Получение объектов текущего пользователя
 
                         // Доступ к пользователям
                         .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN") // создание пользователя
@@ -69,7 +70,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated() // обновление имени
                         .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated() // обновление фамилии
                         .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated() // обновление почты
+                        .requestMatchers(HttpMethod.PUT, "/users/update/{userId}/role").hasRole("ADMIN") // обновление роли
                         .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN") // удаление пользователей
+
+                        // Доступ к задачам
+                        .requestMatchers(HttpMethod.POST, "/tasks").hasRole("ADMIN") // создание задачи
+                        .requestMatchers(HttpMethod.GET, "/tasks").hasAnyRole("USER", "ADMIN") // просмотр всех задач
+                        .requestMatchers(HttpMethod.GET, "/tasks/{id}").hasAnyRole("USER", "ADMIN") // просмотр конкретной задачи
+                        .requestMatchers(HttpMethod.PUT, "/tasks/{id}").hasRole("ADMIN") // обновление задачи
+                        .requestMatchers(HttpMethod.DELETE, "/tasks/{id}").hasRole("ADMIN") // удаление задачи
+
+                        // Получение задач по статусу
+                        .requestMatchers(HttpMethod.GET, "/tasks/status/{status}").hasAnyRole("USER", "ADMIN")
+                        // Получение задач по объекту недвижимости
+                        .requestMatchers(HttpMethod.GET, "/tasks/object/{objectId}").hasAnyRole("USER", "ADMIN")
+                        // Получение задач по статусу и объекту недвижимости
+
+                        .requestMatchers(HttpMethod.GET, "/tasks/status/{status}/object/{objectId}").hasAnyRole("USER", "ADMIN")
 
 
                         // Любые другие запросы требуют авторизации
