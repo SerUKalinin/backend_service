@@ -1186,6 +1186,43 @@
         .users-table .email-cell {
             width: 200px;
         }
+
+        /* Стили для сортировки таблицы */
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .sortable-header:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .sortable-header::after {
+            content: '';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid var(--gray);
+            opacity: 0.5;
+        }
+
+        .sortable-header.asc::after {
+            border-bottom: 5px solid var(--primary);
+            opacity: 1;
+        }
+
+        .sortable-header.desc::after {
+            border-top: 5px solid var(--primary);
+            border-bottom: none;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -2698,17 +2735,17 @@
                         <table class="users-table">
                             <thead>
                                 <tr>
-                                    <th class="id-cell">ID</th>
-                                    <th class="name-cell">Имя пользователя</th>
-                                    <th class="email-cell">Email</th>
-                                    <th class="name-cell">Имя</th>
-                                    <th class="name-cell">Фамилия</th>
-                                    <th class="role-cell">Роль</th>
-                                    <th class="status-cell">Статус</th>
+                                    <th class="id-cell sortable-header" onclick="sortTable('id')">ID</th>
+                                    <th class="name-cell sortable-header" onclick="sortTable('username')">Имя пользователя</th>
+                                    <th class="email-cell sortable-header" onclick="sortTable('email')">Email</th>
+                                    <th class="name-cell sortable-header" onclick="sortTable('firstName')">Имя</th>
+                                    <th class="name-cell sortable-header" onclick="sortTable('lastName')">Фамилия</th>
+                                    <th class="role-cell sortable-header" onclick="sortTable('roles')">Роль</th>
+                                    <th class="status-cell sortable-header" onclick="sortTable('active')">Статус</th>
                                     <th class="action-cell">Действия</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="users-table-body">
                                 ${users.length > 0 ? users.map(user => `
                                     <tr>
                                         <td class="id-cell">${user.id}</td>
@@ -2763,12 +2800,135 @@
                     </div>
                 </div>
             `;
+
+            // Сохраняем данные пользователей для сортировки
+            window.usersData = users;
+            // Инициализируем сортировку
+            initSorting();
         })
         .catch(error => {
             console.error('Ошибка загрузки пользователей:', error);
             const container = document.getElementById('users-content');
             container.innerHTML = '<div class="error">Ошибка загрузки пользователей</div>';
         });
+    }
+
+    // Добавляем функции для сортировки
+    let currentSort = {
+        column: null,
+        direction: 'asc'
+    };
+
+    function initSorting() {
+        // Устанавливаем начальную сортировку по ID
+        sortTable('id');
+    }
+
+    function sortTable(column) {
+        const tbody = document.getElementById('users-table-body');
+        const headers = document.querySelectorAll('.sortable-header');
+        
+        // Сбрасываем классы сортировки у всех заголовков
+        headers.forEach(header => {
+            header.classList.remove('asc', 'desc');
+        });
+        
+        // Определяем направление сортировки
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+        
+        // Добавляем класс сортировки к текущему заголовку
+        const currentHeader = document.querySelector(`.sortable-header[onclick*="${column}"]`);
+        currentHeader.classList.add(currentSort.direction);
+        
+        // Сортируем данные
+        const sortedUsers = [...window.usersData].sort((a, b) => {
+            let aValue = a[column];
+            let bValue = b[column];
+            
+            // Обработка специальных случаев
+            if (column === 'roles') {
+                aValue = getRolePriority(a.roles);
+                bValue = getRolePriority(b.roles);
+            } else if (column === 'active') {
+                aValue = a.active ? 1 : 0;
+                bValue = b.active ? 1 : 0;
+            }
+            
+            // Сравнение значений
+            if (aValue === null || aValue === undefined) aValue = '';
+            if (bValue === null || bValue === undefined) bValue = '';
+            
+            if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        // Обновляем таблицу
+        tbody.innerHTML = sortedUsers.map(user => `
+            <tr>
+                <td class="id-cell">${user.id}</td>
+                <td class="name-cell">${user.username}</td>
+                <td class="email-cell">${user.email || '-'}</td>
+                <td class="name-cell">${user.firstName || '-'}</td>
+                <td class="name-cell">${user.lastName || '-'}</td>
+                <td class="role-cell">
+                    ${user.roles ? (() => {
+                        let roleClass = 'status-new';
+                        let roleName = 'Пользователь';
+                        
+                        switch(user.roles) {
+                            case 'ROLE_ADMIN':
+                                roleClass = 'status-in-progress';
+                                roleName = 'Админ';
+                                break;
+                            case 'ROLE_DIRECTOR':
+                                roleClass = 'status-completed';
+                                roleName = 'Директор';
+                                break;
+                            case 'ROLE_CHIEF':
+                                roleClass = 'status-in-progress';
+                                roleName = 'Начальник';
+                                break;
+                            case 'ROLE_RESPONSIBLE':
+                                roleClass = 'status-new';
+                                roleName = 'Ответственный';
+                                break;
+                        }
+                        
+                        return `<span class="status-badge ${roleClass}">${roleName}</span>`;
+                    })() : '-'}
+                </td>
+                <td class="status-cell">
+                    <span class="status-badge ${user.active ? 'status-completed' : 'status-expired'}">
+                        ${user.active ? 'Активен' : 'Заблокирован'}
+                    </span>
+                </td>
+                <td class="action-cell">
+                    <div class="action-btn edit-btn" onclick="editUser(${user.id})" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn delete-btn" onclick="deleteUser(${user.id})" title="Удалить">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function getRolePriority(role) {
+        switch(role) {
+            case 'ROLE_ADMIN': return 1;
+            case 'ROLE_DIRECTOR': return 2;
+            case 'ROLE_CHIEF': return 3;
+            case 'ROLE_RESPONSIBLE': return 4;
+            case 'ROLE_USER': return 5;
+            default: return 6;
+        }
     }
 
     // Функция для удаления пользователя (заглушка)
