@@ -19,7 +19,13 @@ public class UserInfoService {
     public UserDto getUserInfo(String username) {
         log.info("Запрос информации пользователя: {}", username);
         return userRepository.findByUsername(username)
-                .map(user -> new UserDto(user.getUsername(),user.getEmail(), user.getFirstName(), user.getLastName()))
+                .map(user -> new UserDto(
+                    user.getUsername(),
+                    user.getEmail(), 
+                    user.getFirstName(), 
+                    user.getLastName(),
+                    user.getRoles()
+                ))
                 .orElseThrow(() -> {
                     log.error("Пользователь {} не найден", username);
                     return new UserNotFoundException("Пользователь не найден");
@@ -29,14 +35,26 @@ public class UserInfoService {
     public List<UserDto> getAllUserInfo() {
         log.info("Запрос информации о всех пользователях");
         return userRepository.findAll().stream()
-                .map(user -> new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName()))
+                .map(user -> new UserDto(
+                    user.getUsername(), 
+                    user.getEmail(), 
+                    user.getFirstName(), 
+                    user.getLastName(),
+                    user.getRoles()
+                ))
                 .toList();
     }
 
     public UserDto getUserById(Long id) {
         log.info("Запрос информации о пользователе с ID: {}", id);
         return userRepository.findById(id)
-                .map(user -> new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName()))
+                .map(user -> new UserDto(
+                    user.getUsername(), 
+                    user.getEmail(), 
+                    user.getFirstName(), 
+                    user.getLastName(),
+                    user.getRoles()
+                ))
                 .orElseThrow(() -> {
                     log.warn("Пользователь с ID {} не найден", id);
                     return new UserNotFoundException("Пользователь не найден");

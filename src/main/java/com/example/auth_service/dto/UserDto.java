@@ -1,8 +1,11 @@
 package com.example.auth_service.dto;
 
+import com.example.auth_service.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 /**
  * DTO для передачи данных пользователя.
@@ -27,5 +30,5 @@ public class UserDto {
     private String firstName;   // Добавлено поле для имени
     private String lastName;
 
-
+    private Set<Role> roles;
 }
