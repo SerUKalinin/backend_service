@@ -33,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins(allowedOrigin)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept")
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin")
                 .allowCredentials(true);
 
         log.info("CORS конфигурация успешно применена");

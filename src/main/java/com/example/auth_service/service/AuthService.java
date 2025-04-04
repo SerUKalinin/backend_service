@@ -16,6 +16,7 @@ import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.service.email.EmailService;
 import com.example.auth_service.service.redis.RedisService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -249,6 +250,74 @@ public class AuthService {
         emailService.sendConfirmationCode(email, code);
 
         log.info("Новый код подтверждения был успешно отправлен на email: {}", email);
+    }
+
+    /**
+     * Отправляет инструкции для сброса пароля на email пользователя.
+     *
+     * @param email Email пользователя.
+     * @throws MessagingException Если произошла ошибка при отправке письма.
+     * @throws UserNotFoundException Если пользователь с таким email не найден.
+     */
+    public void sendPasswordResetLink(String email) throws MessagingException {
+        log.info("Запрос на сброс пароля для email: {}", email);
+
+        // Проверка, существует ли пользователь с таким email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с таким email не найден"));
+
+        // Генерация токена для сброса пароля
+        String token = jwtUtil.generatePasswordResetToken(user.getUsername());
+
+        // Сохранение токена в Redis с временем жизни 1 час
+        redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
+
+        // Формирование ссылки для сброса пароля
+        String resetLink = "http://localhost:63342/auth_service/auth_frontend/reset-password.html?token=" + token;
+
+        // Отправка письма со ссылкой
+        emailService.sendPasswordResetEmail(email, resetLink);
+
+        log.info("Ссылка для сброса пароля отправлена на email: {}", email);
+    }
+
+    /**
+     * Сбрасывает пароль пользователя.
+     *
+     * @param token Токен для сброса пароля.
+     * @param newPassword Новый пароль.
+     * @throws AuthException Если токен недействителен или истек срок его действия.
+     */
+    public void resetPassword(String token, String newPassword) {
+        log.info("Запрос на сброс пароля с токеном");
+
+        try {
+            // Декодируем токен и получаем имя пользователя
+            DecodedJWT decodedJWT = jwtUtil.decodePasswordResetToken(token);
+            String username = decodedJWT.getSubject();
+
+            // Находим пользователя
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+            // Проверяем токен в Redis
+            if (!redisService.checkPasswordResetToken(user.getEmail(), token)) {
+                log.warn("Недействительный или истекший токен для сброса пароля");
+                throw new AuthException("Недействительный или истекший токен для сброса пароля");
+            }
+
+            // Обновляем пароль
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            // Удаляем использованный токен из Redis
+            redisService.deletePasswordResetToken(user.getEmail());
+
+            log.info("Пароль успешно сброшен для пользователя: {}", username);
+        } catch (Exception e) {
+            log.error("Ошибка при сбросе пароля: {}", e.getMessage());
+            throw new AuthException("Ошибка при сбросе пароля");
+        }
     }
 
 }

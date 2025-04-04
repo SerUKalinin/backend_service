@@ -37,6 +37,8 @@ public class JwtUtil {
 
     private final RedisJwtBlacklistRepositoryImpl redisRepository;
 
+    private static final long PASSWORD_RESET_TOKEN_EXPIRATION = 3600000; // 1 час
+
     /**
      * Генерирует JWT токен для указанного пользователя с привилегиями.
      *
@@ -148,6 +150,37 @@ public class JwtUtil {
         } catch (JWTVerificationException e) {
             log.error("Недопустимый токен: {}", e.getMessage());
             throw new IllegalArgumentException("Недопустимый токен: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Генерирует токен для сброса пароля.
+     *
+     * @param username Имя пользователя.
+     * @return Сгенерированный токен.
+     */
+    public String generatePasswordResetToken(String username) {
+        return JWT.create()
+                .withSubject(username)
+                .withIssuedAt(new Date(System.currentTimeMillis()))
+                .withExpiresAt(new Date(System.currentTimeMillis() + PASSWORD_RESET_TOKEN_EXPIRATION))
+                .sign(Algorithm.HMAC512(jwtSecret.getBytes()));
+    }
+
+    /**
+     * Декодирует токен для сброса пароля.
+     *
+     * @param token Токен для декодирования.
+     * @return Декодированный JWT.
+     * @throws IllegalArgumentException Если токен недействителен.
+     */
+    public DecodedJWT decodePasswordResetToken(String token) {
+        try {
+            return JWT.require(Algorithm.HMAC512(jwtSecret.getBytes()))
+                    .build()
+                    .verify(token);
+        } catch (JWTVerificationException e) {
+            throw new IllegalArgumentException("Недействительный токен для сброса пароля");
         }
     }
 }

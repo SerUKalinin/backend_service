@@ -4,6 +4,8 @@ import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.dto.EmailVerificationDto;
+import com.example.auth_service.dto.PasswordResetDto;
+import com.example.auth_service.dto.ForgotPasswordDto;
 import com.example.auth_service.service.AuthService;
 import com.example.auth_service.service.SessionService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
@@ -135,6 +137,30 @@ public class AuthController {
         }
         log.warn("Не удалось обновить токен");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    /**
+     * Отправляет ссылку для сброса пароля на email пользователя.
+     *
+     * @param forgotPasswordDto Данные для запроса сброса пароля.
+     */
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.OK)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordDto forgotPasswordDto) throws MessagingException {
+        log.info("Запрос на сброс пароля для email: {}", forgotPasswordDto.getEmail());
+        authService.sendPasswordResetLink(forgotPasswordDto.getEmail());
+    }
+
+    /**
+     * Сбрасывает пароль пользователя.
+     *
+     * @param passwordResetDto Данные для сброса пароля.
+     */
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.OK)
+    public void resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
+        log.info("Запрос на сброс пароля");
+        authService.resetPassword(passwordResetDto.getToken(), passwordResetDto.getNewPassword());
     }
 
 }
