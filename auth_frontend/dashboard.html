@@ -1041,6 +1041,100 @@
         .view-hierarchy-btn:hover {
             background: rgba(67, 97, 238, 0.2);
         }
+
+        /* Стили для уведомлений */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notification {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid var(--primary);
+        }
+
+        .notification.success {
+            border-left-color: var(--success);
+        }
+
+        .notification.error {
+            border-left-color: var(--warning);
+        }
+
+        .notification i {
+            font-size: 20px;
+        }
+
+        .notification.success i {
+            color: var(--success);
+        }
+
+        .notification.error i {
+            color: var(--warning);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .notification-close:hover {
+            color: var(--dark);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1424,6 +1518,9 @@
         </div>
     </div>
 </main>
+
+<!-- Добавляем контейнер для уведомлений перед закрывающим тегом body -->
+<div class="notification-container" id="notification-container"></div>
 
 <script>
     // Токен и данные пользователя
@@ -2680,10 +2777,9 @@
                 const roles = document.getElementById('edit-roles').value;
                 const active = document.getElementById('edit-active').value === 'true';
                 
-                // Создаем массив промисов для обновления каждого поля
                 const updatePromises = [];
+                const updateTypes = [];
                 
-                // Обновляем имя
                 if (firstName !== user.firstName) {
                     updatePromises.push(
                         fetch(`http://localhost:8080/users/update/${userId}/first-name`, {
@@ -2692,12 +2788,12 @@
                                 'Authorization': `Bearer ${jwtToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ firstName: firstName })
+                            body: JSON.stringify({ firstName })
                         })
                     );
+                    updateTypes.push('имя');
                 }
                 
-                // Обновляем фамилию
                 if (lastName !== user.lastName) {
                     updatePromises.push(
                         fetch(`http://localhost:8080/users/update/${userId}/last-name`, {
@@ -2706,12 +2802,12 @@
                                 'Authorization': `Bearer ${jwtToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ lastName: lastName })
+                            body: JSON.stringify({ lastName })
                         })
                     );
+                    updateTypes.push('фамилию');
                 }
                 
-                // Обновляем email
                 if (email !== user.email) {
                     updatePromises.push(
                         fetch(`http://localhost:8080/users/update/${userId}/email`, {
@@ -2720,12 +2816,12 @@
                                 'Authorization': `Bearer ${jwtToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ email: email })
+                            body: JSON.stringify({ email })
                         })
                     );
+                    updateTypes.push('email');
                 }
 
-                // Обновляем роль
                 if (roles !== user.roles) {
                     updatePromises.push(
                         fetch(`http://localhost:8080/users/update/${userId}/role`, {
@@ -2734,20 +2830,12 @@
                                 'Authorization': `Bearer ${jwtToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({
-                                id: userId,
-                                username: user.username,
-                                email: user.email,
-                                firstName: user.firstName,
-                                lastName: user.lastName,
-                                roles: roles,
-                                active: user.active
-                            })
+                            body: JSON.stringify({ role: roles })
                         })
                     );
+                    updateTypes.push('роль');
                 }
 
-                // Обновляем активность
                 if (active !== user.active) {
                     updatePromises.push(
                         fetch(`http://localhost:8080/users/update/${userId}/active`, {
@@ -2756,34 +2844,33 @@
                                 'Authorization': `Bearer ${jwtToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({
-                                id: userId,
-                                username: user.username,
-                                email: user.email,
-                                firstName: user.firstName,
-                                lastName: user.lastName,
-                                roles: user.roles,
-                                active: active
-                            })
+                            body: JSON.stringify({ active })
                         })
                     );
+                    updateTypes.push('статус активности');
                 }
 
-                // Выполняем все обновления
+                if (updatePromises.length === 0) {
+                    showNotification('error', 'Нет изменений', 'Не было внесено никаких изменений для сохранения');
+                    return;
+                }
+
                 Promise.all(updatePromises)
                     .then(responses => {
-                        // Проверяем, что все ответы успешны
-                        const allOk = responses.every(response => response.ok);
-                        if (!allOk) {
-                            throw new Error('Ошибка при обновлении данных пользователя');
+                        const allSuccessful = responses.every(response => response.ok);
+                        if (allSuccessful) {
+                            const updatedFields = updateTypes.join(', ');
+                            showNotification('success', 'Успешно', `Обновлены поля: ${updatedFields}`);
+                            document.getElementById('edit-user-modal').style.display = 'none';
+                            loadUsers();
+                        } else {
+                            throw new Error('Ошибка при обновлении данных');
                         }
-                        console.log('Данные пользователя успешно обновлены');
-                        closeEditUserModal();
-                        loadUsers(); // Обновляем список пользователей
                     })
                     .catch(error => {
-                        console.error('Ошибка при обновлении пользователя:', error);
-                        alert('Ошибка при обновлении пользователя: ' + error.message);
+                        console.error('Ошибка при обновлении данных:', error);
+                        const failedFields = updateTypes.join(', ');
+                        showNotification('error', 'Ошибка', `Не удалось обновить поля: ${failedFields}`);
                     });
             };
             
@@ -2799,6 +2886,34 @@
     function closeEditUserModal() {
         const modal = document.getElementById('edit-user-modal');
         modal.style.display = 'none';
+    }
+
+    // Функция для отображения уведомлений
+    function showNotification(type, title, message) {
+        const container = document.getElementById('notification-container');
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        notification.innerHTML = `
+            <i class="fas ${icon}"></i>
+            <div class="notification-content">
+                <div class="notification-title">${title}</div>
+                <div class="notification-message">${message}</div>
+            </div>
+            <button class="notification-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Автоматическое удаление уведомления через 5 секунд
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
     }
 </script>
 </body>
