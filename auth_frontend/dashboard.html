@@ -1343,6 +1343,143 @@
         .change-password-btn:hover {
             background: #e01e5a;
         }
+
+        /* Стили для блоков объектов и задач */
+        .profile-objects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .profile-object-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .profile-object-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .profile-object-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .profile-object-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .profile-object-type {
+            font-size: 0.9rem;
+            color: var(--gray);
+            background: #f8f9fa;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .profile-object-path {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        .profile-tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .profile-task-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .profile-task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-task-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .profile-task-status {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-in-progress {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .profile-task-object {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        .profile-task-deadline {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        .profile-structure {
+            margin-top: 1.5rem;
+        }
+
+        .profile-structure-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            background: #f8f9fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-structure-icon {
+            color: var(--primary);
+        }
+
+        .profile-structure-name {
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        .profile-structure-count {
+            margin-left: auto;
+            font-size: 0.9rem;
+            color: var(--gray);
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -3311,6 +3448,41 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <span>Мои объекты</span>
+                            <button class="btn btn-primary" onclick="loadObjects()">
+                                <i class="fas fa-external-link-alt"></i>
+                                Перейти к объектам
+                            </button>
+                        </div>
+                        <div class="profile-objects-grid" id="profile-objects-list">
+                            <!-- Объекты будут загружены через loadProfileObjects -->
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <span>Мои задачи</span>
+                            <button class="btn btn-primary" onclick="loadTasks()">
+                                <i class="fas fa-external-link-alt"></i>
+                                Перейти к задачам
+                            </button>
+                        </div>
+                        <div class="profile-tasks-list" id="profile-tasks-list">
+                            <!-- Задачи будут загружены через loadProfileTasks -->
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <span>Структура объектов</span>
+                        </div>
+                        <div class="profile-structure" id="profile-structure">
+                            <!-- Структура будет загружена через loadProfileStructure -->
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -3338,13 +3510,145 @@
             document.getElementById('profile-firstname').value = user.firstName || '';
             document.getElementById('profile-lastname').value = user.lastName || '';
 
-            // Загружаем статистику
+            // Загружаем статистику и дополнительные данные
             loadProfileStats();
+            loadProfileObjects();
+            loadProfileTasks();
+            loadProfileStructure();
         })
         .catch(error => {
             console.error('Ошибка загрузки профиля:', error);
             showNotification('error', 'Ошибка', 'Не удалось загрузить данные профиля');
         });
+    }
+
+    // Функция загрузки объектов пользователя
+    function loadProfileObjects() {
+        fetch("http://localhost:8080/real-estate-objects", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(objects => {
+            const container = document.getElementById('profile-objects-list');
+            if (objects.length === 0) {
+                container.innerHTML = '<div class="empty-state">У вас пока нет объектов</div>';
+                return;
+            }
+
+            // Ограничиваем количество отображаемых объектов
+            const recentObjects = objects.slice(0, 6);
+            container.innerHTML = recentObjects.map(object => `
+                <div class="profile-object-card">
+                    <div class="profile-object-header">
+                        <div class="profile-object-title">${object.name}</div>
+                        <div class="profile-object-type">${getObjectTypeName(object.objectType)}</div>
+                    </div>
+                    <div class="profile-object-path">
+                        ${object.parentId ? 'Часть объекта' : 'Основной объект'}
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки объектов:', error);
+            document.getElementById('profile-objects-list').innerHTML = 
+                '<div class="error">Ошибка загрузки объектов</div>';
+        });
+    }
+
+    // Функция загрузки задач пользователя
+    function loadProfileTasks() {
+        fetch("http://localhost:8080/tasks", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(tasks => {
+            const container = document.getElementById('profile-tasks-list');
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="empty-state">У вас пока нет задач</div>';
+                return;
+            }
+
+            // Ограничиваем количество отображаемых задач
+            const recentTasks = tasks.slice(0, 5);
+            container.innerHTML = recentTasks.map(task => `
+                <div class="profile-task-item">
+                    <div class="profile-task-header">
+                        <div class="profile-task-title">${task.name}</div>
+                        <div class="profile-task-status status-${task.status.toLowerCase()}">
+                            ${getTaskStatusName(task.status)}
+                        </div>
+                    </div>
+                    <div class="profile-task-object">
+                        Объект: ${task.objectName || 'Не указан'}
+                    </div>
+                    <div class="profile-task-deadline">
+                        Дедлайн: ${task.deadline ? new Date(task.deadline).toLocaleDateString() : 'Не указан'}
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки задач:', error);
+            document.getElementById('profile-tasks-list').innerHTML = 
+                '<div class="error">Ошибка загрузки задач</div>';
+        });
+    }
+
+    // Функция загрузки структуры объектов
+    function loadProfileStructure() {
+        fetch("http://localhost:8080/real-estate-objects", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(objects => {
+            const container = document.getElementById('profile-structure');
+            
+            // Группируем объекты по типам
+            const objectTypes = {};
+            objects.forEach(object => {
+                if (!objectTypes[object.objectType]) {
+                    objectTypes[object.objectType] = 0;
+                }
+                objectTypes[object.objectType]++;
+            });
+
+            // Сортируем типы по количеству объектов
+            const sortedTypes = Object.entries(objectTypes)
+                .sort((a, b) => b[1] - a[1]);
+
+            container.innerHTML = sortedTypes.map(([type, count]) => `
+                <div class="profile-structure-item">
+                    <i class="fas fa-building profile-structure-icon"></i>
+                    <div class="profile-structure-name">${getObjectTypeName(type)}</div>
+                    <div class="profile-structure-count">${count}</div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки структуры:', error);
+            document.getElementById('profile-structure').innerHTML = 
+                '<div class="error">Ошибка загрузки структуры объектов</div>';
+        });
+    }
+
+    // Функция получения названия статуса задачи
+    function getTaskStatusName(status) {
+        switch(status) {
+            case 'PENDING': return 'Ожидает';
+            case 'IN_PROGRESS': return 'В работе';
+            case 'COMPLETED': return 'Завершена';
+            default: return status;
+        }
     }
 
     // Функция загрузки статистики профиля
