@@ -1687,6 +1687,7 @@
                             <div class="table-cell">Название</div>
                             <div class="table-cell">Тип</div>
                             <div class="table-cell">Родительский объект</div>
+                            <div class="table-cell">Создатель</div>
                             <div class="table-cell">Дата создания</div>
                             <div class="table-cell">Действия</div>
                         </div>
@@ -1707,6 +1708,12 @@
                                             '-'
                                         }
                                     </div>
+                                    <div class="table-cell">
+                                        ${object.createdByFirstName && object.createdByLastName ? 
+                                            `${object.createdByFirstName} ${object.createdByLastName}` : 
+                                            '-'
+                                        }
+                                    </div>
                                     <div class="table-cell">${new Date(object.createdAt).toLocaleString()}</div>
                                     <div class="table-cell">
                                         <div class="action-btn edit-btn" onclick="editObject(${object.id})" title="Редактировать">
@@ -1717,7 +1724,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            `).join('') : '<div class="table-row"><div class="table-cell" colspan="5">Нет объектов</div></div>'}
+                            `).join('') : '<div class="table-row"><div class="table-cell" colspan="6">Нет объектов</div></div>'}
                         </div>
                     </div>
                 </div>
@@ -1856,6 +1863,17 @@
                                         <div class="detail-item">
                                             <span class="detail-label">Дата создания:</span>
                                             <span>${new Date(object.createdAt).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-row">
+                                    <div class="table-cell">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Создатель:</span>
+                                            <span>${object.createdByFirstName && object.createdByLastName ? 
+                                                `${object.createdByFirstName} ${object.createdByLastName}` : 
+                                                '-'
+                                            }</span>
                                         </div>
                                     </div>
                                 </div>

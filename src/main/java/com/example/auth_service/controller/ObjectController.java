@@ -114,4 +114,16 @@ public class ObjectController {
         log.info("Объект с ID {} удален", id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Получить все объекты, созданные текущим пользователем.
+     *
+     * @return список объектов, созданных текущим пользователем
+     */
+    @GetMapping("/my-objects")
+    public ResponseEntity<List<ObjectResponseDto>> getCurrentUserObjects() {
+        log.info("Запрос на получение объектов текущего пользователя");
+        List<ObjectResponseDto> objects = objectService.getCurrentUserObjects();
+        return ResponseEntity.ok(objects);
+    }
 }

@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/real-estate-objects/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/real-estate-objects/my-objects").authenticated() // Получение объектов текущего пользователя
 
                         // Доступ к пользователям
                         .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN") // создание пользователя
