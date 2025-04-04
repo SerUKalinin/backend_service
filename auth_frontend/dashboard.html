@@ -1375,6 +1375,54 @@
             </div>
         </div>
     </div>
+
+    <!-- Модальное окно для редактирования пользователя -->
+    <div id="edit-user-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Редактирование пользователя</h3>
+                <button class="close-btn" onclick="closeEditUserModal()">&times;</button>
+            </div>
+            <form id="edit-user-form">
+                <div class="form-group">
+                    <label class="form-label" for="edit-username">Имя пользователя</label>
+                    <input type="text" class="form-input" id="edit-username" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-email">Email</label>
+                    <input type="email" class="form-input" id="edit-email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-firstname">Имя</label>
+                    <input type="text" class="form-input" id="edit-firstname">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-lastname">Фамилия</label>
+                    <input type="text" class="form-input" id="edit-lastname">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-roles">Роли</label>
+                    <select class="form-select" id="edit-roles" multiple>
+                        <option value="ROLE_USER">Пользователь</option>
+                        <option value="ROLE_ADMIN">Администратор</option>
+                        <option value="ROLE_DIRECTOR">Директор</option>
+                        <option value="ROLE_CHIEF">Начальник</option>
+                        <option value="ROLE_RESPONSIBLE">Ответственный</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-active">Статус</label>
+                    <select class="form-select" id="edit-active">
+                        <option value="true">Активен</option>
+                        <option value="false">Заблокирован</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </main>
 
 <script>
@@ -2569,12 +2617,6 @@
         });
     }
 
-    // Функция для редактирования пользователя (заглушка)
-    function editUser(userId) {
-        console.log('Редактирование пользователя:', userId);
-        // Здесь будет реализация редактирования пользователя
-    }
-
     // Функция для удаления пользователя (заглушка)
     function deleteUser(userId) {
         if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) {
@@ -2582,6 +2624,18 @@
         }
         console.log('Удаление пользователя:', userId);
         // Здесь будет реализация удаления пользователя
+    }
+
+    // Функция для открытия модального окна редактирования пользователя
+    function editUser(username) {
+        const modal = document.getElementById('edit-user-modal');
+        modal.style.display = 'block';
+    }
+
+    // Функция для закрытия модального окна редактирования пользователя
+    function closeEditUserModal() {
+        const modal = document.getElementById('edit-user-modal');
+        modal.style.display = 'none';
     }
 </script>
 </body>
