@@ -70,6 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated() // обновление имени
                         .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated() // обновление фамилии
                         .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated() // обновление почты
+                        .requestMatchers(HttpMethod.PUT, "/users/update/{userId}/role").hasRole("ADMIN") // обновление роли
                         .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN") // удаление пользователей
 
                         // Доступ к задачам

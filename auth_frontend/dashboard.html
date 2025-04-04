@@ -1401,8 +1401,8 @@
                     <input type="text" class="form-input" id="edit-lastname">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="edit-roles">Роли</label>
-                    <select class="form-select" id="edit-roles" multiple>
+                    <label class="form-label" for="edit-roles">Роль</label>
+                    <select class="form-select" id="edit-roles">
                         <option value="ROLE_USER">Пользователь</option>
                         <option value="ROLE_ADMIN">Администратор</option>
                         <option value="ROLE_DIRECTOR">Директор</option>
@@ -1483,7 +1483,7 @@
         document.getElementById('user-avatar').textContent = getInitials(userData.username || 'П');
 
         // Проверяем, является ли пользователь администратором
-        isAdmin = userData.roles && userData.roles.some(role => role.roleType === 'ROLE_ADMIN');
+        isAdmin = userData.roles === 'ROLE_ADMIN';
         document.getElementById('user-role').textContent = isAdmin ? 'Администратор' : 'Пользователь';
 
         // Показываем/скрываем административные разделы
@@ -2548,27 +2548,29 @@
                     </div>
                     <div class="table-body">
                         <div class="table-row header">
+                            <div class="table-cell">ID</div>
                             <div class="table-cell">Имя пользователя</div>
                             <div class="table-cell">Email</div>
                             <div class="table-cell">Имя</div>
                             <div class="table-cell">Фамилия</div>
-                            <div class="table-cell">Роли</div>
+                            <div class="table-cell">Роль</div>
                             <div class="table-cell">Статус</div>
                             <div class="table-cell">Действия</div>
                         </div>
                         <div id="users-list">
                             ${users.length > 0 ? users.map(user => `
                                 <div class="table-row">
+                                    <div class="table-cell">${user.id}</div>
                                     <div class="table-cell">${user.username}</div>
                                     <div class="table-cell">${user.email || '-'}</div>
                                     <div class="table-cell">${user.firstName || '-'}</div>
                                     <div class="table-cell">${user.lastName || '-'}</div>
                                     <div class="table-cell">
-                                        ${user.roles ? user.roles.map(role => {
+                                        ${user.roles ? (() => {
                                             let roleClass = 'status-new';
                                             let roleName = 'Пользователь';
                                             
-                                            switch(role.roleType) {
+                                            switch(user.roles) {
                                                 case 'ROLE_ADMIN':
                                                     roleClass = 'status-in-progress';
                                                     roleName = 'Админ';
@@ -2588,7 +2590,7 @@
                                             }
                                             
                                             return `<span class="status-badge ${roleClass}">${roleName}</span>`;
-                                        }).join(' ') : '-'}
+                                        })() : '-'}
                                     </div>
                                     <div class="table-cell">
                                         <span class="status-badge ${user.active ? 'status-completed' : 'status-expired'}">
@@ -2596,15 +2598,15 @@
                                         </span>
                                     </div>
                                     <div class="table-cell">
-                                        <div class="action-btn edit-btn" onclick="editUser('${user.username}')" title="Редактировать">
+                                        <div class="action-btn edit-btn" onclick="editUser(${user.id})" title="Редактировать">
                                             <i class="fas fa-edit"></i>
                                         </div>
-                                        <div class="action-btn delete-btn" onclick="deleteUser('${user.username}')" title="Удалить">
+                                        <div class="action-btn delete-btn" onclick="deleteUser(${user.id})" title="Удалить">
                                             <i class="fas fa-trash"></i>
                                         </div>
                                     </div>
                                 </div>
-                            `).join('') : '<div class="table-row"><div class="table-cell" colspan="7">Нет пользователей</div></div>'}
+                            `).join('') : '<div class="table-row"><div class="table-cell" colspan="8">Нет пользователей</div></div>'}
                         </div>
                     </div>
                 </div>
@@ -2622,14 +2624,175 @@
         if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) {
             return;
         }
-        console.log('Удаление пользователя:', userId);
-        // Здесь будет реализация удаления пользователя
+
+        fetch(`http://localhost:8080/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка удаления пользователя');
+            }
+            loadUsers(); // Обновляем список пользователей после удаления
+        })
+        .catch(error => {
+            console.error('Ошибка при удалении пользователя:', error);
+            alert('Ошибка при удалении пользователя: ' + error.message);
+        });
     }
 
     // Функция для открытия модального окна редактирования пользователя
-    function editUser(username) {
+    function editUser(userId) {
         const modal = document.getElementById('edit-user-modal');
-        modal.style.display = 'block';
+        
+        // Загружаем данные пользователя
+        fetch(`http://localhost:8080/users/info/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных пользователя');
+            }
+            return response.json();
+        })
+        .then(user => {
+            // Заполняем форму данными пользователя
+            document.getElementById('edit-username').value = user.username;
+            document.getElementById('edit-email').value = user.email || '';
+            document.getElementById('edit-firstname').value = user.firstName || '';
+            document.getElementById('edit-lastname').value = user.lastName || '';
+            document.getElementById('edit-roles').value = user.roles || 'ROLE_USER';
+            document.getElementById('edit-active').value = user.active ? 'true' : 'false';
+            
+            // Обработчик отправки формы
+            document.getElementById('edit-user-form').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const firstName = document.getElementById('edit-firstname').value;
+                const lastName = document.getElementById('edit-lastname').value;
+                const email = document.getElementById('edit-email').value;
+                const roles = document.getElementById('edit-roles').value;
+                const active = document.getElementById('edit-active').value === 'true';
+                
+                // Создаем массив промисов для обновления каждого поля
+                const updatePromises = [];
+                
+                // Обновляем имя
+                if (firstName !== user.firstName) {
+                    updatePromises.push(
+                        fetch(`http://localhost:8080/users/update/${userId}/first-name`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${jwtToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ firstName: firstName })
+                        })
+                    );
+                }
+                
+                // Обновляем фамилию
+                if (lastName !== user.lastName) {
+                    updatePromises.push(
+                        fetch(`http://localhost:8080/users/update/${userId}/last-name`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${jwtToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ lastName: lastName })
+                        })
+                    );
+                }
+                
+                // Обновляем email
+                if (email !== user.email) {
+                    updatePromises.push(
+                        fetch(`http://localhost:8080/users/update/${userId}/email`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${jwtToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ email: email })
+                        })
+                    );
+                }
+
+                // Обновляем роль
+                if (roles !== user.roles) {
+                    updatePromises.push(
+                        fetch(`http://localhost:8080/users/update/${userId}/role`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${jwtToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: userId,
+                                username: user.username,
+                                email: user.email,
+                                firstName: user.firstName,
+                                lastName: user.lastName,
+                                roles: roles,
+                                active: user.active
+                            })
+                        })
+                    );
+                }
+
+                // Обновляем активность
+                if (active !== user.active) {
+                    updatePromises.push(
+                        fetch(`http://localhost:8080/users/update/${userId}/active`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${jwtToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: userId,
+                                username: user.username,
+                                email: user.email,
+                                firstName: user.firstName,
+                                lastName: user.lastName,
+                                roles: user.roles,
+                                active: active
+                            })
+                        })
+                    );
+                }
+
+                // Выполняем все обновления
+                Promise.all(updatePromises)
+                    .then(responses => {
+                        // Проверяем, что все ответы успешны
+                        const allOk = responses.every(response => response.ok);
+                        if (!allOk) {
+                            throw new Error('Ошибка при обновлении данных пользователя');
+                        }
+                        console.log('Данные пользователя успешно обновлены');
+                        closeEditUserModal();
+                        loadUsers(); // Обновляем список пользователей
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при обновлении пользователя:', error);
+                        alert('Ошибка при обновлении пользователя: ' + error.message);
+                    });
+            };
+            
+            modal.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки данных пользователя:', error);
+            alert('Ошибка загрузки данных пользователя: ' + error.message);
+        });
     }
 
     // Функция для закрытия модального окна редактирования пользователя
