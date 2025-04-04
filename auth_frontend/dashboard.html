@@ -2476,6 +2476,113 @@
 
         modal.style.display = 'block';
     }
+
+    // Функция для загрузки списка пользователей
+    function loadUsers() {
+        fetch("http://localhost:8080/users/info/all", {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки пользователей');
+            }
+            return response.json();
+        })
+        .then(users => {
+            const container = document.getElementById('users-content');
+            container.innerHTML = `
+                <div class="data-table">
+                    <div class="table-header">
+                        <h3 class="table-title">Список пользователей</h3>
+                    </div>
+                    <div class="table-body">
+                        <div class="table-row header">
+                            <div class="table-cell">Имя пользователя</div>
+                            <div class="table-cell">Email</div>
+                            <div class="table-cell">Имя</div>
+                            <div class="table-cell">Фамилия</div>
+                            <div class="table-cell">Роли</div>
+                            <div class="table-cell">Статус</div>
+                            <div class="table-cell">Действия</div>
+                        </div>
+                        <div id="users-list">
+                            ${users.length > 0 ? users.map(user => `
+                                <div class="table-row">
+                                    <div class="table-cell">${user.username}</div>
+                                    <div class="table-cell">${user.email || '-'}</div>
+                                    <div class="table-cell">${user.firstName || '-'}</div>
+                                    <div class="table-cell">${user.lastName || '-'}</div>
+                                    <div class="table-cell">
+                                        ${user.roles ? user.roles.map(role => {
+                                            let roleClass = 'status-new';
+                                            let roleName = 'Пользователь';
+                                            
+                                            switch(role.roleType) {
+                                                case 'ROLE_ADMIN':
+                                                    roleClass = 'status-in-progress';
+                                                    roleName = 'Админ';
+                                                    break;
+                                                case 'ROLE_DIRECTOR':
+                                                    roleClass = 'status-completed';
+                                                    roleName = 'Директор';
+                                                    break;
+                                                case 'ROLE_CHIEF':
+                                                    roleClass = 'status-in-progress';
+                                                    roleName = 'Начальник';
+                                                    break;
+                                                case 'ROLE_RESPONSIBLE':
+                                                    roleClass = 'status-new';
+                                                    roleName = 'Ответственный';
+                                                    break;
+                                            }
+                                            
+                                            return `<span class="status-badge ${roleClass}">${roleName}</span>`;
+                                        }).join(' ') : '-'}
+                                    </div>
+                                    <div class="table-cell">
+                                        <span class="status-badge ${user.active ? 'status-completed' : 'status-expired'}">
+                                            ${user.active ? 'Активен' : 'Заблокирован'}
+                                        </span>
+                                    </div>
+                                    <div class="table-cell">
+                                        <div class="action-btn edit-btn" onclick="editUser('${user.username}')" title="Редактировать">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="action-btn delete-btn" onclick="deleteUser('${user.username}')" title="Удалить">
+                                            <i class="fas fa-trash"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') : '<div class="table-row"><div class="table-cell" colspan="7">Нет пользователей</div></div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки пользователей:', error);
+            const container = document.getElementById('users-content');
+            container.innerHTML = '<div class="error">Ошибка загрузки пользователей</div>';
+        });
+    }
+
+    // Функция для редактирования пользователя (заглушка)
+    function editUser(userId) {
+        console.log('Редактирование пользователя:', userId);
+        // Здесь будет реализация редактирования пользователя
+    }
+
+    // Функция для удаления пользователя (заглушка)
+    function deleteUser(userId) {
+        if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+            return;
+        }
+        console.log('Удаление пользователя:', userId);
+        // Здесь будет реализация удаления пользователя
+    }
 </script>
 </body>
 </html>

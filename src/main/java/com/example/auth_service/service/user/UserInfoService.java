@@ -24,7 +24,8 @@ public class UserInfoService {
                     user.getEmail(), 
                     user.getFirstName(), 
                     user.getLastName(),
-                    user.getRoles()
+                    user.getRoles(),
+                    user.isActive()
                 ))
                 .orElseThrow(() -> {
                     log.error("Пользователь {} не найден", username);
@@ -40,7 +41,8 @@ public class UserInfoService {
                     user.getEmail(), 
                     user.getFirstName(), 
                     user.getLastName(),
-                    user.getRoles()
+                    user.getRoles(),
+                    user.isActive()
                 ))
                 .toList();
     }
@@ -53,7 +55,8 @@ public class UserInfoService {
                     user.getEmail(), 
                     user.getFirstName(), 
                     user.getLastName(),
-                    user.getRoles()
+                    user.getRoles(),
+                    user.isActive()
                 ))
                 .orElseThrow(() -> {
                     log.warn("Пользователь с ID {} не найден", id);

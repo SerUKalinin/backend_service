@@ -31,4 +31,10 @@ public class UserDto {
     private String lastName;
 
     private Set<Role> roles;
+
+    /**
+     * Статус активации пользователя.
+     * true - пользователь активирован, false - заблокирован.
+     */
+    private boolean active;
 }

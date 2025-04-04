@@ -34,7 +34,7 @@ public class UserUpdateService {
         return userRepository.findByUsername(username)
                 .map(user -> {
                     user.setEmail(email);
-                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRoles());
+                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRoles(), user.isActive());
                 })
                 .orElseThrow(() -> {
                     log.error("Пользователь {} не найден для обновления почты", username);
@@ -55,7 +55,7 @@ public class UserUpdateService {
         return userRepository.findByUsername(username)
                 .map(user -> {
                     user.setFirstName(firstName);
-                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRoles());
+                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRoles(), user.isActive());
                 })
                 .orElseThrow(() -> {
                     log.error("Пользователь {} не найден для обновления имени", username);
@@ -76,7 +76,7 @@ public class UserUpdateService {
         return userRepository.findByUsername(username)
                 .map(user -> {
                     user.setLastName(lastName);
-                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRoles());
+                    return new UserDto(user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRoles(), user.isActive());
                 })
                 .orElseThrow(() -> {
                     log.error("Пользователь {} не найден для обновления фамилии", username);
