@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.annotation.RateLimit;
 import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
@@ -35,9 +36,11 @@ public class AuthController {
 
     /**
      * Регистрация нового пользователя.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param userSignupDto данные пользователя для регистрации.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/register-user")
     @ResponseStatus(HttpStatus.CREATED)
     public void register(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
@@ -47,9 +50,11 @@ public class AuthController {
 
     /**
      * Регистрация нового администратора.
+     * Ограничение: 1 запрос в час с одного IP
      *
      * @param userSignupDto данные администратора для регистрации.
      */
+    @RateLimit(value = 1, timeWindow = 3600)
     @PostMapping("/register-admin")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
@@ -59,10 +64,12 @@ public class AuthController {
 
     /**
      * Аутентификация пользователя.
+     * Ограничение: 5 запросов в минуту с одного IP
      *
      * @param userSigninDto данные для входа.
      * @return JWT-токен.
      */
+    @RateLimit(value = 5, timeWindow = 60)
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
@@ -78,7 +85,9 @@ public class AuthController {
 
     /**
      * Выход пользователя из системы.
+     * Ограничение: 10 запросов в минуту с одного IP
      */
+    @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@RequestHeader("Authorization") String authHeader) {
@@ -88,7 +97,9 @@ public class AuthController {
 
     /**
      * Подтверждение email.
+     * Ограничение: 3 запроса в минуту с одного IP
      */
+    @RateLimit(value = 3, timeWindow = 60)
     @PostMapping("/verify-email")
     @ResponseStatus(HttpStatus.OK)
     public void verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto) {
@@ -98,9 +109,11 @@ public class AuthController {
 
     /**
      * Повторная отправка кода подтверждения на email.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param email адрес электронной почты пользователя.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/resend-verification")
     @ResponseStatus(HttpStatus.OK)
     public void resendEmailVerification(@RequestParam String email) throws MessagingException {
@@ -110,10 +123,12 @@ public class AuthController {
 
     /**
      * Обновляет токен пользователя.
+     * Ограничение: 10 запросов в минуту с одного IP
      *
      * @param authHeader Заголовок Authorization с текущим токеном.
      * @return ResponseEntity с новым токеном или ошибкой.
      */
+    @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String authHeader) {
         log.info("Запрос на обновление токена");
@@ -141,9 +156,11 @@ public class AuthController {
 
     /**
      * Отправляет ссылку для сброса пароля на email пользователя.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param forgotPasswordDto Данные для запроса сброса пароля.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.OK)
     public void forgotPassword(@Valid @RequestBody ForgotPasswordDto forgotPasswordDto) throws MessagingException {
@@ -153,9 +170,11 @@ public class AuthController {
 
     /**
      * Сбрасывает пароль пользователя.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param passwordResetDto Данные для сброса пароля.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/reset-password")
     @ResponseStatus(HttpStatus.OK)
     public void resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
