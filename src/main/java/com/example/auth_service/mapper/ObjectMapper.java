@@ -29,6 +29,7 @@ public class ObjectMapper {
             dto.setResponsibleUserId(entity.getResponsibleUser().getId());
             dto.setResponsibleUserFirstName(entity.getResponsibleUser().getFirstName());
             dto.setResponsibleUserLastName(entity.getResponsibleUser().getLastName());
+            dto.setResponsibleUserRole(entity.getResponsibleUser().getRoles() != null ? entity.getResponsibleUser().getRoles().toString() : "ROLE_USER");
         }
 
         return dto;

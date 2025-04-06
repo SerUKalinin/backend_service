@@ -785,25 +785,23 @@
         }
 
         .children-section {
-            margin-top: 20px;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
         }
-        
-        .children-section h3 {
-            margin-bottom: 15px;
-            color: var(--dark);
+
+        .children-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
         }
-        
+
         .children-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 20px;
+            gap: 1rem;
+            margin-bottom: 20px;
         }
-        
+
         .child-card {
             background: white;
             border: 1px solid #eee;
@@ -861,19 +859,6 @@
 
         .object-children-main {
             flex-grow: 1;
-        }
-
-        .children-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 0 20px;
-        }
-
-        .children-header h3 {
-            margin: 0;
-            color: var(--dark);
         }
 
         .no-children {
@@ -1672,7 +1657,7 @@
                                         <div class="responsible-user-container">
                                             <span id="responsible-user-display">
                                                 ${object.responsibleUserFirstName && object.responsibleUserLastName ? 
-                                                    `${object.responsibleUserFirstName} ${object.responsibleUserLastName}` : 
+                                                    `${object.responsibleUserFirstName} ${object.responsibleUserLastName} <span class="status-badge ${getRoleClass(object.responsibleUserRole)}">${getRoleName(object.responsibleUserRole)}</span>` : 
                                                     'Не назначен'
                                                 }
                                             </span>
@@ -1701,28 +1686,87 @@
                 </div>
                 <div class="object-children-main">
                     <div class="children-header">
-                        <h3>Дочерние объекты</h3>
-                        <button class="add-btn" onclick="showAddChildObjectModal()">
-                            <i class="fas fa-plus"></i>
-                            Добавить дочерний объект
+
+                    </div>
+                    <div class="children-section">
+                        <div class="children-grid" id="children-list">
+                            <!-- Дочерние объекты будут загружены здесь -->
+                        </div>
+                    </div>
+                    <div class="data-table">
+                        <div class="table-header">
+                            <h3 class="table-title">Детали объекта</h3>
+                        </div>
+                        <div class="table-body">
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Название:</span>
+                                        <span>${object.name}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Тип:</span>
+                                        <span>${getObjectTypeName(object.objectType)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Дата создания:</span>
+                                        <span>${new Date(object.createdAt).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Создатель:</span>
+                                        <span>${object.createdByFirstName && object.createdByLastName ? 
+                                            `${object.createdByFirstName} ${object.createdByLastName}` : 
+                                            '-'
+                                        }</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Ответственный:</span>
+                                        <div class="responsible-user-container">
+                                            <span id="responsible-user-display">
+                                                ${responsibleUser ? 
+                                                    `${responsibleUser.firstName} ${responsibleUser.lastName} <span class="status-badge ${getRoleClass(responsibleUser.roles)}">${getRoleName(responsibleUser.roles)}</span>` : 
+                                                    'Не назначен'
+                                                }
+                                            </span>
+                                            <div class="responsible-user-actions">
+                                                <button class="btn btn-sm btn-primary" onclick="showAssignResponsibleModal(${object.id})">
+                                                    <i class="fas fa-user-plus"></i> Назначить
+                                                </button>
+                                                ${object.responsibleUserId ? `
+                                                    <button class="btn btn-sm btn-danger" onclick="removeResponsibleUser(${object.id})">
+                                                        <i class="fas fa-user-minus"></i> Удалить
+                                                    </button>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="back-button">
+                        <button class="btn btn-primary" onclick="loadObjects()">
+                            <i class="fas fa-arrow-left"></i>
+                            Вернуться к списку
                         </button>
                     </div>
-                    <div id="children-list" class="children-grid">
-                        <!-- Дочерние объекты будут загружены через loadChildren -->
-                    </div>
                 </div>
-            </div>
-            <div class="back-button">
-                ${object.parentId ? `
-                    <button class="btn btn-primary" onclick="showObjectDetails(${object.parentId})" style="margin-right: 10px;">
-                        <i class="fas fa-arrow-up"></i>
-                        Назад
-                    </button>
-                ` : ''}
-                <button class="btn btn-primary" onclick="loadObjects()">
-                    <i class="fas fa-arrow-left"></i>
-                    Вернуться к списку
-                </button>
             </div>
         </div>
     </div>
@@ -2106,7 +2150,7 @@
                         <div class="table-filters">
                             <select class="filter-select" id="object-type-filter" onchange="filterObjects()">
                                 <option value="">Все типы</option>
-                                <option value="BUILDING">Здание</option>
+                                <option value="BUILDING" selected>Здание</option>
                                 <option value="ENTRANCE">Подъезд</option>
                                 <option value="BASEMENT_FLOOR">Цокольный этаж</option>
                                 <option value="FLOOR">Этаж</option>
@@ -2169,10 +2213,11 @@
                     </div>
                 </div>
             `;
+            // Применяем фильтр по умолчанию
+            filterObjects();
         })
         .catch(error => {
-            console.error('Ошибка загрузки объектов:', error);
-            const container = document.getElementById('objects-content');
+            console.error('Error loading objects:', error);
             container.innerHTML = '<div class="error">Ошибка загрузки объектов</div>';
         });
     }
@@ -2238,10 +2283,26 @@
             currentParentId = object.parentId;
             console.log('Set currentParentId to:', currentParentId);
 
+            // Если есть ответственный пользователь, загружаем его полную информацию
+            let responsibleUserPromise = Promise.resolve(null);
+            if (object.responsibleUserId) {
+                responsibleUserPromise = fetch(`http://localhost:8080/users/info/${object.responsibleUserId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .catch(error => {
+                    console.error('Error loading responsible user:', error);
+                    return null;
+                });
+            }
+
             // Формируем хлебные крошки
-            let breadcrumbsHtml = '';
+            let breadcrumbsPromise = Promise.resolve('');
             if (object.parentId) {
-                fetch(`http://localhost:8080/real-estate-objects/${object.parentId}`, {
+                breadcrumbsPromise = fetch(`http://localhost:8080/real-estate-objects/${object.parentId}`, {
                     headers: {
                         'Authorization': `Bearer ${jwtToken}`,
                         'Content-Type': 'application/json'
@@ -2249,7 +2310,7 @@
                 })
                 .then(response => response.json())
                 .then(parentObject => {
-                    breadcrumbsHtml = `
+                    return `
                         <div class="breadcrumbs">
                             <a href="#" onclick="showObjectDetails(${parentObject.id})" class="object-name-link">
                                 ${parentObject.name}
@@ -2258,25 +2319,24 @@
                             <span class="current-object">${object.name}</span>
                         </div>
                     `;
-                    updateContent();
                 });
-            } else {
-                updateContent();
             }
 
-            function updateContent() {
-                // Обновляем содержимое секции
-                const container = document.getElementById('objects-content');
-                container.innerHTML = `
-                    <div class="children-section">
-                        <div class="children-header">
-                            ${breadcrumbsHtml}
+            // Ждем загрузки всех данных
+            return Promise.all([responsibleUserPromise, breadcrumbsPromise])
+                .then(([responsibleUser, breadcrumbsHtml]) => {
+                    // Обновляем содержимое
+                    const container = document.getElementById('objects-content');
+                    container.innerHTML = `
+                        ${breadcrumbsHtml}
+                        <div class="children-section">
+                            <div class="children-header">
+
+                            </div>
+                            <div class="children-grid" id="children-list">
+                                <!-- Дочерние объекты будут загружены здесь -->
+                            </div>
                         </div>
-                        <div id="children-list" class="children-grid">
-                            <!-- Дочерние объекты будут загружены через loadChildren -->
-                        </div>
-                    </div>
-                    <div class="object-details">
                         <div class="data-table">
                             <div class="table-header">
                                 <h3 class="table-title">Детали объекта</h3>
@@ -2323,8 +2383,8 @@
                                             <span class="detail-label">Ответственный:</span>
                                             <div class="responsible-user-container">
                                                 <span id="responsible-user-display">
-                                                    ${object.responsibleUserFirstName && object.responsibleUserLastName ? 
-                                                        `${object.responsibleUserFirstName} ${object.responsibleUserLastName}` : 
+                                                    ${responsibleUser ? 
+                                                        `${responsibleUser.firstName} ${responsibleUser.lastName} <span class="status-badge ${getRoleClass(responsibleUser.roles)}">${getRoleName(responsibleUser.roles)}</span>` : 
                                                         'Не назначен'
                                                     }
                                                 </span>
@@ -2344,22 +2404,21 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="back-button">
-                        <button class="btn btn-primary" onclick="loadObjects()">
-                            <i class="fas fa-arrow-left"></i>
-                            Вернуться к списку
-                        </button>
-                    </div>
-                `;
-                
-                // Сохраняем ID текущего объекта
-                currentParentId = objectId;
-                console.log('Set currentParentId to:', currentParentId);
-                
-                // Загружаем дочерние объекты
-                loadChildren(objectId);
-            }
+                        <div class="back-button">
+                            <button class="btn btn-primary" onclick="loadObjects()">
+                                <i class="fas fa-arrow-left"></i>
+                                Вернуться к списку
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Сохраняем ID текущего объекта
+                    currentParentId = objectId;
+                    console.log('Set currentParentId to:', currentParentId);
+                    
+                    // Загружаем дочерние объекты
+                    loadChildren(objectId);
+                });
         })
         .catch(error => {
             console.error('Ошибка загрузки деталей объекта:', error);
@@ -3509,11 +3568,18 @@
     // Функция получения названия роли
     function getRoleName(role) {
         switch(role) {
-            case 'ROLE_ADMIN': return 'Администратор';
-            case 'ROLE_DIRECTOR': return 'Директор';
-            case 'ROLE_CHIEF': return 'Начальник';
-            case 'ROLE_RESPONSIBLE': return 'Ответственный';
-            default: return 'Пользователь';
+            case 'ROLE_ADMIN':
+                return 'Администратор';
+            case 'ROLE_DIRECTOR':
+                return 'Директор';
+            case 'ROLE_CHIEF':
+                return 'Начальник';
+            case 'ROLE_RESPONSIBLE':
+                return 'Ответственный';
+            case 'ROLE_USER':
+                return 'Пользователь';
+            default:
+                return 'Пользователь';
         }
     }
 
@@ -3680,13 +3746,10 @@
     // Функция для показа модального окна назначения ответственного
     function showAssignResponsibleModal(objectId) {
         const modal = document.getElementById('assign-responsible-modal');
-        modal.dataset.objectId = objectId;
+        modal.style.display = 'block';
         
         // Загружаем список пользователей
-        const select = document.getElementById('responsible-user-select');
-        select.innerHTML = '<option value="">Загрузка...</option>';
-        
-        fetch('http://localhost:8080/users/info/all', {
+        fetch("http://localhost:8080/users/info/all", {
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
                 'Content-Type': 'application/json'
@@ -3694,20 +3757,26 @@
         })
         .then(response => response.json())
         .then(users => {
-            select.innerHTML = '<option value="">Выберите пользователя</option>';
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = `${user.firstName} ${user.lastName} (${user.email})`;
-                select.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('Ошибка загрузки пользователей:', error);
-            select.innerHTML = '<option value="">Ошибка загрузки</option>';
+            const select = document.getElementById('responsible-user-select');
+            select.innerHTML = '<option value="">Выберите пользователя</option>' +
+                users.map(user => `
+                    <option value="${user.id}">
+                        ${user.firstName} ${user.lastName} (${getRoleName(user.roles)})
+                    </option>
+                `).join('');
         });
-        
-        modal.style.display = 'block';
+
+        // Обновляем обработчик формы
+        const form = document.getElementById('assign-responsible-form');
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('responsible-user-select').value;
+            if (!userId) {
+                alert('Пожалуйста, выберите пользователя');
+                return;
+            }
+            assignResponsibleUser(objectId);
+        };
     }
 
     // Функция для закрытия модального окна назначения ответственного
@@ -3716,22 +3785,16 @@
     }
 
     // Функция для назначения ответственного пользователя
-    function assignResponsibleUser() {
-        const modal = document.getElementById('assign-responsible-modal');
-        const objectId = modal.dataset.objectId;
+    function assignResponsibleUser(objectId) {
         const userId = document.getElementById('responsible-user-select').value;
         
-        if (!userId) {
-            alert('Пожалуйста, выберите пользователя');
-            return;
-        }
-        
-        fetch(`http://localhost:8080/real-estate-objects/${objectId}/assign-responsible/${userId}`, {
+        fetch(`http://localhost:8080/real-estate-objects/${objectId}/assign-responsible`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({ userId })
         })
         .then(response => {
             if (!response.ok) {
@@ -3743,7 +3806,21 @@
         })
         .then(updatedObject => {
             closeAssignResponsibleModal();
-            showObjectDetails(objectId); // Обновляем детали объекта
+            // Загружаем полную информацию о пользователе
+            return fetch(`http://localhost:8080/users/info/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(user => {
+                // Обновляем отображение ответственного пользователя
+                const responsibleUserDisplay = document.getElementById('responsible-user-display');
+                responsibleUserDisplay.innerHTML = `
+                    ${user.firstName} ${user.lastName} <span class="status-badge ${getRoleClass(user.roles)}">${getRoleName(user.roles)}</span>
+                `;
+            });
         })
         .catch(error => {
             console.error('Ошибка при назначении ответственного:', error);
@@ -3779,6 +3856,23 @@
             console.error('Ошибка при удалении ответственного:', error);
             alert('Ошибка при удалении ответственного: ' + error.message);
         });
+    }
+
+    function getRoleClass(role) {
+        switch(role) {
+            case 'ROLE_ADMIN':
+                return 'status-in-progress';
+            case 'ROLE_DIRECTOR':
+                return 'status-completed';
+            case 'ROLE_CHIEF':
+                return 'status-in-progress';
+            case 'ROLE_RESPONSIBLE':
+                return 'status-new';
+            case 'ROLE_USER':
+                return 'status-new';
+            default:
+                return 'status-new';
+        }
     }
 </script>
 </body>

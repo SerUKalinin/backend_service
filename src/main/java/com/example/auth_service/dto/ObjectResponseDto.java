@@ -24,4 +24,5 @@ public class ObjectResponseDto {
     private Long responsibleUserId;
     private String responsibleUserFirstName;
     private String responsibleUserLastName;
+    private String responsibleUserRole;
 }
