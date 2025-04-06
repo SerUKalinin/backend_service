@@ -376,6 +376,27 @@
             align-items: center;
             padding: 1rem 1.5rem;
             border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .table-header .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .table-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .table-body {
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+            max-height: 1000px;
+        }
+
+        .table-body.collapsed {
+            max-height: 0;
+            padding: 0;
+            overflow: hidden;
         }
 
         .table-title {
@@ -1484,8 +1505,9 @@
             </div>
 
             <div class="data-table">
-                <div class="table-header">
+                <div class="table-header" data-toggle="details">
                     <h3 class="table-title">Последние задачи</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="table-body">
                     <div class="table-row header">
@@ -1611,8 +1633,9 @@
             <div class="object-details-container">
                 <div class="object-details-sidebar">
                     <div class="data-table">
-                        <div class="table-header">
+                        <div class="table-header" data-toggle="details">
                             <h3 class="table-title">Детали объекта</h3>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
                         </div>
                         <div class="table-body">
                             <div class="table-row">
@@ -1662,11 +1685,11 @@
                                                 }
                                             </span>
                                             <div class="responsible-user-actions">
-                                                <button class="btn btn-sm btn-primary" onclick="showAssignResponsibleModal(${object.id})">
+                                                <button class="btn btn-sm btn-primary" data-action="assign" data-object-id="${object.id}">
                                                     <i class="fas fa-user-plus"></i> Назначить
                                                 </button>
                                                 ${object.responsibleUserId ? `
-                                                    <button class="btn btn-sm btn-danger" onclick="removeResponsibleUser(${object.id})">
+                                                    <button class="btn btn-sm btn-danger" data-action="remove" data-object-id="${object.id}">
                                                         <i class="fas fa-user-minus"></i> Удалить
                                                     </button>
                                                 ` : ''}
@@ -1694,8 +1717,9 @@
                         </div>
                     </div>
                     <div class="data-table">
-                        <div class="table-header">
+                        <div class="table-header" data-toggle="details">
                             <h3 class="table-title">Детали объекта</h3>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
                         </div>
                         <div class="table-body">
                             <div class="table-row">
@@ -1745,11 +1769,11 @@
                                                 }
                                             </span>
                                             <div class="responsible-user-actions">
-                                                <button class="btn btn-sm btn-primary" onclick="showAssignResponsibleModal(${object.id})">
+                                                <button class="btn btn-sm btn-primary" data-action="assign" data-object-id="${object.id}">
                                                     <i class="fas fa-user-plus"></i> Назначить
                                                 </button>
                                                 ${object.responsibleUserId ? `
-                                                    <button class="btn btn-sm btn-danger" onclick="removeResponsibleUser(${object.id})">
+                                                    <button class="btn btn-sm btn-danger" data-action="remove" data-object-id="${object.id}">
                                                         <i class="fas fa-user-minus"></i> Удалить
                                                     </button>
                                                 ` : ''}
@@ -1887,6 +1911,31 @@
 
         // Запускаем автоматическое обновление
         startDashboardAutoRefresh();
+
+        // Обработчики для аккордеона
+        document.addEventListener('click', function(e) {
+            const header = e.target.closest('[data-toggle="details"]');
+            if (!header) return;
+
+            const body = header.nextElementSibling;
+            header.classList.toggle('collapsed');
+            body.classList.toggle('collapsed');
+        });
+
+        // Обработчики для кнопок ответственного
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('[data-action]');
+            if (!button) return;
+
+            const action = button.dataset.action;
+            const objectId = button.dataset.objectId;
+
+            if (action === 'assign') {
+                showAssignResponsibleModal(objectId);
+            } else if (action === 'remove') {
+                removeResponsibleUser(objectId);
+            }
+        });
     });
 
     // Загрузка данных пользователя
@@ -2338,8 +2387,9 @@
                             </div>
                         </div>
                         <div class="data-table">
-                            <div class="table-header">
+                            <div class="table-header" data-toggle="details">
                                 <h3 class="table-title">Детали объекта</h3>
+                                <i class="fas fa-chevron-down toggle-icon"></i>
                             </div>
                             <div class="table-body">
                                 <div class="table-row">
@@ -2389,11 +2439,11 @@
                                                     }
                                                 </span>
                                                 <div class="responsible-user-actions">
-                                                    <button class="btn btn-sm btn-primary" onclick="showAssignResponsibleModal(${object.id})">
+                                                    <button class="btn btn-sm btn-primary" data-action="assign" data-object-id="${object.id}">
                                                         <i class="fas fa-user-plus"></i> Назначить
                                                     </button>
                                                     ${object.responsibleUserId ? `
-                                                        <button class="btn btn-sm btn-danger" onclick="removeResponsibleUser(${object.id})">
+                                                        <button class="btn btn-sm btn-danger" data-action="remove" data-object-id="${object.id}">
                                                             <i class="fas fa-user-minus"></i> Удалить
                                                         </button>
                                                     ` : ''}
