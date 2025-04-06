@@ -1736,6 +1736,7 @@
     let currentUser = null;
     let isAdmin = false;
     let currentParentId = null; // Добавляем глобальную переменную для хранения ID текущего родительского объекта
+    let lastSelectedObjectType = null; // Добавляем переменную для хранения последнего выбранного типа
 
     // Проверка авторизации при загрузке
     document.addEventListener('DOMContentLoaded', function() {
@@ -2321,7 +2322,7 @@
     function showAddChildObjectModal(parentId) {
         const modal = document.getElementById('object-modal');
         document.getElementById('modal-title').textContent = 'Создание дочернего объекта';
-        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать'; // Устанавливаем текст кнопки
+        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать';
 
         // Очищаем форму и сбрасываем обработчик
         const form = document.getElementById('object-form');
@@ -2329,9 +2330,14 @@
         form.parentNode.replaceChild(newForm, form);
         const currentForm = document.getElementById('object-form');
         currentForm.reset(); 
-        currentForm.onsubmit = null; // Очищаем обработчик
+        currentForm.onsubmit = null;
         document.getElementById('object-id').value = '';
-        document.getElementById('parent-select').disabled = true; // Блокируем выбор родителя
+        document.getElementById('parent-select').disabled = true;
+
+        // Устанавливаем последний выбранный тип объекта, если он есть
+        if (lastSelectedObjectType) {
+            document.getElementById('object-type').value = lastSelectedObjectType;
+        }
 
         // Загружаем родителя
         const parentSelect = document.getElementById('parent-select');
@@ -2355,6 +2361,8 @@
             e.preventDefault();
             const objectName = document.getElementById('object-name').value;
             const objectType = document.getElementById('object-type').value;
+            // Сохраняем выбранный тип объекта
+            lastSelectedObjectType = objectType;
             const data = { name: objectName, objectType: objectType, parentId: parentId };
 
             fetch('http://localhost:8080/real-estate-objects', {
@@ -2759,7 +2767,7 @@
     function showAddObjectModal() {
         const modal = document.getElementById('object-modal');
         document.getElementById('modal-title').textContent = 'Создание объекта';
-        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать'; // Устанавливаем текст кнопки
+        document.querySelector('#object-form button[type="submit"]').textContent = 'Создать';
 
         // Очищаем форму и сбрасываем обработчик
         const form = document.getElementById('object-form');
@@ -2767,9 +2775,14 @@
         form.parentNode.replaceChild(newForm, form);
         const currentForm = document.getElementById('object-form');
         currentForm.reset(); 
-        currentForm.onsubmit = null; // Очищаем обработчик
+        currentForm.onsubmit = null;
         document.getElementById('object-id').value = '';
-        document.getElementById('parent-select').disabled = false; // Разблокируем выбор родителя
+        document.getElementById('parent-select').disabled = false;
+
+        // Устанавливаем последний выбранный тип объекта, если он есть
+        if (lastSelectedObjectType) {
+            document.getElementById('object-type').value = lastSelectedObjectType;
+        }
 
         // Загружаем список родительских объектов
         const parentSelect = document.getElementById('parent-select');
@@ -2801,6 +2814,8 @@
             e.preventDefault();
             const objectName = document.getElementById('object-name').value;
             const objectType = document.getElementById('object-type').value;
+            // Сохраняем выбранный тип объекта
+            lastSelectedObjectType = objectType;
             const parentId = document.getElementById('parent-select').value;
             const data = { name: objectName, objectType: objectType };
             if (parentId) { data.parentId = parseInt(parentId); }
