@@ -19,4 +19,9 @@ public class ObjectResponseDto {
     private Long createdById;
     private String createdByFirstName;
     private String createdByLastName;
+    
+    // Информация об ответственном пользователе
+    private Long responsibleUserId;
+    private String responsibleUserFirstName;
+    private String responsibleUserLastName;
 }

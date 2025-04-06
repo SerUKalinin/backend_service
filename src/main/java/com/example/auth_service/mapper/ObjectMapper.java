@@ -8,6 +8,10 @@ import org.mapstruct.Mapper;
 public class ObjectMapper {
 
     public ObjectResponseDto toDto(ObjectEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
         ObjectResponseDto dto = new ObjectResponseDto();
         dto.setId(entity.getId());
         dto.setName(entity.getName());
@@ -21,6 +25,12 @@ public class ObjectMapper {
             dto.setCreatedByLastName(entity.getCreatedBy().getLastName());
         }
         
+        if (entity.getResponsibleUser() != null) {
+            dto.setResponsibleUserId(entity.getResponsibleUser().getId());
+            dto.setResponsibleUserFirstName(entity.getResponsibleUser().getFirstName());
+            dto.setResponsibleUserLastName(entity.getResponsibleUser().getLastName());
+        }
+
         return dto;
     }
 

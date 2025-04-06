@@ -1343,6 +1343,34 @@
         .change-password-btn:hover {
             background: #e01e5a;
         }
+
+        .responsible-user-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .responsible-user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        #assign-responsible-modal .modal-content {
+            max-width: 500px;
+        }
+
+        #assign-responsible-modal .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -1626,6 +1654,42 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Создатель:</span>
+                                        <span>${object.createdByFirstName && object.createdByLastName ? 
+                                            `${object.createdByFirstName} ${object.createdByLastName}` : 
+                                            '-'
+                                        }</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="table-cell">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Ответственный:</span>
+                                        <div class="responsible-user-container">
+                                            <span id="responsible-user-display">
+                                                ${object.responsibleUserFirstName && object.responsibleUserLastName ? 
+                                                    `${object.responsibleUserFirstName} ${object.responsibleUserLastName}` : 
+                                                    'Не назначен'
+                                                }
+                                            </span>
+                                            <div class="responsible-user-actions">
+                                                <button class="btn btn-sm btn-primary" onclick="showAssignResponsibleModal(${object.id})">
+                                                    <i class="fas fa-user-plus"></i> Назначить
+                                                </button>
+                                                ${object.responsibleUserId ? `
+                                                    <button class="btn btn-sm btn-danger" onclick="removeResponsibleUser(${object.id})">
+                                                        <i class="fas fa-user-minus"></i> Удалить
+                                                    </button>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="back-button">
@@ -1723,6 +1787,28 @@
                     <button type="submit" class="btn btn-primary">Сохранить</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для назначения ответственного -->
+    <div id="assign-responsible-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Назначение ответственного</h3>
+                <button class="close-btn" onclick="closeAssignResponsibleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="responsible-user-select">Выберите пользователя</label>
+                    <select class="form-select" id="responsible-user-select">
+                        <option value="">Загрузка...</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-primary" onclick="assignResponsibleUser()">Назначить</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAssignResponsibleModal()">Отмена</button>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -2228,6 +2314,31 @@
                                                 `${object.createdByFirstName} ${object.createdByLastName}` : 
                                                 '-'
                                             }</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-row">
+                                    <div class="table-cell">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Ответственный:</span>
+                                            <div class="responsible-user-container">
+                                                <span id="responsible-user-display">
+                                                    ${object.responsibleUserFirstName && object.responsibleUserLastName ? 
+                                                        `${object.responsibleUserFirstName} ${object.responsibleUserLastName}` : 
+                                                        'Не назначен'
+                                                    }
+                                                </span>
+                                                <div class="responsible-user-actions">
+                                                    <button class="btn btn-sm btn-primary" onclick="showAssignResponsibleModal(${object.id})">
+                                                        <i class="fas fa-user-plus"></i> Назначить
+                                                    </button>
+                                                    ${object.responsibleUserId ? `
+                                                        <button class="btn btn-sm btn-danger" onclick="removeResponsibleUser(${object.id})">
+                                                            <i class="fas fa-user-minus"></i> Удалить
+                                                        </button>
+                                                    ` : ''}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -3563,6 +3674,110 @@
         .catch(error => {
             console.error('Ошибка при смене пароля:', error);
             showNotification('error', 'Ошибка', 'Не удалось изменить пароль');
+        });
+    }
+
+    // Функция для показа модального окна назначения ответственного
+    function showAssignResponsibleModal(objectId) {
+        const modal = document.getElementById('assign-responsible-modal');
+        modal.dataset.objectId = objectId;
+        
+        // Загружаем список пользователей
+        const select = document.getElementById('responsible-user-select');
+        select.innerHTML = '<option value="">Загрузка...</option>';
+        
+        fetch('http://localhost:8080/users/info/all', {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(users => {
+            select.innerHTML = '<option value="">Выберите пользователя</option>';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.firstName} ${user.lastName} (${user.email})`;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки пользователей:', error);
+            select.innerHTML = '<option value="">Ошибка загрузки</option>';
+        });
+        
+        modal.style.display = 'block';
+    }
+
+    // Функция для закрытия модального окна назначения ответственного
+    function closeAssignResponsibleModal() {
+        document.getElementById('assign-responsible-modal').style.display = 'none';
+    }
+
+    // Функция для назначения ответственного пользователя
+    function assignResponsibleUser() {
+        const modal = document.getElementById('assign-responsible-modal');
+        const objectId = modal.dataset.objectId;
+        const userId = document.getElementById('responsible-user-select').value;
+        
+        if (!userId) {
+            alert('Пожалуйста, выберите пользователя');
+            return;
+        }
+        
+        fetch(`http://localhost:8080/real-estate-objects/${objectId}/assign-responsible/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(text || 'Ошибка при назначении ответственного');
+                });
+            }
+            return response.json();
+        })
+        .then(updatedObject => {
+            closeAssignResponsibleModal();
+            showObjectDetails(objectId); // Обновляем детали объекта
+        })
+        .catch(error => {
+            console.error('Ошибка при назначении ответственного:', error);
+            alert('Ошибка при назначении ответственного: ' + error.message);
+        });
+    }
+
+    // Функция для удаления ответственного пользователя
+    function removeResponsibleUser(objectId) {
+        if (!confirm('Вы уверены, что хотите удалить ответственного пользователя?')) {
+            return;
+        }
+        
+        fetch(`http://localhost:8080/real-estate-objects/${objectId}/remove-responsible`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(text || 'Ошибка при удалении ответственного');
+                });
+            }
+            return response.json();
+        })
+        .then(updatedObject => {
+            showObjectDetails(objectId); // Обновляем детали объекта
+        })
+        .catch(error => {
+            console.error('Ошибка при удалении ответственного:', error);
+            alert('Ошибка при удалении ответственного: ' + error.message);
         });
     }
 </script>
