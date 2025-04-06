@@ -363,7 +363,6 @@
 
         /* Таблицы */
         .data-table {
-            width: 100%;
             background: white;
             border-radius: 12px;
             overflow: hidden;
@@ -1377,6 +1376,29 @@
             gap: 10px;
             margin-top: 20px;
         }
+
+        /* Уникальные стили для разных типов списков */
+        .objects-table {
+            width: 100%;
+        }
+
+        .tasks-table {
+            width: 100%;
+        }
+
+        .users-table {
+            width: 100%;
+        }
+
+        /* Стили для блока деталей объекта */
+        .object-details-table {
+            width: 50%;
+        }
+
+        /* Стили для деталей в дочернем объекте */
+        .child-object-details .object-details-table {
+            width: 50%;
+        }
     </style>
 </head>
 <body>
@@ -2193,7 +2215,7 @@
         .then(objects => {
             const container = document.getElementById('objects-content');
             container.innerHTML = `
-                <div class="data-table">
+                <div class="data-table objects-table">
                     <div class="table-header">
                         <h3 class="table-title">Список объектов</h3>
                         <div class="table-filters">
@@ -2315,23 +2337,16 @@
             }
         })
         .then(response => {
-            console.log('Object details response status:', response.status);
             if (!response.ok) {
                 throw new Error('Ошибка загрузки деталей объекта');
             }
             return response.json();
         })
         .then(object => {
-            console.log('Received object details:', object);
+            // Определяем, является ли объект дочерним
+            const isChildObject = object.parentId !== null;
+            const containerClass = isChildObject ? 'child-object-details' : '';
             
-            // Обновляем заголовок секции
-            const pageTitle = document.querySelector('#objects-section .page-title');
-            pageTitle.textContent = object.name;
-
-            // Устанавливаем текущий родительский ID
-            currentParentId = object.parentId;
-            console.log('Set currentParentId to:', currentParentId);
-
             // Если есть ответственный пользователь, загружаем его полную информацию
             let responsibleUserPromise = Promise.resolve(null);
             if (object.responsibleUserId) {
@@ -2380,73 +2395,74 @@
                         ${breadcrumbsHtml}
                         <div class="children-section">
                             <div class="children-header">
-
                             </div>
                             <div class="children-grid" id="children-list">
                                 <!-- Дочерние объекты будут загружены здесь -->
                             </div>
                         </div>
-                        <div class="data-table">
-                            <div class="table-header" data-toggle="details">
-                                <h3 class="table-title">Детали объекта</h3>
-                                <i class="fas fa-chevron-down toggle-icon"></i>
-                            </div>
-                            <div class="table-body">
-                                <div class="table-row">
-                                    <div class="table-cell">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Название:</span>
-                                            <span>${object.name}</span>
+                        <div class="${containerClass}">
+                            <div class="data-table object-details-table">
+                                <div class="table-header" data-toggle="details">
+                                    <h3 class="table-title">Детали объекта</h3>
+                                    <i class="fas fa-chevron-down toggle-icon"></i>
+                                </div>
+                                <div class="table-body">
+                                    <div class="table-row">
+                                        <div class="table-cell">
+                                            <div class="detail-item">
+                                                <span class="detail-label">Название:</span>
+                                                <span>${object.name}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="table-row">
-                                    <div class="table-cell">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Тип:</span>
-                                            <span>${getObjectTypeName(object.objectType)}</span>
+                                    <div class="table-row">
+                                        <div class="table-cell">
+                                            <div class="detail-item">
+                                                <span class="detail-label">Тип:</span>
+                                                <span>${getObjectTypeName(object.objectType)}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="table-row">
-                                    <div class="table-cell">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Дата создания:</span>
-                                            <span>${new Date(object.createdAt).toLocaleString()}</span>
+                                    <div class="table-row">
+                                        <div class="table-cell">
+                                            <div class="detail-item">
+                                                <span class="detail-label">Дата создания:</span>
+                                                <span>${new Date(object.createdAt).toLocaleString()}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="table-row">
-                                    <div class="table-cell">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Создатель:</span>
-                                            <span>${object.createdByFirstName && object.createdByLastName ? 
-                                                `${object.createdByFirstName} ${object.createdByLastName}` : 
-                                                '-'
-                                            }</span>
+                                    <div class="table-row">
+                                        <div class="table-cell">
+                                            <div class="detail-item">
+                                                <span class="detail-label">Создатель:</span>
+                                                <span>${object.createdByFirstName && object.createdByLastName ? 
+                                                    `${object.createdByFirstName} ${object.createdByLastName}` : 
+                                                    '-'
+                                                }</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="table-row">
-                                    <div class="table-cell">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Ответственный:</span>
-                                            <div class="responsible-user-container">
-                                                <span id="responsible-user-display">
-                                                    ${responsibleUser ? 
-                                                        `${responsibleUser.firstName} ${responsibleUser.lastName} <span class="status-badge ${getRoleClass(responsibleUser.roles)}">${getRoleName(responsibleUser.roles)}</span>` : 
-                                                        'Не назначен'
-                                                    }
-                                                </span>
-                                                <div class="responsible-user-actions">
-                                                    <button class="btn btn-sm btn-primary" data-action="assign" data-object-id="${object.id}">
-                                                        <i class="fas fa-user-plus"></i> Назначить
-                                                    </button>
-                                                    ${object.responsibleUserId ? `
-                                                        <button class="btn btn-sm btn-danger" data-action="remove" data-object-id="${object.id}">
-                                                            <i class="fas fa-user-minus"></i> Удалить
+                                    <div class="table-row">
+                                        <div class="table-cell">
+                                            <div class="detail-item">
+                                                <span class="detail-label">Ответственный:</span>
+                                                <div class="responsible-user-container">
+                                                    <span id="responsible-user-display">
+                                                        ${responsibleUser ? 
+                                                            `${responsibleUser.firstName} ${responsibleUser.lastName} <span class="status-badge ${getRoleClass(responsibleUser.roles)}">${getRoleName(responsibleUser.roles)}</span>` : 
+                                                            'Не назначен'
+                                                        }
+                                                    </span>
+                                                    <div class="responsible-user-actions">
+                                                        <button class="btn btn-sm btn-primary" data-action="assign" data-object-id="${object.id}">
+                                                            <i class="fas fa-user-plus"></i> Назначить
                                                         </button>
-                                                    ` : ''}
+                                                        ${object.responsibleUserId ? `
+                                                            <button class="btn btn-sm btn-danger" data-action="remove" data-object-id="${object.id}">
+                                                                <i class="fas fa-user-minus"></i> Удалить
+                                                            </button>
+                                                        ` : ''}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -2464,7 +2480,6 @@
                     
                     // Сохраняем ID текущего объекта
                     currentParentId = objectId;
-                    console.log('Set currentParentId to:', currentParentId);
                     
                     // Загружаем дочерние объекты
                     loadChildren(objectId);
@@ -2472,7 +2487,7 @@
         })
         .catch(error => {
             console.error('Ошибка загрузки деталей объекта:', error);
-            alert('Ошибка загрузки деталей объекта');
+            showNotification('Ошибка загрузки деталей объекта', 'error');
         });
     }
 
@@ -3082,7 +3097,7 @@
         .then(users => {
             const container = document.getElementById('users-content');
             container.innerHTML = `
-                <div class="data-table">
+                <div class="data-table users-table">
                     <div class="table-header">
                         <h3 class="table-title">Список пользователей</h3>
                     </div>
@@ -3923,6 +3938,56 @@
             default:
                 return 'status-new';
         }
+    }
+
+    function loadTasks() {
+        fetch('http://localhost:8080/tasks', {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`
+            }
+        })
+        .then(response => response.json())
+        .then(tasks => {
+            const container = document.getElementById('tasks-content');
+            container.innerHTML = `
+                <div class="data-table tasks-table">
+                    <div class="table-header">
+                        <h3 class="table-title">Задачи</h3>
+                        <div class="table-actions">
+                            <button class="btn btn-primary" onclick="showCreateTaskModal()">
+                                <i class="fas fa-plus"></i> Создать задачу
+                            </button>
+                        </div>
+                    </div>
+                    // ... existing code ...
+                </div>
+            `;
+        });
+    }
+
+    function loadObjectTasks(objectId) {
+        fetch(`http://localhost:8080/tasks/by-object/${objectId}`, {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`
+            }
+        })
+        .then(response => response.json())
+        .then(tasks => {
+            const container = document.getElementById('object-tasks');
+            container.innerHTML = `
+                <div class="data-table tasks-table">
+                    <div class="table-header">
+                        <h3 class="table-title">Задачи объекта</h3>
+                        <div class="table-actions">
+                            <button class="btn btn-primary" onclick="showCreateTaskModal()">
+                                <i class="fas fa-plus"></i> Создать задачу
+                            </button>
+                        </div>
+                    </div>
+                    // ... existing code ...
+                </div>
+            `;
+        });
     }
 </script>
 </body>
