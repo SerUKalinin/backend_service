@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        String allowedOrigin = "http://localhost:63342"; // Фронтенд работает на порту 63342
+        String allowedOrigin = "http://localhost:54470";
 
         if (allowedOrigin.isBlank()) {
             log.error("Ошибка конфигурации CORS: список разрешённых источников пуст");
