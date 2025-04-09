@@ -101,10 +101,14 @@ public class AuthController {
      */
     @RateLimit(value = 3, timeWindow = 60)
     @PostMapping("/verify-email")
-    @ResponseStatus(HttpStatus.OK)
-    public void verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto) {
+    public ResponseEntity<AuthResponse> verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto, HttpServletResponse response) {
         log.info("Получен запрос на проверку email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
-        authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+        AuthResponse authResponse = authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+
+        // Добавляем JWT в cookie
+        authService.addJwtToCookie(authResponse.getJwtToken(), response);
+
+        return ResponseEntity.ok(authResponse); // Возвращаем токен в теле ответа и статус 200 OK
     }
 
     /**
@@ -176,10 +180,10 @@ public class AuthController {
      */
     @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/reset-password")
-    @ResponseStatus(HttpStatus.OK)
-    public void resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
+    public ResponseEntity<AuthResponse> resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
         log.info("Запрос на сброс пароля");
-        authService.resetPassword(passwordResetDto.getToken(), passwordResetDto.getNewPassword());
+        AuthResponse authResponse = authService.resetPassword(passwordResetDto.getToken(), passwordResetDto.getNewPassword());
+        return ResponseEntity.ok(authResponse);
     }
 
 }

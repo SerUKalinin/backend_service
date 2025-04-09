@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        String allowedOrigin = "http://localhost:54470";
+        String allowedOrigin = "http://localhost:5175";
 
         if (allowedOrigin.isBlank()) {
             log.error("Ошибка конфигурации CORS: список разрешённых источников пуст");

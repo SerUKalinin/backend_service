@@ -25,11 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Сервис для аутентификации и регистрации пользователей.
@@ -143,7 +145,12 @@ public class AuthService {
         }
 
         // Генерация JWT токена
-        String token = jwtUtil.generateToken(authentication.getName(), authentication.getAuthorities());
+        String token = jwtUtil.generateToken(
+                user.getUsername(),
+                user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                        .collect(Collectors.toList()) // Собираем в список GrantedAuthority
+        );
 
         // Сохраняем сессию в Redis
         sessionService.saveSession(user.getUsername(), token, Duration.ofHours(2));
@@ -171,7 +178,7 @@ public class AuthService {
      * @throws InvalidConfirmationCodeException Если код неверный или истекший.
      * @throws UserNotFoundException Если пользователь не найден.
      */
-    public void confirmEmail(String email, String code) {
+    public AuthResponse confirmEmail(String email, String code) {
         log.info("Проверка кода подтверждения для email: {}", email);
 
         // Проверка кода подтверждения в Redis
@@ -194,6 +201,22 @@ public class AuthService {
         redisService.deleteConfirmationCode(email);
 
         log.info("Email пользователя {} успешно подтвержден. Аккаунт активирован.", email);
+
+        // Генерация JWT токена
+        String token = jwtUtil.generateToken(
+                user.getUsername(),
+                user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                        .collect(Collectors.toList()) // Собираем в список GrantedAuthority
+        );
+
+        // Сохраняем сессию в Redis
+        sessionService.saveSession(user.getUsername(), token, Duration.ofHours(2)); // Сессия на 2 часа
+
+        log.info("Пользователь {} успешно активирован и авторизован", email);
+
+        // Возвращаем объект AuthResponse с токеном
+        return new AuthResponse(token);
     }
 
     /**
@@ -273,8 +296,7 @@ public class AuthService {
         redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
 
         // Формирование ссылки для сброса пароля
-        String resetLink = "http://localhost:63342/auth_service/auth_frontend/reset-password.html?token=" + token;
-
+        String resetLink = "http://localhost:5175/reset-password?token=" + token;
         // Отправка письма со ссылкой
         emailService.sendPasswordResetEmail(email, resetLink);
 
@@ -288,7 +310,7 @@ public class AuthService {
      * @param newPassword Новый пароль.
      * @throws AuthException Если токен недействителен или истек срок его действия.
      */
-    public void resetPassword(String token, String newPassword) {
+    public AuthResponse resetPassword(String token, String newPassword) {
         log.info("Запрос на сброс пароля с токеном");
 
         try {
@@ -313,7 +335,21 @@ public class AuthService {
             // Удаляем использованный токен из Redis
             redisService.deletePasswordResetToken(user.getEmail());
 
+            // Генерация нового JWT токена
+            String newToken = jwtUtil.generateToken(
+                    user.getUsername(),
+                    user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                            .collect(Collectors.toList())
+            );
+
+            // Сохраняем сессию в Redis
+            sessionService.saveSession(user.getUsername(), newToken, Duration.ofHours(2));
+
             log.info("Пароль успешно сброшен для пользователя: {}", username);
+
+            // Возвращаем новый токен
+            return new AuthResponse(newToken);
         } catch (Exception e) {
             log.error("Ошибка при сбросе пароля: {}", e.getMessage());
             throw new AuthException("Ошибка при сбросе пароля");
