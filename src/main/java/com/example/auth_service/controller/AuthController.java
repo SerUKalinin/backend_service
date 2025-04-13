@@ -186,4 +186,38 @@ public class AuthController {
         return ResponseEntity.ok(authResponse);
     }
 
+    /**
+     * Валидация JWT токена.
+     * Проверяет валидность токена и возвращает информацию о пользователе.
+     * Ограничение: 10 запросов в минуту с одного IP
+     *
+     * @param authHeader Заголовок Authorization с токеном.
+     * @return ResponseEntity с информацией о пользователе или ошибкой.
+     */
+    @RateLimit(value = 10, timeWindow = 60)
+    @GetMapping("/validate")
+    public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader) {
+        log.info("Запрос на валидацию токена");
+        
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
+                String username = decodedJWT.getSubject();
+                
+                // Проверяем сессию
+                if (sessionService.isSessionValid(username, token)) {
+                    // Обновляем сессию
+                    sessionService.refreshSession(username, Duration.ofHours(2));
+                    log.info("Токен успешно валидирован для пользователя: {}", username);
+                    return ResponseEntity.ok().build();
+                }
+            } catch (Exception e) {
+                log.error("Ошибка при валидации токена: {}", e.getMessage());
+            }
+        }
+        log.warn("Не удалось валидировать токен");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
 }
