@@ -77,6 +77,13 @@ public class ObjectEntity {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
+    /**
+     * Пользователь, ответственный за объект.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsible_user_id")
+    private User responsibleUser;
+
     // Новый конструктор для создания объекта с родительским объектом по ID
     public ObjectEntity(Long id) {
         this.id = id;

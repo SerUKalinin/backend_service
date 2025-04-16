@@ -60,7 +60,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/real-estate-objects/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/real-estate-objects/my-objects").authenticated() // Получение объектов текущего пользователя
+                        .requestMatchers(HttpMethod.GET, "/real-estate-objects/my-objects").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/real-estate-objects/by-responsible/{userId}").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}/assign-responsible/{userId}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}/remove-responsible").hasRole("ADMIN")
 
                         // Доступ к пользователям
                         .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN") // создание пользователя
@@ -85,9 +88,7 @@ public class SecurityConfig {
                         // Получение задач по объекту недвижимости
                         .requestMatchers(HttpMethod.GET, "/tasks/object/{objectId}").hasAnyRole("USER", "ADMIN")
                         // Получение задач по статусу и объекту недвижимости
-
                         .requestMatchers(HttpMethod.GET, "/tasks/status/{status}/object/{objectId}").hasAnyRole("USER", "ADMIN")
-
 
                         // Любые другие запросы требуют авторизации
                         .anyRequest().authenticated()

@@ -18,4 +18,6 @@ public class ObjectRequestDto {
     private ObjectType objectType;
 
     private Long parentId; // ID родителя (может быть null)
+
+    private Long responsibleUserId; // ID ответственного пользователя (может быть null)
 }
