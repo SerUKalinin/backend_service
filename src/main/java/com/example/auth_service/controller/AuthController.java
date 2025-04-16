@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.annotation.RateLimit;
 import com.example.auth_service.dto.AuthResponse;
 import com.example.auth_service.dto.UserSigninDto;
 import com.example.auth_service.dto.UserSignupDto;
@@ -35,9 +36,11 @@ public class AuthController {
 
     /**
      * Регистрация нового пользователя.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param userSignupDto данные пользователя для регистрации.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/register-user")
     @ResponseStatus(HttpStatus.CREATED)
     public void register(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
@@ -47,9 +50,11 @@ public class AuthController {
 
     /**
      * Регистрация нового администратора.
+     * Ограничение: 1 запрос в час с одного IP
      *
      * @param userSignupDto данные администратора для регистрации.
      */
+    @RateLimit(value = 1, timeWindow = 3600)
     @PostMapping("/register-admin")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
@@ -59,10 +64,12 @@ public class AuthController {
 
     /**
      * Аутентификация пользователя.
+     * Ограничение: 5 запросов в минуту с одного IP
      *
      * @param userSigninDto данные для входа.
      * @return JWT-токен.
      */
+    @RateLimit(value = 5, timeWindow = 60)
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
@@ -78,7 +85,9 @@ public class AuthController {
 
     /**
      * Выход пользователя из системы.
+     * Ограничение: 10 запросов в минуту с одного IP
      */
+    @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@RequestHeader("Authorization") String authHeader) {
@@ -88,19 +97,27 @@ public class AuthController {
 
     /**
      * Подтверждение email.
+     * Ограничение: 3 запроса в минуту с одного IP
      */
+    @RateLimit(value = 3, timeWindow = 60)
     @PostMapping("/verify-email")
-    @ResponseStatus(HttpStatus.OK)
-    public void verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto) {
+    public ResponseEntity<AuthResponse> verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto, HttpServletResponse response) {
         log.info("Получен запрос на проверку email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
-        authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+        AuthResponse authResponse = authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+
+        // Добавляем JWT в cookie
+        authService.addJwtToCookie(authResponse.getJwtToken(), response);
+
+        return ResponseEntity.ok(authResponse); // Возвращаем токен в теле ответа и статус 200 OK
     }
 
     /**
      * Повторная отправка кода подтверждения на email.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param email адрес электронной почты пользователя.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/resend-verification")
     @ResponseStatus(HttpStatus.OK)
     public void resendEmailVerification(@RequestParam String email) throws MessagingException {
@@ -110,10 +127,12 @@ public class AuthController {
 
     /**
      * Обновляет токен пользователя.
+     * Ограничение: 10 запросов в минуту с одного IP
      *
      * @param authHeader Заголовок Authorization с текущим токеном.
      * @return ResponseEntity с новым токеном или ошибкой.
      */
+    @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String authHeader) {
         log.info("Запрос на обновление токена");
@@ -141,9 +160,11 @@ public class AuthController {
 
     /**
      * Отправляет ссылку для сброса пароля на email пользователя.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param forgotPasswordDto Данные для запроса сброса пароля.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.OK)
     public void forgotPassword(@Valid @RequestBody ForgotPasswordDto forgotPasswordDto) throws MessagingException {
@@ -153,14 +174,50 @@ public class AuthController {
 
     /**
      * Сбрасывает пароль пользователя.
+     * Ограничение: 3 запроса в час с одного IP
      *
      * @param passwordResetDto Данные для сброса пароля.
      */
+    @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/reset-password")
-    @ResponseStatus(HttpStatus.OK)
-    public void resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
+    public ResponseEntity<AuthResponse> resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
         log.info("Запрос на сброс пароля");
-        authService.resetPassword(passwordResetDto.getToken(), passwordResetDto.getNewPassword());
+        AuthResponse authResponse = authService.resetPassword(passwordResetDto.getToken(), passwordResetDto.getNewPassword());
+        return ResponseEntity.ok(authResponse);
+    }
+
+    /**
+     * Валидация JWT токена.
+     * Проверяет валидность токена и возвращает информацию о пользователе.
+     * Ограничение: 10 запросов в минуту с одного IP
+     *
+     * @param authHeader Заголовок Authorization с токеном.
+     * @return ResponseEntity с информацией о пользователе или ошибкой.
+     */
+    @RateLimit(value = 10, timeWindow = 60)
+    @GetMapping("/validate")
+    public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader) {
+        log.info("Запрос на валидацию токена");
+        
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
+                String username = decodedJWT.getSubject();
+                
+                // Проверяем сессию
+                if (sessionService.isSessionValid(username, token)) {
+                    // Обновляем сессию
+                    sessionService.refreshSession(username, Duration.ofHours(2));
+                    log.info("Токен успешно валидирован для пользователя: {}", username);
+                    return ResponseEntity.ok().build();
+                }
+            } catch (Exception e) {
+                log.error("Ошибка при валидации токена: {}", e.getMessage());
+            }
+        }
+        log.warn("Не удалось валидировать токен");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
 }

@@ -56,6 +56,13 @@ public class ObjectService {
             currentUser.ifPresent(entity::setCreatedBy);
         }
 
+        // Устанавливаем ответственного пользователя, если указан
+        if (objectDto.getResponsibleUserId() != null) {
+            User responsibleUser = userRepository.findById(objectDto.getResponsibleUserId())
+                    .orElseThrow(() -> new RuntimeException("Ответственный пользователь не найден"));
+            entity.setResponsibleUser(responsibleUser);
+        }
+
         // Сохраняем объект в базу данных
         ObjectEntity savedEntity = objectRepository.save(entity);
         log.info("Объект успешно создан с ID: {}", savedEntity.getId());
@@ -145,7 +152,25 @@ public class ObjectService {
                 .map(existing -> {
                     existing.setName(updatedObject.getName());
                     existing.setObjectType(updatedObject.getObjectType());
-                    existing.setParent(updatedObject.getParentId() != null ? new ObjectEntity(updatedObject.getParentId()) : null);
+                    
+                    // Обновляем родительский объект
+                    if (updatedObject.getParentId() != null) {
+                        ObjectEntity parent = objectRepository.findById(updatedObject.getParentId())
+                                .orElseThrow(() -> new ObjectNotFoundException("Родительский объект не найден"));
+                        existing.setParent(parent);
+                    } else {
+                        existing.setParent(null);
+                    }
+                    
+                    // Обновляем ответственного пользователя
+                    if (updatedObject.getResponsibleUserId() != null) {
+                        User responsibleUser = userRepository.findById(updatedObject.getResponsibleUserId())
+                                .orElseThrow(() -> new RuntimeException("Ответственный пользователь не найден"));
+                        existing.setResponsibleUser(responsibleUser);
+                    } else {
+                        existing.setResponsibleUser(null);
+                    }
+                    
                     ObjectEntity savedObject = objectRepository.save(existing);
                     log.info("Объект обновлен: {}", savedObject);
                     return objectMapper.toDto(savedObject);
@@ -201,5 +226,40 @@ public class ObjectService {
             }
         }
         return List.of();
+    }
+
+    public List<ObjectResponseDto> getObjectsByResponsibleUser(Long userId) {
+        log.info("Получение объектов для ответственного пользователя с ID: {}", userId);
+        List<ObjectEntity> entities = objectRepository.findByResponsibleUserId(userId);
+        return entities.stream()
+                .map(objectMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public ObjectResponseDto assignResponsibleUser(Long objectId, Long userId) {
+        log.info("Назначение ответственного пользователя {} для объекта {}", userId, objectId);
+        
+        ObjectEntity object = objectRepository.findById(objectId)
+                .orElseThrow(() -> new ObjectNotFoundException("Объект не найден"));
+                
+        User responsibleUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Ответственный пользователь не найден"));
+                
+        object.setResponsibleUser(responsibleUser);
+        ObjectEntity savedObject = objectRepository.save(object);
+        
+        return objectMapper.toDto(savedObject);
+    }
+
+    public ObjectResponseDto removeResponsibleUser(Long objectId) {
+        log.info("Удаление ответственного пользователя для объекта {}", objectId);
+        
+        ObjectEntity object = objectRepository.findById(objectId)
+                .orElseThrow(() -> new ObjectNotFoundException("Объект не найден"));
+                
+        object.setResponsibleUser(null);
+        ObjectEntity savedObject = objectRepository.save(object);
+        
+        return objectMapper.toDto(savedObject);
     }
 }

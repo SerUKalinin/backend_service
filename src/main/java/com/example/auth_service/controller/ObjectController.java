@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.ObjectRequestDto;
 import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.ObjectType;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Контроллер для управления объектами недвижимости.
@@ -125,5 +127,28 @@ public class ObjectController {
         log.info("Запрос на получение объектов текущего пользователя");
         List<ObjectResponseDto> objects = objectService.getCurrentUserObjects();
         return ResponseEntity.ok(objects);
+    }
+
+    @GetMapping("/by-responsible/{userId}")
+    public ResponseEntity<List<ObjectResponseDto>> getObjectsByResponsibleUser(@PathVariable Long userId) {
+        log.info("Запрос на получение объектов для ответственного пользователя: {}", userId);
+        List<ObjectResponseDto> objects = objectService.getObjectsByResponsibleUser(userId);
+        return ResponseEntity.ok(objects);
+    }
+
+    @PutMapping("/{id}/assign-responsible/{userId}")
+    public ResponseEntity<ObjectResponseDto> assignResponsibleUser(
+            @PathVariable Long id,
+            @PathVariable Long userId) {
+        log.info("Запрос на назначение ответственного пользователя {} для объекта {}", userId, id);
+        ObjectResponseDto updatedObject = objectService.assignResponsibleUser(id, userId);
+        return ResponseEntity.ok(updatedObject);
+    }
+
+    @PutMapping("/{id}/remove-responsible")
+    public ResponseEntity<ObjectResponseDto> removeResponsibleUser(@PathVariable Long id) {
+        log.info("Запрос на удаление ответственного пользователя для объекта {}", id);
+        ObjectResponseDto updatedObject = objectService.removeResponsibleUser(id);
+        return ResponseEntity.ok(updatedObject);
     }
 }
