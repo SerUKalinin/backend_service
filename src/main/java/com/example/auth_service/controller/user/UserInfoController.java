@@ -16,6 +16,11 @@ import java.util.List;
 
 /**
  * Контроллер для получения информации о пользователях.
+ * <p>
+ * Этот контроллер предоставляет различные методы для получения информации о пользователях системы.
+ * Он поддерживает запросы для получения информации о текущем пользователе, всех пользователях (для администраторов),
+ * а также информации о пользователе по его ID.
+ * </p>
  */
 @Slf4j
 @RestController
@@ -25,6 +30,16 @@ public class UserInfoController {
 
     private final UserInfoService userInfoService;
 
+    /**
+     * Получает информацию о текущем пользователе.
+     * <p>
+     * Этот метод позволяет пользователю получить информацию о себе, используя данные из аутентификации.
+     * Метод возвращает объект {@link UserDto}, содержащий информацию о пользователе.
+     * </p>
+     *
+     * @param authentication Объект аутентификации, содержащий информацию о текущем пользователе.
+     * @return {@link ResponseEntity} с {@link UserDto} информацией о текущем пользователе.
+     */
     @GetMapping
     public ResponseEntity<UserDto> getUserInfo(Authentication authentication) {
         String username = authentication.getName();
@@ -33,6 +48,15 @@ public class UserInfoController {
         return ResponseEntity.ok(userInfo);
     }
 
+    /**
+     * Получает список всех пользователей.
+     * <p>
+     * Этот метод доступен только администраторам и позволяет получить список всех пользователей
+     * с информацией о каждом из них. Доступ ограничен ролью {@code ADMIN}.
+     * </p>
+     *
+     * @return {@link ResponseEntity} с списком {@link UserDto} всех пользователей.
+     */
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDto>> getAllUsersInfo() {
@@ -41,6 +65,16 @@ public class UserInfoController {
         return ResponseEntity.ok(allUsersInfo);
     }
 
+    /**
+     * Получает информацию о пользователе по его идентификатору.
+     * <p>
+     * Этот метод доступен только администраторам и позволяет получить информацию о пользователе,
+     * передав его идентификатор в URL. Доступ ограничен ролью {@code ADMIN}.
+     * </p>
+     *
+     * @param id Идентификатор пользователя.
+     * @return {@link ResponseEntity} с {@link UserDto} информацией о пользователе с указанным ID.
+     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
