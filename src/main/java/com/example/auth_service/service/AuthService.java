@@ -322,38 +322,26 @@ public class AuthService {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
 
-            // Проверяем токен в Redis
-            if (!redisService.checkPasswordResetToken(user.getEmail(), token)) {
-                log.warn("Недействительный или истекший токен для сброса пароля");
-                throw new AuthException("Недействительный или истекший токен для сброса пароля");
-            }
-
-            // Обновляем пароль
+            // Сбрасываем пароль
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
 
-            // Удаляем использованный токен из Redis
+            // Удаляем токен сброса пароля из Redis
             redisService.deletePasswordResetToken(user.getEmail());
 
-            // Генерация нового JWT токена
-            String newToken = jwtUtil.generateToken(
-                    user.getUsername(),
-                    user.getRoles().stream()
-                            .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                            .collect(Collectors.toList())
-            );
+            log.info("Пароль для пользователя {} успешно сброшен", username);
 
-            // Сохраняем сессию в Redis
-            sessionService.saveSession(user.getUsername(), newToken, Duration.ofHours(2));
+            // Генерация нового токена и возвращение в AuthResponse
+            String newToken = jwtUtil.generateToken(user.getUsername(), user.getRoles()
+                    .stream()
+                    .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                    .collect(Collectors.toList()));
 
-            log.info("Пароль успешно сброшен для пользователя: {}", username);
-
-            // Возвращаем новый токен
             return new AuthResponse(newToken);
+
         } catch (Exception e) {
             log.error("Ошибка при сбросе пароля: {}", e.getMessage());
             throw new AuthException("Ошибка при сбросе пароля");
         }
     }
-
 }
