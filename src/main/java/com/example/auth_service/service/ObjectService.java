@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 
 /**
  * Сервис для управления объектами недвижимости.
+ * Предоставляет методы для создания, обновления, удаления и получения объектов недвижимости,
+ * а также для назначения и удаления ответственного пользователя.
  */
 @Slf4j
 @Service
@@ -32,6 +34,13 @@ public class ObjectService {
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
 
+    /**
+     * Создает новый объект недвижимости.
+     *
+     * @param objectDto DTO с данными для создания объекта
+     * @return DTO созданного объекта
+     * @throws IllegalArgumentException если объект или его поля невалидны
+     */
     public ObjectResponseDto createObject(ObjectResponseDto objectDto) {
         Assert.notNull(objectDto, "Объект не должен быть null");
         Assert.hasText(objectDto.getName(), "Имя объекта не должно быть пустым");
@@ -71,11 +80,10 @@ public class ObjectService {
         return objectMapper.toDto(savedEntity);
     }
 
-
     /**
-     * Получить все объекты недвижимости.
+     * Получает все объекты недвижимости.
      *
-     * @return список всех объектов недвижимости
+     * @return Список всех объектов недвижимости в формате DTO
      */
     public List<ObjectResponseDto> getAllObjects() {
         log.info("Получение всех объектов");
@@ -87,10 +95,11 @@ public class ObjectService {
     }
 
     /**
-     * Получить объект недвижимости по его ID и вернуть ResponseEntity.
+     * Получает объект недвижимости по его идентификатору.
      *
      * @param id идентификатор объекта
-     * @return объект недвижимости в ResponseEntity
+     * @return ResponseEntity с объектом недвижимости в формате DTO
+     * @throws ObjectNotFoundException если объект не найден
      */
     public ResponseEntity<ObjectResponseDto> getObjectById(Long id) {
         log.info("Запрос на получение объекта с ID: {}", id);
@@ -107,10 +116,10 @@ public class ObjectService {
     }
 
     /**
-     * Получить объекты по типу и вернуть в виде DTO.
+     * Получает объекты недвижимости по их типу.
      *
-     * @param type тип объекта
-     * @return список объектов данного типа в формате DTO
+     * @param type тип объекта недвижимости
+     * @return Список объектов данного типа в формате DTO
      */
     public List<ObjectResponseDto> getObjectsByType(ObjectType type) {
         log.info("Запрос на получение объектов типа: {}", type);
@@ -121,10 +130,10 @@ public class ObjectService {
     }
 
     /**
-     * Получить дочерние объекты по ID родительского объекта и вернуть в виде DTO.
+     * Получает дочерние объекты для указанного родительского объекта.
      *
-     * @param parentId ID родительского объекта
-     * @return список дочерних объектов в формате DTO
+     * @param parentId идентификатор родительского объекта
+     * @return Список дочерних объектов в формате DTO
      */
     public List<ObjectResponseDto> getChildren(Long parentId) {
         log.info("Запрос на получение дочерних объектов для ID: {}", parentId);
@@ -135,11 +144,12 @@ public class ObjectService {
     }
 
     /**
-     * Обновить объект недвижимости.
+     * Обновляет объект недвижимости.
      *
-     * @param id            идентификатор объекта
-     * @param updatedObject новые данные объекта
-     * @return обновленный объект недвижимости
+     * @param id идентификатор объекта для обновления
+     * @param updatedObject DTO с новыми данными объекта
+     * @return Обновленный объект недвижимости в формате DTO
+     * @throws ObjectNotFoundException если объект с указанным ID не найден
      */
     public ObjectResponseDto updateObject(Long id, ObjectResponseDto updatedObject) {
         Assert.notNull(updatedObject, "Обновленный объект не должен быть null");
@@ -152,7 +162,7 @@ public class ObjectService {
                 .map(existing -> {
                     existing.setName(updatedObject.getName());
                     existing.setObjectType(updatedObject.getObjectType());
-                    
+
                     // Обновляем родительский объект
                     if (updatedObject.getParentId() != null) {
                         ObjectEntity parent = objectRepository.findById(updatedObject.getParentId())
@@ -161,7 +171,7 @@ public class ObjectService {
                     } else {
                         existing.setParent(null);
                     }
-                    
+
                     // Обновляем ответственного пользователя
                     if (updatedObject.getResponsibleUserId() != null) {
                         User responsibleUser = userRepository.findById(updatedObject.getResponsibleUserId())
@@ -170,7 +180,7 @@ public class ObjectService {
                     } else {
                         existing.setResponsibleUser(null);
                     }
-                    
+
                     ObjectEntity savedObject = objectRepository.save(existing);
                     log.info("Объект обновлен: {}", savedObject);
                     return objectMapper.toDto(savedObject);
@@ -182,9 +192,11 @@ public class ObjectService {
     }
 
     /**
-     * Удалить объект недвижимости.
+     * Удаляет объект недвижимости.
      *
-     * @param id идентификатор удаляемого объекта
+     * @param id идентификатор объекта для удаления
+     * @throws ObjectNotFoundException если объект с указанным ID не найден
+     * @throws IllegalStateException если объект имеет дочерние объекты и не может быть удален
      */
     public void deleteObject(Long id) {
         log.info("Запрос на удаление объекта с ID: {}", id);
@@ -207,16 +219,16 @@ public class ObjectService {
     }
 
     /**
-     * Получить все объекты, созданные текущим пользователем.
+     * Получает все объекты, созданные текущим пользователем.
      *
-     * @return список объектов, созданных текущим пользователем
+     * @return Список объектов, созданных текущим пользователем
      */
     public List<ObjectResponseDto> getCurrentUserObjects() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
             Optional<User> currentUser = userRepository.findByUsername(username);
-            
+
             if (currentUser.isPresent()) {
                 log.info("Получение объектов, созданных пользователем: {}", currentUser.get().getId());
                 List<ObjectEntity> entities = objectRepository.findByCreatedById(currentUser.get().getId());
@@ -228,6 +240,12 @@ public class ObjectService {
         return List.of();
     }
 
+    /**
+     * Получает все объекты, назначенные ответственным пользователем.
+     *
+     * @param userId идентификатор пользователя
+     * @return Список объектов, назначенных ответственным пользователем
+     */
     public List<ObjectResponseDto> getObjectsByResponsibleUser(Long userId) {
         log.info("Получение объектов для ответственного пользователя с ID: {}", userId);
         List<ObjectEntity> entities = objectRepository.findByResponsibleUserId(userId);
@@ -236,30 +254,46 @@ public class ObjectService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Назначает ответственным пользователем для указанного объекта.
+     *
+     * @param objectId идентификатор объекта
+     * @param userId идентификатор пользователя
+     * @return Обновленный объект с назначенным ответственным пользователем
+     * @throws ObjectNotFoundException если объект не найден
+     * @throws RuntimeException если пользователь не найден
+     */
     public ObjectResponseDto assignResponsibleUser(Long objectId, Long userId) {
         log.info("Назначение ответственного пользователя {} для объекта {}", userId, objectId);
-        
+
         ObjectEntity object = objectRepository.findById(objectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Объект не найден"));
-                
+
         User responsibleUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Ответственный пользователь не найден"));
-                
+
         object.setResponsibleUser(responsibleUser);
         ObjectEntity savedObject = objectRepository.save(object);
-        
+
         return objectMapper.toDto(savedObject);
     }
 
+    /**
+     * Удаляет ответственного пользователя для объекта недвижимости.
+     *
+     * @param objectId идентификатор объекта
+     * @return Обновленный объект с удаленным ответственным пользователем
+     * @throws ObjectNotFoundException если объект не найден
+     */
     public ObjectResponseDto removeResponsibleUser(Long objectId) {
         log.info("Удаление ответственного пользователя для объекта {}", objectId);
-        
+
         ObjectEntity object = objectRepository.findById(objectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Объект не найден"));
-                
+
         object.setResponsibleUser(null);
         ObjectEntity savedObject = objectRepository.save(object);
-        
+
         return objectMapper.toDto(savedObject);
     }
 }

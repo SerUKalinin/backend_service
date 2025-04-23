@@ -1,8 +1,6 @@
 package com.example.auth_service.controller;
 
-import com.example.auth_service.dto.ObjectRequestDto;
 import com.example.auth_service.dto.ObjectResponseDto;
-import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.ObjectType;
 import com.example.auth_service.service.ObjectService;
 import lombok.RequiredArgsConstructor;
@@ -11,12 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Контроллер для управления объектами недвижимости.
- * Предоставляет CRUD-операции для работы с объектами.
+ * <p>
+ * Предоставляет CRUD-операции, а также функциональность назначения ответственных пользователей
+ * и фильтрации объектов по различным критериям (тип, родитель, создатель).
+ * </p>
  */
 @Slf4j
 @RestController
@@ -53,7 +52,7 @@ public class ObjectController {
     /**
      * Получить объекты по их типу.
      *
-     * @param type тип объекта
+     * @param type тип объекта недвижимости (например, ЭТАЖ, КВАРТИРА и т.д.)
      * @return список объектов данного типа
      */
     @GetMapping("/by-type")
@@ -129,6 +128,12 @@ public class ObjectController {
         return ResponseEntity.ok(objects);
     }
 
+    /**
+     * Получить все объекты, за которые отвечает указанный пользователь.
+     *
+     * @param userId идентификатор пользователя
+     * @return список объектов, за которые отвечает пользователь
+     */
     @GetMapping("/by-responsible/{userId}")
     public ResponseEntity<List<ObjectResponseDto>> getObjectsByResponsibleUser(@PathVariable Long userId) {
         log.info("Запрос на получение объектов для ответственного пользователя: {}", userId);
@@ -136,6 +141,13 @@ public class ObjectController {
         return ResponseEntity.ok(objects);
     }
 
+    /**
+     * Назначить ответственного пользователя за объект недвижимости.
+     *
+     * @param id     идентификатор объекта
+     * @param userId идентификатор пользователя
+     * @return обновлённый объект недвижимости
+     */
     @PutMapping("/{id}/assign-responsible/{userId}")
     public ResponseEntity<ObjectResponseDto> assignResponsibleUser(
             @PathVariable Long id,
@@ -145,6 +157,12 @@ public class ObjectController {
         return ResponseEntity.ok(updatedObject);
     }
 
+    /**
+     * Удалить назначенного ответственного пользователя из объекта.
+     *
+     * @param id идентификатор объекта
+     * @return обновлённый объект недвижимости
+     */
     @PutMapping("/{id}/remove-responsible")
     public ResponseEntity<ObjectResponseDto> removeResponsibleUser(@PathVariable Long id) {
         log.info("Запрос на удаление ответственного пользователя для объекта {}", id);
