@@ -13,6 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.regex.Pattern;
 import java.util.Set;
 
+/**
+ * Сервис для обновления информации о пользователях.
+ * <p>
+ * Этот сервис предоставляет методы для обновления различных данных пользователей, таких как email, имя, фамилия, роль и статус активности.
+ * </p>
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,21 +27,39 @@ public class UserUpdateService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
+    /**
+     * Создает {@link UserDto} на основе данных пользователя.
+     *
+     * @param user объект пользователя
+     * @return {@link UserDto} с информацией о пользователе
+     */
     private UserDto createUserDto(com.example.auth_service.model.User user) {
         return new UserDto(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getFirstName(),
-            user.getLastName(),
-            user.getRoles().stream()
-                .findFirst()
-                .map(role -> role.getRoleType().toString())
-                .orElse("ROLE_USER"),
-            user.isActive()
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRoles().stream()
+                        .findFirst()
+                        .map(role -> role.getRoleType().toString())
+                        .orElse("ROLE_USER"),
+                user.isActive()
         );
     }
 
+    /**
+     * Обновить email пользователя.
+     * <p>
+     * Метод обновляет email пользователя по его ID. Проверяется правильность формата email и уникальность.
+     * </p>
+     *
+     * @param userId идентификатор пользователя
+     * @param email новый email
+     * @return обновленный {@link UserDto}
+     * @throws IllegalArgumentException если email имеет некорректный формат или уже используется другим пользователем
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateEmail(Long userId, String email) {
         log.info("Обновление почты пользователя с ID: {}", userId);
@@ -61,6 +85,18 @@ public class UserUpdateService {
                 });
     }
 
+    /**
+     * Обновить имя пользователя.
+     * <p>
+     * Метод обновляет имя пользователя по его ID. Проверяется, что имя не пустое и состоит хотя бы из 2 символов.
+     * </p>
+     *
+     * @param userId идентификатор пользователя
+     * @param firstName новое имя пользователя
+     * @return обновленный {@link UserDto}
+     * @throws IllegalArgumentException если имя пустое или короче 2 символов
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateFirstName(Long userId, String firstName) {
         log.info("Обновление имени пользователя с ID: {}", userId);
@@ -82,6 +118,18 @@ public class UserUpdateService {
                 });
     }
 
+    /**
+     * Обновить фамилию пользователя.
+     * <p>
+     * Метод обновляет фамилию пользователя по его ID. Проверяется, что фамилия не пустая и состоит хотя бы из 2 символов.
+     * </p>
+     *
+     * @param userId идентификатор пользователя
+     * @param lastName новая фамилия пользователя
+     * @return обновленный {@link UserDto}
+     * @throws IllegalArgumentException если фамилия пустая или короче 2 символов
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateLastName(Long userId, String lastName) {
         log.info("Обновление фамилии пользователя с ID: {}", userId);
@@ -103,6 +151,18 @@ public class UserUpdateService {
                 });
     }
 
+    /**
+     * Обновить роль пользователя.
+     * <p>
+     * Метод обновляет роль пользователя по его ID. Проверяется, что роль существует в системе.
+     * </p>
+     *
+     * @param userId идентификатор пользователя
+     * @param role новая роль пользователя
+     * @return обновленный {@link UserDto}
+     * @throws IllegalArgumentException если роль некорректна или не найдена
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateRole(Long userId, String role) {
         log.info("Обновление роли пользователя с ID: {}", userId);
@@ -127,10 +187,10 @@ public class UserUpdateService {
                     // Получаем новую роль из базы данных
                     Role newRole = roleRepository.findByRoleType(roleType)
                             .orElseThrow(() -> new IllegalArgumentException("Роль не найдена"));
-                    
+
                     // Обновляем роли пользователя
                     user.setRoles(Set.of(newRole));
-                    
+
                     return createUserDto(user);
                 })
                 .orElseThrow(() -> {
@@ -139,6 +199,17 @@ public class UserUpdateService {
                 });
     }
 
+    /**
+     * Обновить статус активности пользователя.
+     * <p>
+     * Метод обновляет статус активности пользователя по его ID.
+     * </p>
+     *
+     * @param userId идентификатор пользователя
+     * @param active новый статус активности
+     * @return обновленный {@link UserDto}
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateActiveStatus(Long userId, boolean active) {
         log.info("Обновление статуса активности пользователя с ID: {}", userId);
