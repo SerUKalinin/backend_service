@@ -23,7 +23,8 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         String[] allowedOrigins = {
                 "http://localhost:5173",
-                "http://localhost:63342"
+                "http://localhost:63342",
+                "http://localhost:3000",
         };
 
         if (allowedOrigins.length == 0) {
