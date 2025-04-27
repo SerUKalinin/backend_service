@@ -20,6 +20,8 @@ databaseChangeLog:
   - include:
       file: 007_add_responsible_user_to_objects.sql
       relativeToChangelogFile: true
-
+  - include:
+      file: 008_create_refresh_tokens.sql
+      relativeToChangelogFile: true
 
 

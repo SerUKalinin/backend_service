@@ -12,6 +12,7 @@ import com.example.auth_service.service.SessionService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,10 +91,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
-
-        AuthResponse authResponse = authService.login(userSigninDto);
-        authService.addJwtToCookie(authResponse.getJwtToken(), response);
-
+        AuthResponse authResponse = authService.login(userSigninDto, response);
         return ResponseEntity.ok(authResponse);
     }
 
@@ -103,14 +101,15 @@ public class AuthController {
      * Доступ ограничен: не более 10 запросов в минуту с одного IP.
      * </p>
      *
-     * @param authHeader Заголовок Authorization с токеном.
+     * @param request HTTP-запрос, содержащий cookie с токеном.
+     * @param response HTTP-ответ, в который удаляется cookie с токеном.
      */
     @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@RequestHeader("Authorization") String authHeader) {
-        log.info("Выход пользователя, токен: {}", authHeader);
-        authService.logout(authHeader);
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        log.info("Выход пользователя (refresh token из cookie)");
+        authService.logout(request, response);
     }
 
     /**
@@ -156,31 +155,30 @@ public class AuthController {
      * Доступ ограничен: не более 10 запросов в минуту с одного IP.
      * </p>
      *
-     * @param authHeader Заголовок Authorization с текущим токеном.
+     * @param request HTTP-запрос, содержащий cookie с токеном.
+     * @param response HTTP-ответ, в который добавляется cookie с новым токеном.
      * @return Ответ с новым токеном или статус 401, если обновление невозможно.
      */
     @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String authHeader) {
-        log.info("Запрос на обновление токена");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
-                String username = decodedJWT.getSubject();
-
-                if (sessionService.isSessionValid(username, token)) {
-                    sessionService.refreshSession(username, Duration.ofHours(2));
-                    log.info("Токен успешно обновлен для пользователя: {}", username);
-                    return ResponseEntity.ok(new AuthResponse(token));
+    public ResponseEntity<AuthResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
                 }
-            } catch (Exception e) {
-                log.error("Ошибка при обновлении токена: {}", e.getMessage());
             }
         }
-        log.warn("Не удалось обновить токен");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        AuthResponse authResponse = authService.refreshAccessToken(refreshToken, response);
+        if (authResponse == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(authResponse);
     }
 
     /**
@@ -253,3 +251,4 @@ public class AuthController {
     }
 
 }
+
