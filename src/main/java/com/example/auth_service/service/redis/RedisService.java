@@ -1,6 +1,7 @@
 package com.example.auth_service.service.redis;
 
 import com.example.auth_service.repository.redis.RedisPasswordResetTokenRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -149,6 +150,7 @@ public class RedisService {
         return false;
     }
 
+    @Transactional
     // Удаляет refresh token для пользователя (Redis + БД)
     public void deleteRefreshToken(String username, String refreshToken) {
         String key = "refresh:" + username + ":" + refreshToken;

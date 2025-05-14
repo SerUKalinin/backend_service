@@ -304,7 +304,7 @@ public class AuthService {
         redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
 
         // Формирование ссылки для сброса пароля
-        String resetLink = "http://localhost:3000/reset-password?token=" + token;
+        String resetLink = "http://localhost:3000/set-new-password?token=" + token;
         // Отправка письма со ссылкой
         emailService.sendPasswordResetEmail(email, resetLink);
 
