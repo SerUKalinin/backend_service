@@ -59,7 +59,6 @@ public class UserInfoController {
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDto>> getAllUsersInfo() {
-        log.info("Запрос списка всех пользователей администратором");
         List<UserDto> allUsersInfo = userInfoService.getAllUserInfo();
         return ResponseEntity.ok(allUsersInfo);
     }
@@ -77,7 +76,6 @@ public class UserInfoController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
-        log.info("Администратор запросил информацию о пользователе с ID: {}", id);
         UserDto userById = userInfoService.getUserById(id);
         return ResponseEntity.ok(userById);
     }
