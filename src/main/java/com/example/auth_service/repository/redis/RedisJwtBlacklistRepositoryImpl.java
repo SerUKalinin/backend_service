@@ -33,9 +33,6 @@ public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
             throw new IllegalArgumentException("Ключ не может быть пустым.");
         }
 
-        // Логирование сохранения
-        log.info("Сохраняем значение в Redis: ключ = {}, значение = {}", key, value);
-
         this.redisTemplate.opsForValue().set(key, value);
         expireAt(key, date);
     }
@@ -56,9 +53,6 @@ public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
             throw new IllegalArgumentException("Дата истечения не может быть пустой.");
         }
 
-        // Логирование установки времени истечения
-        log.info("Устанавливаем время истечения для ключа = {} на дату = {}", key, date);
-
         redisTemplate.expireAt(key, date);
     }
 
@@ -75,9 +69,6 @@ public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
             throw new IllegalArgumentException("Ключ не может быть пустым.");
         }
 
-        // Логирование проверки существования ключа
-        log.info("Проверка существования ключа в Redis: ключ = {}", key);
-
         return this.redisTemplate.hasKey(key);
     }
 
@@ -93,9 +84,6 @@ public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
         if (key == null || key.isBlank()) {
             throw new IllegalArgumentException("Ключ не может быть пустым.");
         }
-
-        // Логирование получения значения
-        log.info("Получаем значение для ключа из Redis: ключ = {}", key);
 
         return this.redisTemplate.opsForValue().get(key);
     }
@@ -132,7 +120,7 @@ public class RedisJwtBlacklistRepositoryImpl implements RedisRepository {
             if (token != null) {
                 redisTemplate.opsForHash().put(key, "expiry", String.valueOf(System.currentTimeMillis() + duration.toMillis()));
                 redisTemplate.expire(key, duration);
-                log.info("Сессия пользователя {} обновлена на {}", username, duration);
+                log.debug("Сессия пользователя {} обновлена на {}", username, duration);
             }
         }
     }

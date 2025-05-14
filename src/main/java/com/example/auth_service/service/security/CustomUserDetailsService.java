@@ -5,11 +5,14 @@ import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Сервис для загрузки данных пользователя для аутентификации.
@@ -25,29 +28,29 @@ public class CustomUserDetailsService implements UserDetailsService {
     /**
      * Загружает пользователя по имени пользователя или email.
      *
-     * @param identifier Логин или email пользователя.
+     * @param username Логин или email пользователя.
      * @return Объект UserDetails.
-     * @throws UserNotFoundException Если пользователь с таким идентификатором не найден.
+     * @throws UsernameNotFoundException Если пользователь с таким идентификатором не найден.
      */
     @Override
-    public UserDetails loadUserByUsername(String identifier) {
-        log.info("Попытка загрузить пользователя с идентификатором: {}", identifier);
-
-        // Проверяем, является ли идентификатор почтой
-        Optional<User> userOptional;
-        if (identifier.contains("@")) {
-            userOptional = userRepository.findByEmail(identifier);  // поиск по email
-        } else {
-            userOptional = userRepository.findByUsername(identifier);  // поиск по username
-        }
-
-        User user = userOptional.orElseThrow(() -> {
-            log.error("Пользователь с идентификатором {} не найден", identifier);
-            return new UserNotFoundException("Пользователь не найден: " + identifier);
-        });
-
-        log.info("Пользователь с идентификатором {} найден", identifier);
-
-        return new CustomUserDetails(user.getUsername(), user.getPassword(), user.getRoles());
+    @Cacheable(value = "userDetails", key = "#username")
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("Попытка загрузить пользователя с идентификатором: {}", username);
+        
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        
+        log.info("Пользователь с идентификатором {} найден", username);
+        
+        var authorities = user.getRoles().stream()
+                .map(role -> {
+                    log.info("Добавление роли {} для пользователя {}", role.getRoleType(), username);
+                    return new SimpleGrantedAuthority(role.getRoleType().name());
+                })
+                .collect(Collectors.toList());
+        
+        log.info("Пользователь {} имеет роли: {}", username, authorities);
+        
+        return new CustomUserDetails(user, authorities);
     }
 }

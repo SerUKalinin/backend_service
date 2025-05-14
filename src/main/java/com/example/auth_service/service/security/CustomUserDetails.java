@@ -1,27 +1,28 @@
 package com.example.auth_service.service.security;
 
-import com.example.auth_service.model.Role;
-import lombok.AllArgsConstructor;
+import com.example.auth_service.model.User;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Кастомный класс для хранения данных пользователя, который реализует интерфейс {@link UserDetails}.
  * Используется для работы с Spring Security.
  */
 @Slf4j
-@AllArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-    private final String username;
-    private final String password;
-    private final Set<Role> roles;
+    @Getter
+    private final User user;
+    private final Collection<? extends GrantedAuthority> authorities;
+
+    public CustomUserDetails(User user, Collection<? extends GrantedAuthority> authorities) {
+        this.user = user;
+        this.authorities = authorities;
+    }
 
     /**
      * Возвращает роли пользователя в виде коллекции {@link GrantedAuthority}.
@@ -31,20 +32,6 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (roles == null || roles.isEmpty()) {
-            log.error("Пользователь {} не имеет назначенных ролей!", username);
-            throw new IllegalStateException("Пользователю должна быть назначена хотя бы одна роль.");
-        }
-        
-        Collection<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(role -> {
-                    String roleType = role.getRoleType().toString();
-                    log.info("Добавление роли {} для пользователя {}", roleType, username);
-                    return new SimpleGrantedAuthority(roleType);
-                })
-                .collect(Collectors.toList());
-                
-        log.info("Пользователь {} имеет роли: {}", username, authorities);
         return authorities;
     }
 
@@ -55,7 +42,7 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public String getPassword() {
-        return password;
+        return user.getPassword();
     }
 
     /**
@@ -65,7 +52,7 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public String getUsername() {
-        return username;
+        return user.getUsername();
     }
 
     /**
@@ -105,6 +92,6 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public boolean isEnabled() {
-        return true;
+        return user.isActive();
     }
 }

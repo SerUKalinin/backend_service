@@ -2,9 +2,11 @@ package com.example.auth_service.service.user;
 
 import com.example.auth_service.dto.UserDto;
 import com.example.auth_service.exception.UserNotFoundException;
+import com.example.auth_service.model.User;
 import com.example.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,6 +36,7 @@ public class UserInfoService {
      * @return {@link UserDto} с информацией о пользователе
      * @throws UserNotFoundException если пользователь с указанным именем не найден
      */
+    @Cacheable(value = "userInfo", key = "#username")
     public UserDto getUserInfo(String username) {
         log.info("Запрос информации пользователя: {}", username);
         return userRepository.findByUsername(username)

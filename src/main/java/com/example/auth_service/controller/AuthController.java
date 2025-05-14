@@ -238,7 +238,7 @@ public class AuthController {
                 String username = decodedJWT.getSubject();
 
                 if (sessionService.isSessionValid(username, token)) {
-                    sessionService.refreshSession(username, Duration.ofHours(2));
+                    sessionService.updateSession(username, token, Duration.ofHours(2));
                     log.info("Токен успешно валидирован для пользователя: {}", username);
                     return ResponseEntity.ok().build();
                 }

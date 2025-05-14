@@ -43,7 +43,6 @@ public class UserInfoController {
     @GetMapping
     public ResponseEntity<UserDto> getUserInfo(Authentication authentication) {
         String username = authentication.getName();
-        log.info("Запрос информации о пользователе: {}", username);
         UserDto userInfo = userInfoService.getUserInfo(username);
         return ResponseEntity.ok(userInfo);
     }

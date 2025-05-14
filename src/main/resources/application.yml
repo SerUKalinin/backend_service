@@ -35,6 +35,18 @@ spring:
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
 
+logging:
+  level:
+    root: INFO
+    com.example.auth_service:
+      service: DEBUG
+      config: DEBUG
+      controller: INFO
+      repository: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
 auth_service:
   issuer: auth_service
   jwtSecret: mySecretKey

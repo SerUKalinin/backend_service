@@ -140,7 +140,7 @@ public class AuthService {
             throw new UserNotActivatedException("Пользователь не активирован. Пожалуйста, подтвердите ваш email.");
         }
         String accessToken = jwtUtil.generateToken(
-                user.getUsername(),
+                user,
                 user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
                         .collect(Collectors.toList())
@@ -200,10 +200,10 @@ public class AuthService {
 
         // Генерация JWT токена
         String token = jwtUtil.generateToken(
-                user.getUsername(),
+                user,
                 user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                        .collect(Collectors.toList()) // Собираем в список GrantedAuthority
+                        .collect(Collectors.toList())
         );
 
         // Сохраняем сессию в Redis
@@ -340,10 +340,12 @@ public class AuthService {
             log.info("Пароль для пользователя {} успешно сброшен", username);
 
             // Генерация нового токена и возвращение в AuthResponse
-            String newToken = jwtUtil.generateToken(user.getUsername(), user.getRoles()
-                    .stream()
-                    .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                    .collect(Collectors.toList()));
+            String newToken = jwtUtil.generateToken(
+                    user,
+                    user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                            .collect(Collectors.toList())
+            );
 
             return new AuthResponse(newToken);
 
@@ -429,7 +431,7 @@ public class AuthService {
                 });
 
         String accessToken = jwtUtil.generateToken(
-                user.getUsername(),
+                user,
                 user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
                         .collect(Collectors.toList())
