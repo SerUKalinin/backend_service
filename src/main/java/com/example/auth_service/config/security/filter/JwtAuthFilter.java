@@ -56,31 +56,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
                 String username = decodedJWT.getSubject();
-                String roles = decodedJWT.getClaim("roles").asString();
-                log.info("Декодированный JWT - username: {}, roles: {}", username, roles);
 
                 // Проверяем, не истек ли токен
                 if (decodedJWT.getExpiresAt().before(new Date())) {
-                    log.warn("Токен истек: {}", token);
+                    log.warn("Токен истек");
                     throw new JWTVerificationException("Токен истек");
                 }
 
                 // Проверяем, не находится ли токен в черном списке
                 if (redisRepository.isExists(token)) {
-                    log.warn("Токен находится в черном списке: {}", token);
+                    log.warn("Токен находится в черном списке");
                     throw new JWTVerificationException("Токен находится в черном списке");
                 }
 
                 // Проверяем валидность сессии
                 if (!sessionService.isSessionValid(username, token)) {
-                    log.warn("Сессия недействительна для пользователя: {}", username);
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    return;
-                }
-
-                // Проверяем, не истекла ли сессия
-                if (sessionService.isSessionExpired(username)) {
-                    log.warn("Сессия истекла для пользователя: {}", username);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
@@ -96,10 +86,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // Устанавливаем аутентификацию в контекст безопасности
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                // Обновляем время жизни сессии
-                sessionService.refreshSession(username, Duration.ofHours(2));
+                // Обновляем сессию
+                sessionService.updateSession(username, token, Duration.ofHours(2));
 
-                log.info("Успешная аутентификация для пользователя: {}", username);
+                log.debug("Успешная аутентификация для пользователя: {}", username);
             } catch (JWTVerificationException e) {
                 log.error("Ошибка верификации JWT: {}", e.getMessage());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

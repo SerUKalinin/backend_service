@@ -28,6 +28,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import java.time.Duration;
 import java.util.Set;
@@ -118,47 +121,40 @@ public class AuthService {
      * @throws UserNotFoundException Если пользователь с таким именем не найден.
      * @throws UserNotActivatedException Если пользователь не активирован.
      */
-    public AuthResponse login(UserSigninDto userSigninDto) {
+    public AuthResponse login(UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Попытка входа в систему для пользователя {}", userSigninDto.getUsername());
-
-        // Проверка, если введенный username является email
         String usernameOrEmail = userSigninDto.getUsername();
         User user;
-
-        if (usernameOrEmail.contains("@")) {  // Если это email
+        if (usernameOrEmail.contains("@")) {
             user = userRepository.findByEmail(usernameOrEmail)
                     .orElseThrow(() -> new UserNotFoundException("Пользователь с таким email не найден"));
-        } else {  // Если это логин
+        } else {
             user = userRepository.findByUsername(usernameOrEmail)
                     .orElseThrow(() -> new UserNotFoundException("Пользователь с таким логином не найден"));
         }
-
-        // Аутентификация пользователя через Spring Security
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), userSigninDto.getPassword())
         );
-
-        // Проверка активности пользователя
         if (!user.isActive()) {
             log.warn("Пользователь {} не активирован", userSigninDto.getUsername());
             throw new UserNotActivatedException("Пользователь не активирован. Пожалуйста, подтвердите ваш email.");
         }
-
-        // Генерация JWT токена
-        String token = jwtUtil.generateToken(
-                user.getUsername(),
+        String accessToken = jwtUtil.generateToken(
+                user,
                 user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                        .collect(Collectors.toList()) // Собираем в список GrantedAuthority
+                        .collect(Collectors.toList())
         );
-
-        // Сохраняем сессию в Redis
-        sessionService.saveSession(user.getUsername(), token, Duration.ofHours(2));
-
+        // Генерация refresh token
+        String refreshToken = UUID.randomUUID().toString();
+        // Сохраняем refresh token в Redis
+        saveRefreshToken(user.getUsername(), refreshToken, Duration.ofDays(7));
+        // Устанавливаем refresh token в cookie
+        addRefreshTokenToCookie(refreshToken, response);
+        // Сохраняем access token в сессии (если нужно)
+        sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));
         log.info("Пользователь {} успешно авторизован", userSigninDto.getUsername());
-
-        // Возвращаем объект AuthResponse, а не просто строку
-        return new AuthResponse(token);
+        return new AuthResponse(accessToken);
     }
 
     public void addJwtToCookie(String token, HttpServletResponse response) {
@@ -204,10 +200,10 @@ public class AuthService {
 
         // Генерация JWT токена
         String token = jwtUtil.generateToken(
-                user.getUsername(),
+                user,
                 user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                        .collect(Collectors.toList()) // Собираем в список GrantedAuthority
+                        .collect(Collectors.toList())
         );
 
         // Сохраняем сессию в Redis
@@ -222,18 +218,30 @@ public class AuthService {
     /**
      * Выполняет выход пользователя из системы.
      *
-     * @param authHeader Заголовок Authorization, содержащий JWT токен.
      */
-    public void logout(String authHeader) {
-        String token = extractTokenFromAuthHeader(authHeader);
-        if (token == null) {
-            log.warn("JWT токен отсутствует или имеет неверный формат");
-            throw new IllegalArgumentException("Неверный формат токена");
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
         }
-
-        log.info("Попытка выхода пользователя с токеном {}", token);
-        jwtUtil.addJwtToBlacklist(token);
-        log.info("Пользователь с токеном {} успешно вышел из системы", token);
+        if (refreshToken != null) {
+            String username = redisService.findUsernameByRefreshToken(refreshToken);
+            if (username != null) {
+                deleteRefreshToken(username, refreshToken);
+            }
+        }
+        // Удалить cookie у клиента
+        Cookie cookie = new Cookie("refreshToken", "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
     /**
@@ -296,7 +304,7 @@ public class AuthService {
         redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
 
         // Формирование ссылки для сброса пароля
-        String resetLink = "http://localhost:5175/reset-password?token=" + token;
+        String resetLink = "http://localhost:3000/reset-password?token=" + token;
         // Отправка письма со ссылкой
         emailService.sendPasswordResetEmail(email, resetLink);
 
@@ -332,10 +340,12 @@ public class AuthService {
             log.info("Пароль для пользователя {} успешно сброшен", username);
 
             // Генерация нового токена и возвращение в AuthResponse
-            String newToken = jwtUtil.generateToken(user.getUsername(), user.getRoles()
-                    .stream()
-                    .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                    .collect(Collectors.toList()));
+            String newToken = jwtUtil.generateToken(
+                    user,
+                    user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                            .collect(Collectors.toList())
+            );
 
             return new AuthResponse(newToken);
 
@@ -343,5 +353,99 @@ public class AuthService {
             log.error("Ошибка при сбросе пароля: {}", e.getMessage());
             throw new AuthException("Ошибка при сбросе пароля");
         }
+    }
+
+    /**
+     * Добавляет refresh token в HttpOnly cookie с настройками безопасности.
+     *
+     * @param refreshToken refresh токен, который нужно сохранить в cookie
+     * @param response     HTTP-ответ, в который добавляется cookie
+     */
+    public void addRefreshTokenToCookie(String refreshToken, HttpServletResponse response) {
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true); // Только по HTTPS
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge((int) Duration.ofDays(7).getSeconds());
+
+        response.addCookie(refreshTokenCookie);
+
+        log.debug("Добавлен refresh token в cookie: имя = {}, срок жизни = {} секунд",
+                refreshTokenCookie.getName(), refreshTokenCookie.getMaxAge());
+    }
+
+    /**
+     * Сохраняет refresh токен в Redis с указанным временем жизни.
+     *
+     * @param username     имя пользователя
+     * @param refreshToken refresh токен
+     * @param duration     время жизни токена
+     */
+    public void saveRefreshToken(String username, String refreshToken, Duration duration) {
+        redisService.saveRefreshToken(username, refreshToken, duration);
+        log.debug("Сохранён refresh token для пользователя: {} на срок {} секунд", username, duration.getSeconds());
+    }
+
+    /**
+     * Проверяет наличие и валидность refresh токена в Redis.
+     *
+     * @param username     имя пользователя
+     * @param refreshToken refresh токен
+     * @return true, если токен валиден, иначе false
+     */
+    public boolean isRefreshTokenValid(String username, String refreshToken) {
+        boolean valid = redisService.isRefreshTokenValid(username, refreshToken);
+        log.debug("Проверка валидности refresh token для пользователя {}: {}", username, valid);
+        return valid;
+    }
+
+    /**
+     * Удаляет refresh токен из Redis.
+     *
+     * @param username     имя пользователя
+     * @param refreshToken refresh токен
+     */
+    public void deleteRefreshToken(String username, String refreshToken) {
+        redisService.deleteRefreshToken(username, refreshToken);
+        log.debug("Удалён refresh token для пользователя: {}", username);
+    }
+
+    /**
+     * Обновляет access токен на основе переданного refresh токена из cookie.
+     *
+     * @param refreshToken refresh токен из cookie
+     * @param response     HTTP-ответ для установки новой cookie
+     * @return новый access токен в обёртке AuthResponse или null, если refresh токен недействителен
+     */
+    public AuthResponse refreshAccessToken(String refreshToken, HttpServletResponse response) {
+        String username = redisService.findUsernameByRefreshToken(refreshToken);
+        if (username == null || !isRefreshTokenValid(username, refreshToken)) {
+            log.warn("Попытка обновления токена: refresh token невалиден или не найден");
+            return null;
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.error("Пользователь с именем {} не найден при обновлении токена", username);
+                    return new UserNotFoundException("Пользователь не найден");
+                });
+
+        String accessToken = jwtUtil.generateToken(
+                user,
+                user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
+                        .collect(Collectors.toList())
+        );
+        log.debug("Сгенерирован новый access token для пользователя: {}", username);
+
+        // Ротация refresh токена
+        String newRefreshToken = UUID.randomUUID().toString();
+        saveRefreshToken(user.getUsername(), newRefreshToken, Duration.ofDays(7));
+        addRefreshTokenToCookie(newRefreshToken, response);
+        deleteRefreshToken(user.getUsername(), refreshToken);
+        sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));
+
+        log.info("Успешное обновление access и refresh токенов для пользователя: {}", username);
+        return new AuthResponse(accessToken);
     }
 }

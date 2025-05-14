@@ -8,6 +8,12 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 import java.time.Duration;
 import com.example.auth_service.model.PasswordResetToken;
+import java.util.Set;
+import com.example.auth_service.model.RefreshToken;
+import com.example.auth_service.repository.RefreshTokenRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Сервис для работы с Redis.
@@ -20,6 +26,7 @@ public class RedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisPasswordResetTokenRepository passwordResetTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private static final String PASSWORD_RESET_TOKEN_PREFIX = "password_reset:";
 
@@ -108,5 +115,60 @@ public class RedisService {
     public void deletePasswordResetToken(String email) {
         String key = PASSWORD_RESET_TOKEN_PREFIX + email;
         passwordResetTokenRepository.deleteById(key);
+    }
+
+    // Сохраняет refresh token для пользователя (Redis + БД)
+    public void saveRefreshToken(String username, String refreshToken, Duration duration) {
+        String key = "refresh:" + username + ":" + refreshToken;
+        redisTemplate.opsForValue().set(key, username, duration.getSeconds(), TimeUnit.SECONDS);
+        // БД
+        RefreshToken entity = RefreshToken.builder()
+            .username(username)
+            .token(refreshToken)
+            .expiresAt(LocalDateTime.now().plusSeconds(duration.getSeconds()))
+            .createdAt(LocalDateTime.now())
+            .build();
+        refreshTokenRepository.save(entity);
+    }
+
+    // Проверяет, существует ли refresh token для пользователя (Redis + БД)
+    public boolean isRefreshTokenValid(String username, String refreshToken) {
+        String key = "refresh:" + username + ":" + refreshToken;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+        // Если не найдено в Redis — ищем в БД
+        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(refreshToken);
+        if (tokenOpt.isPresent() && tokenOpt.get().getUsername().equals(username)
+            && tokenOpt.get().getExpiresAt().isAfter(LocalDateTime.now())) {
+            // Восстанавливаем в Redis
+            Duration duration = Duration.between(LocalDateTime.now(), tokenOpt.get().getExpiresAt());
+            redisTemplate.opsForValue().set(key, username, duration.getSeconds(), TimeUnit.SECONDS);
+            return true;
+        }
+        return false;
+    }
+
+    // Удаляет refresh token для пользователя (Redis + БД)
+    public void deleteRefreshToken(String username, String refreshToken) {
+        String key = "refresh:" + username + ":" + refreshToken;
+        redisTemplate.delete(key);
+        refreshTokenRepository.deleteByToken(refreshToken);
+    }
+
+    // Находит username по refresh token (поиск по шаблону, только Redis)
+    public String findUsernameByRefreshToken(String refreshToken) {
+        String pattern = "refresh:*:" + refreshToken;
+        Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            String key = keys.iterator().next();
+            String[] parts = key.split(":");
+            if (parts.length >= 3) {
+                return parts[1];
+            }
+        }
+        // Если не найдено в Redis — ищем в БД
+        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(refreshToken);
+        return tokenOpt.map(RefreshToken::getUsername).orElse(null);
     }
 }

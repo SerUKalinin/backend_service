@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.example.auth_service.model.User;
 import com.example.auth_service.repository.redis.RedisJwtBlacklistRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j  // Добавление логирования
+@Slf4j
 public class JwtUtil {
 
     @Value("${auth_service.jwtSecret}")
@@ -61,7 +62,7 @@ public class JwtUtil {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
                 
-        log.info("Генерация токена для пользователя {} с ролями: {}", username, roles);
+        log.debug("Генерация токена для пользователя {} с ролями: {}", username, roles);
         
         String token = JWT.create()
                 .withSubject(username)
@@ -71,7 +72,46 @@ public class JwtUtil {
                 .withExpiresAt(new Date(System.currentTimeMillis() + jwtLifeTimeDuration))
                 .sign(Algorithm.HMAC256(jwtSecret));
 
-        log.info("Токен успешно сгенерирован для пользователя: {}", username);
+        return token;
+    }
+
+    /**
+     * Генерирует JWT токен для указанного пользователя с расширенной информацией.
+     *
+     * @param user Пользователь для которого генерируется токен.
+     * @param authorities Привилегии пользователя.
+     * @return Сгенерированный JWT токен.
+     * @throws IllegalArgumentException Если {@code user} или {@code authorities} пусты или null.
+     */
+    public String generateToken(User user, Collection<? extends GrantedAuthority> authorities) {
+        if (user == null) {
+            log.error("Пользователь не может быть нулевым");
+            throw new IllegalArgumentException("Пользователь не может быть нулевым");
+        }
+        if (authorities == null || authorities.isEmpty()) {
+            log.error("Полномочия не могут быть нулевыми или пустыми");
+            throw new IllegalArgumentException("Полномочия не могут быть нулевыми или пустыми");
+        }
+
+        String roles = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+                
+        log.debug("Генерация расширенного токена для пользователя {} с ролями: {}", user.getUsername(), roles);
+        
+        String token = JWT.create()
+                .withSubject(user.getUsername())
+                .withIssuer(issuer)
+                .withClaim("roles", roles)
+                .withClaim("userId", user.getId())
+                .withClaim("email", user.getEmail())
+                .withClaim("firstName", user.getFirstName())
+                .withClaim("lastName", user.getLastName())
+                .withClaim("active", user.isActive())
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + jwtLifeTimeDuration))
+                .sign(Algorithm.HMAC256(jwtSecret));
+
         return token;
     }
 
@@ -100,7 +140,6 @@ public class JwtUtil {
                 log.warn("Токен истек");
                 return false;
             }
-            log.info("Токен валиден");
             return true;
         } catch (IllegalArgumentException e) {
             log.error("Некорректный токен: {}", e.getMessage());
@@ -120,7 +159,7 @@ public class JwtUtil {
         Date expirationDate = decodedJWT.getExpiresAt();
         if (expirationDate != null) {
             redisRepository.save(token, "blacklisted", expirationDate);
-            log.info("Токен добавлен в черный список: {}", token);
+            log.debug("Токен добавлен в черный список");
         } else {
             log.warn("Не удалось добавить токен в черный список, так как его срок действия истек");
         }
@@ -145,7 +184,7 @@ public class JwtUtil {
                     .withIssuer(issuer)
                     .build();
             DecodedJWT decodedJWT = verifier.verify(token);
-            log.info("Токен успешно декодирован");
+            log.debug("Токен успешно декодирован");
             return decodedJWT;
         } catch (JWTVerificationException e) {
             log.error("Недопустимый токен: {}", e.getMessage());
