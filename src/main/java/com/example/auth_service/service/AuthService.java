@@ -154,7 +154,7 @@ public class AuthService {
         // Сохраняем access token в сессии (если нужно)
         sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));
         log.info("Пользователь {} успешно авторизован", userSigninDto.getUsername());
-        return new AuthResponse(accessToken);
+        return new AuthResponse(accessToken, refreshToken);
     }
 
     public void addJwtToCookie(String token, HttpServletResponse response) {
@@ -211,8 +211,12 @@ public class AuthService {
 
         log.info("Пользователь {} успешно активирован и авторизован", email);
 
-        // Возвращаем объект AuthResponse с токеном
-        return new AuthResponse(token);
+        // Генерация refresh token
+        String refreshToken = UUID.randomUUID().toString();
+        saveRefreshToken(user.getUsername(), refreshToken, Duration.ofDays(7));
+
+        // Возвращаем объект AuthResponse с токенами
+        return new AuthResponse(token, refreshToken);
     }
 
     /**
@@ -304,7 +308,7 @@ public class AuthService {
         redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
 
         // Формирование ссылки для сброса пароля
-        String resetLink = "http://localhost:3000/set-new-password?token=" + token;
+        String resetLink = "http://localhost:3000/reset-password?token=" + token;
         // Отправка письма со ссылкой
         emailService.sendPasswordResetEmail(email, resetLink);
 
@@ -347,7 +351,16 @@ public class AuthService {
                             .collect(Collectors.toList())
             );
 
-            return new AuthResponse(newToken);
+            // Генерация refresh token
+            String refreshToken = UUID.randomUUID().toString();
+            
+            // Сохраняем refresh token в Redis
+            saveRefreshToken(user.getUsername(), refreshToken, Duration.ofDays(7));
+
+            // Создаем новую сессию для пользователя
+            sessionService.saveSession(username, newToken, Duration.ofHours(2));
+
+            return new AuthResponse(newToken, refreshToken);
 
         } catch (Exception e) {
             log.error("Ошибка при сбросе пароля: {}", e.getMessage());
@@ -446,6 +459,6 @@ public class AuthService {
         sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));
 
         log.info("Успешное обновление access и refresh токенов для пользователя: {}", username);
-        return new AuthResponse(accessToken);
+        return new AuthResponse(accessToken, newRefreshToken);
     }
 }

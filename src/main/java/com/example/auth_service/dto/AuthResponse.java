@@ -18,4 +18,17 @@ public class AuthResponse {
      * JWT-токен, который клиент получает после успешной аутентификации.
      */
     private String jwtToken;
+
+    /**
+     * Refresh токен для обновления JWT-токена.
+     */
+    private String refreshToken;
+
+    /**
+     * Конструктор для обратной совместимости.
+     */
+    public AuthResponse(String jwtToken) {
+        this.jwtToken = jwtToken;
+        this.refreshToken = null;
+    }
 }

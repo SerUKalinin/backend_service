@@ -47,7 +47,12 @@ public class RateLimitAspect {
         
         if (currentCount > rateLimit.value()) {
             log.warn("Rate limit exceeded for key: {}", key);
-            throw new RateLimitExceededException("Rate limit exceeded. Try again later.");
+            String operationKey = rateLimit.key().isEmpty() ? 
+                joinPoint.getSignature().getName() : rateLimit.key();
+            throw new RateLimitExceededException(
+                String.format("Превышен лимит запросов (%d запросов за %d секунд) для операции %s. Пожалуйста, подождите.", 
+                    rateLimit.value(), rateLimit.timeWindow(), operationKey)
+            );
         }
         
         return joinPoint.proceed();
