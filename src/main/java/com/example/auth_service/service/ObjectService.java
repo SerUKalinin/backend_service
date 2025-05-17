@@ -296,4 +296,35 @@ public class ObjectService {
 
         return objectMapper.toDto(savedObject);
     }
+
+    /**
+     * Получает дерево объектов недвижимости.
+     * Возвращает список объектов, где каждый объект содержит информацию о своих дочерних объектах.
+     *
+     * @return список объектов с их дочерними элементами
+     */
+    public List<ObjectResponseDto> getObjectTree() {
+        log.info("Получение дерева объектов");
+        List<ObjectEntity> rootObjects = objectRepository.findByParentIsNull();
+        return rootObjects.stream()
+                .map(this::buildObjectTree)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Рекурсивно строит дерево объектов, начиная с корневого объекта.
+     *
+     * @param root корневой объект
+     * @return объект с информацией о дочерних элементах
+     */
+    private ObjectResponseDto buildObjectTree(ObjectEntity root) {
+        ObjectResponseDto dto = objectMapper.toDto(root);
+        List<ObjectEntity> children = objectRepository.findByParentId(root.getId());
+        if (!children.isEmpty()) {
+            dto.setChildren(children.stream()
+                    .map(this::buildObjectTree)
+                    .collect(Collectors.toList()));
+        }
+        return dto;
+    }
 }

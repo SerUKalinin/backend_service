@@ -84,6 +84,8 @@ public class AuthService {
         user.setEmail(userSignupDto.getEmail());
         user.setPassword(passwordEncoder.encode(userSignupDto.getPassword()));
         user.setActive(false); // Устанавливаем флаг активности в false
+        user.setFirstName(userSignupDto.getFirstName()); // Устанавливаем имя
+        user.setLastName(userSignupDto.getLastName()); // Устанавливаем фамилию
 
         // Назначение роли для пользователя
         Role.RoleType roleType = isAdmin ? Role.RoleType.ROLE_ADMIN : Role.RoleType.ROLE_USER;
@@ -149,7 +151,8 @@ public class AuthService {
         String refreshToken = UUID.randomUUID().toString();
         // Сохраняем refresh token в Redis
         saveRefreshToken(user.getUsername(), refreshToken, Duration.ofDays(7));
-        // Устанавливаем refresh token в cookie
+        // Устанавливаем JWT и refresh token в cookie
+        addJwtToCookie(accessToken, response);
         addRefreshTokenToCookie(refreshToken, response);
         // Сохраняем access token в сессии (если нужно)
         sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));

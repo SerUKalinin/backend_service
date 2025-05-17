@@ -21,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/real-estate-objects")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:63342")
 public class ObjectController {
 
     private final ObjectService objectService;
@@ -168,5 +167,17 @@ public class ObjectController {
         log.info("Запрос на удаление ответственного пользователя для объекта {}", id);
         ObjectResponseDto updatedObject = objectService.removeResponsibleUser(id);
         return ResponseEntity.ok(updatedObject);
+    }
+
+    /**
+     * Получить дерево объектов недвижимости.
+     *
+     * @return дерево объектов в формате JSON
+     */
+    @GetMapping("/tree")
+    public ResponseEntity<List<ObjectResponseDto>> getObjectTree() {
+        log.info("Запрос на получение дерева объектов");
+        List<ObjectResponseDto> tree = objectService.getObjectTree();
+        return ResponseEntity.ok(tree);
     }
 }

@@ -1,9 +1,11 @@
 package com.example.auth_service.dto;
 
 import com.example.auth_service.model.ObjectType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * DTO для ответа с информацией об объекте недвижимости.
@@ -76,4 +78,7 @@ public class ObjectResponseDto {
      * Роль ответственного пользователя (например: ПРОРАБ, ПОДРЯДЧИК и т.д.).
      */
     private String responsibleUserRole;
+
+    @JsonProperty("children")
+    private List<ObjectResponseDto> children;
 }

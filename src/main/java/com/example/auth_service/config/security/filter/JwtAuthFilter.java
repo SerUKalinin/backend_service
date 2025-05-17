@@ -50,9 +50,28 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String token = null;
+
+        // 1. Пробуем взять токен из заголовка Authorization
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+            token = authHeader.substring(7);
+        }
+
+        // 2. Если не нашли — пробуем взять токен из cookie
+        if (token == null) {
+            if (request.getCookies() != null) {
+                for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                    if ("JWT_TOKEN".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 3. Если токен найден — продолжаем аутентификацию
+        if (token != null) {
             try {
                 DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
                 String username = decodedJWT.getSubject();
