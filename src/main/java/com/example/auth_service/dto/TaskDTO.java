@@ -62,4 +62,8 @@ public class TaskDTO {
     private String createdByFirstName;
     private String createdByLastName;
 
+    private Long responsibleUserId;
+    private String responsibleUserFirstName;
+    private String responsibleUserLastName;
+
 }

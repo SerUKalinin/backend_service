@@ -62,4 +62,8 @@ public class Task {
     @ManyToOne
     @JoinColumn(name = "created_by_id")
     private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "responsible_user_id")
+    private User responsibleUser;
 }

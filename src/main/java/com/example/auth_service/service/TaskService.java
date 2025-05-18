@@ -10,6 +10,7 @@ import com.example.auth_service.model.TaskStatus;
 import com.example.auth_service.repository.TaskRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.model.User;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -122,5 +123,21 @@ public class TaskService {
             throw new TaskNotFoundException("Задача не найдена");
         }
         taskRepository.deleteById(id);
+    }
+
+    public void assignResponsible(Long taskId, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        task.setResponsibleUser(user);
+        taskRepository.save(task);
+    }
+
+    public void removeResponsible(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+        task.setResponsibleUser(null);
+        taskRepository.save(task);
     }
 }

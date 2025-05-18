@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.AssignResponsibleRequest;
 import com.example.auth_service.dto.TaskCreateDTO;
 import com.example.auth_service.dto.TaskDTO;
 import com.example.auth_service.dto.TaskUpdateDTO;
@@ -90,5 +91,17 @@ public class TaskController {
         log.info("Удаление задачи с ID {}", id);
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/assign-responsible")
+    public ResponseEntity<?> assignResponsible(@PathVariable Long id, @RequestBody AssignResponsibleRequest request) {
+        taskService.assignResponsible(id, request.getUserId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/remove-responsible")
+    public ResponseEntity<?> removeResponsible(@PathVariable Long id) {
+        taskService.removeResponsible(id);
+        return ResponseEntity.ok().build();
     }
 }
