@@ -4,12 +4,17 @@ import com.example.auth_service.dto.TaskCreateDTO;
 import com.example.auth_service.dto.TaskDTO;
 import com.example.auth_service.dto.TaskUpdateDTO;
 import com.example.auth_service.exception.TaskNotFoundException;
+import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.Task;
 import com.example.auth_service.model.TaskStatus;
 import com.example.auth_service.repository.TaskRepository;
+import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +31,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
 
     /**
      * Создание новой задачи.
@@ -36,11 +42,27 @@ public class TaskService {
     public TaskDTO createTask(TaskCreateDTO taskCreateDTO) {
         log.info("Создание задачи: {}", taskCreateDTO);
 
-        Task task = modelMapper.map(taskCreateDTO, Task.class);
-        task.setStatus(TaskStatus.NEW);  // Устанавливаем начальный статус задачи
-        Task savedTask = taskRepository.save(task);
+        Task task = new Task();
+        task.setTitle(taskCreateDTO.getTitle());
+        task.setDescription(taskCreateDTO.getDescription());
+        task.setDeadline(taskCreateDTO.getDeadline());
+        task.setStatus(TaskStatus.NEW);
+        task.setRealEstateObject(new ObjectEntity(taskCreateDTO.getRealEstateObjectId()));
 
-        return modelMapper.map(savedTask, TaskDTO.class);
+        // Устанавливаем автора задачи
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
+        task.setCreatedBy(user);
+
+        Task savedTask = taskRepository.save(task);
+        TaskDTO dto = modelMapper.map(savedTask, TaskDTO.class);
+        if (savedTask.getCreatedBy() != null) {
+            dto.setCreatedByFirstName(savedTask.getCreatedBy().getFirstName());
+            dto.setCreatedByLastName(savedTask.getCreatedBy().getLastName());
+        }
+        return dto;
     }
 
     /**
@@ -64,7 +86,12 @@ public class TaskService {
     public TaskDTO getTaskById(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
-        return modelMapper.map(task, TaskDTO.class);
+        TaskDTO dto = modelMapper.map(task, TaskDTO.class);
+        if (task.getCreatedBy() != null) {
+            dto.setCreatedByFirstName(task.getCreatedBy().getFirstName());
+            dto.setCreatedByLastName(task.getCreatedBy().getLastName());
+        }
+        return dto;
     }
 
     /**
