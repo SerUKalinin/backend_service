@@ -104,4 +104,16 @@ public class TaskController {
         taskService.removeResponsible(id);
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Получить все задачи для конкретного объекта недвижимости.
+     *
+     * @param objectId ID объекта недвижимости
+     * @return список задач для данного объекта
+     */
+    @GetMapping("/object/{objectId}")
+    public ResponseEntity<List<TaskDTO>> getTasksByObjectId(@PathVariable Long objectId) {
+        log.info("Получение задач для объекта с ID: {}", objectId);
+        return ResponseEntity.ok(taskService.getTasksByObjectId(objectId));
+    }
 }

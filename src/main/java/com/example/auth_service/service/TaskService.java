@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Сервис для управления задачами.
@@ -139,5 +140,29 @@ public class TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
         task.setResponsibleUser(null);
         taskRepository.save(task);
+    }
+
+    /**
+     * Получить все задачи для конкретного объекта недвижимости.
+     *
+     * @param objectId ID объекта недвижимости
+     * @return список задач для данного объекта
+     */
+    public List<TaskDTO> getTasksByObjectId(Long objectId) {
+        log.info("Получение задач для объекта с ID: {}", objectId);
+        return taskRepository.findByRealEstateObjectId(objectId).stream()
+                .map(task -> {
+                    TaskDTO dto = modelMapper.map(task, TaskDTO.class);
+                    if (task.getCreatedBy() != null) {
+                        dto.setCreatedByFirstName(task.getCreatedBy().getFirstName());
+                        dto.setCreatedByLastName(task.getCreatedBy().getLastName());
+                    }
+                    if (task.getResponsibleUser() != null) {
+                        dto.setResponsibleUserFirstName(task.getResponsibleUser().getFirstName());
+                        dto.setResponsibleUserLastName(task.getResponsibleUser().getLastName());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }
