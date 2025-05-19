@@ -7,6 +7,7 @@ import com.example.auth_service.exception.TaskNotFoundException;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.Task;
 import com.example.auth_service.model.TaskStatus;
+import com.example.auth_service.repository.ObjectRepository;
 import com.example.auth_service.repository.TaskRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.model.User;
@@ -20,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Сервис для управления задачами.
@@ -34,6 +38,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final ObjectRepository objectRepository;
 
     /**
      * Создание новой задачи.
@@ -164,5 +169,33 @@ public class TaskService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // Получить статистику задач по статусам для объекта и всех его потомков
+    public Map<String, Integer> getTaskStatusStatsRecursive(Long objectId) {
+        List<Long> allObjectIds = getAllDescendantIds(objectId);
+        allObjectIds.add(objectId);
+
+        List<Task> tasks = taskRepository.findByRealEstateObjectIdIn(allObjectIds);
+        Map<String, Integer> statusCounts = new HashMap<>();
+        for (TaskStatus status : TaskStatus.values()) {
+            statusCounts.put(status.name(), 0);
+        }
+        for (Task task : tasks) {
+            String status = task.getStatus().name();
+            statusCounts.put(status, statusCounts.getOrDefault(status, 0) + 1);
+        }
+        return statusCounts;
+    }
+
+    // Рекурсивно получить все id потомков
+    private List<Long> getAllDescendantIds(Long parentId) {
+        List<Long> result = new ArrayList<>();
+        List<ObjectEntity> children = objectRepository.findByParentId(parentId);
+        for (ObjectEntity child : children) {
+            result.add(child.getId());
+            result.addAll(getAllDescendantIds(child.getId()));
+        }
+        return result;
     }
 }

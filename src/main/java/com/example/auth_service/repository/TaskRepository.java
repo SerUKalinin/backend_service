@@ -40,4 +40,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     boolean existsByTitleAndRealEstateObjectId(String title, Long objectId);
 
+    // Найти задачи по списку id объектов
+    List<Task> findByRealEstateObjectIdIn(List<Long> objectIds);
+
 }

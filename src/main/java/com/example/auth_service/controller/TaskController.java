@@ -112,4 +112,16 @@ public class TaskController {
         log.info("Получение задач для объекта с ID: {}", objectId);
         return ResponseEntity.ok(taskService.getTasksByObjectId(objectId));
     }
+
+    /**
+     * Получить статистику задач по статусам для объекта и всех его потомков.
+     *
+     * @param objectId ID объекта недвижимости
+     * @return Map<String, Integer> с количеством задач по статусам
+     */
+    @GetMapping("/object/{objectId}/status-stats")
+    public ResponseEntity<java.util.Map<String, Integer>> getTaskStatusStats(@PathVariable Long objectId) {
+        java.util.Map<String, Integer> stats = taskService.getTaskStatusStatsRecursive(objectId);
+        return ResponseEntity.ok(stats);
+    }
 }
