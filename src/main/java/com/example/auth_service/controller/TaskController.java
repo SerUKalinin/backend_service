@@ -39,7 +39,6 @@ public class TaskController {
      */
     @PostMapping
     public ResponseEntity<TaskDTO> createTask(@Valid @RequestBody TaskCreateDTO taskCreateDTO) {
-        log.info("Создание новой задачи: {}", taskCreateDTO);
         TaskDTO taskDTO = taskService.createTask(taskCreateDTO);
         return ResponseEntity.created(URI.create("/tasks/" + taskDTO.getId())).body(taskDTO);
     }
@@ -51,7 +50,6 @@ public class TaskController {
      */
     @GetMapping
     public ResponseEntity<List<TaskDTO>> getAllTasks() {
-        log.debug("Получение списка всех задач");
         List<TaskDTO> tasks = taskService.getAllTasks();
         return ResponseEntity.ok(tasks);
     }
@@ -76,7 +74,6 @@ public class TaskController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<TaskDTO> updateTask(@PathVariable Long id, @Valid @RequestBody TaskUpdateDTO taskUpdateDTO) {
-        log.info("Обновление задачи с ID {}: {}", id, taskUpdateDTO);
         return ResponseEntity.ok(taskService.updateTask(id, taskUpdateDTO));
     }
 
@@ -88,7 +85,6 @@ public class TaskController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-        log.info("Удаление задачи с ID {}", id);
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
     }
