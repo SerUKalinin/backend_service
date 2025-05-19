@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -295,5 +296,22 @@ public class ObjectService {
         ObjectEntity savedObject = objectRepository.save(object);
 
         return objectMapper.toDto(savedObject);
+    }
+
+    /**
+     * Получает путь (хлебные крошки) от корня до текущего объекта.
+     *
+     * @param id идентификатор объекта
+     * @return Список объектов от корня до текущего
+     */
+    public List<ObjectResponseDto> getObjectPath(Long id) {
+        List<ObjectResponseDto> path = new ArrayList<>();
+        ObjectResponseDto current = getObjectById(id).getBody();
+        while (current != null) {
+            path.add(0, current); // добавляем в начало списка
+            if (current.getParentId() == null) break;
+            current = getObjectById(current.getParentId()).getBody();
+        }
+        return path;
     }
 }
