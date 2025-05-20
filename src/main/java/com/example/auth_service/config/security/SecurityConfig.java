@@ -90,6 +90,11 @@ public class SecurityConfig {
                         // Получение задач по статусу и объекту недвижимости
                         .requestMatchers(HttpMethod.GET, "/tasks/status/{status}/object/{objectId}").hasAnyRole("USER", "ADMIN")
 
+                        // Доступ к файлам
+                        .requestMatchers(HttpMethod.POST, "/api/files/upload").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/files/download/{fileName:.+}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/files/{fileName:.+}").hasAnyRole("USER", "ADMIN")
+
                         // Любые другие запросы требуют авторизации
                         .anyRequest().authenticated()
                 )
