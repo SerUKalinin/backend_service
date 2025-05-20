@@ -150,10 +150,12 @@ public class FileStorageService {
         }
 
         Resource resource = loadFileAsResource(fileName);
-        String contentType = "application/octet-stream";
+        // Определяем Content-Type по расширению файла
+        String contentType = getFileType(fileName);
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
     }
 
@@ -180,6 +182,76 @@ public class FileStorageService {
         deleteFileInternal(fileName);
         log.info("Файл {} удалён (если существовал)", fileName);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Получает список файлов для конкретной задачи.
+     *
+     * @param taskId идентификатор задачи
+     * @return ResponseEntity со списком информации о файлах задачи
+     * @throws TaskNotFoundException если задача не найдена
+     */
+    public ResponseEntity<List<Map<String, String>>> getTaskFiles(Long taskId) {
+        log.info("Получение списка файлов для задачи {}", taskId);
+        
+        if (!taskRepository.existsById(taskId)) {
+            throw new TaskNotFoundException("Задача не найдена: " + taskId);
+        }
+
+        List<TaskAttachment> attachments = taskAttachmentRepository.findByTaskId(taskId);
+        List<Map<String, String>> files = new ArrayList<>();
+
+        for (TaskAttachment attachment : attachments) {
+            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/files/download/")
+                    .path(attachment.getFilePath())
+                    .toUriString();
+
+            Map<String, String> fileInfo = new HashMap<>();
+            fileInfo.put("fileName", attachment.getFilePath());
+            fileInfo.put("fileDownloadUri", fileDownloadUri);
+            fileInfo.put("uploadedAt", attachment.getUploadedAt().toString());
+            
+            // Получаем тип файла из расширения
+            String fileType = getFileType(attachment.getFilePath());
+            fileInfo.put("fileType", fileType);
+            
+            // Получаем размер файла
+            try {
+                Path filePath = fileStorageLocation.resolve(attachment.getFilePath());
+                long size = Files.size(filePath);
+                fileInfo.put("size", String.valueOf(size));
+            } catch (IOException e) {
+                log.warn("Не удалось получить размер файла {}: {}", attachment.getFilePath(), e.getMessage());
+                fileInfo.put("size", "0");
+            }
+
+            files.add(fileInfo);
+        }
+
+        log.info("Найдено {} файлов для задачи {}", files.size(), taskId);
+        return ResponseEntity.ok(files);
+    }
+
+    /**
+     * Определяет тип файла по его расширению.
+     *
+     * @param fileName имя файла
+     * @return MIME-тип файла
+     */
+    private String getFileType(String fileName) {
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        return switch (extension) {
+            case "pdf" -> "application/pdf";
+            case "doc" -> "application/msword";
+            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "xls" -> "application/vnd.ms-excel";
+            case "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "png" -> "image/png";
+            case "gif" -> "image/gif";
+            default -> "application/octet-stream";
+        };
     }
 
     /**

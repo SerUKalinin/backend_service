@@ -45,6 +45,18 @@ public class FileController {
     }
 
     /**
+     * Получает список файлов для конкретной задачи.
+     *
+     * @param taskId идентификатор задачи
+     * @return ResponseEntity со списком информации о файлах задачи
+     */
+    @GetMapping("/task/{taskId}")
+    public ResponseEntity<List<Map<String, String>>> getTaskFiles(@PathVariable Long taskId) {
+        log.info("Получен запрос на получение списка файлов для задачи {}", taskId);
+        return fileStorageService.getTaskFiles(taskId);
+    }
+
+    /**
      * Скачивает файл по его имени.
      * Файл будет отправлен как вложение (attachment).
      *
