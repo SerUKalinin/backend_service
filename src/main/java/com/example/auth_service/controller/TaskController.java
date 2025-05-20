@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.AssignResponsibleRequest;
 import com.example.auth_service.dto.TaskCreateDTO;
 import com.example.auth_service.dto.TaskDTO;
 import com.example.auth_service.dto.TaskUpdateDTO;
@@ -86,5 +87,41 @@ public class TaskController {
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/assign-responsible")
+    public ResponseEntity<?> assignResponsible(@PathVariable Long id, @RequestBody AssignResponsibleRequest request) {
+        taskService.assignResponsible(id, request.getUserId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/remove-responsible")
+    public ResponseEntity<?> removeResponsible(@PathVariable Long id) {
+        taskService.removeResponsible(id);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Получить все задачи для конкретного объекта недвижимости.
+     *
+     * @param objectId ID объекта недвижимости
+     * @return список задач для данного объекта
+     */
+    @GetMapping("/object/{objectId}")
+    public ResponseEntity<List<TaskDTO>> getTasksByObjectId(@PathVariable Long objectId) {
+        log.info("Получение задач для объекта с ID: {}", objectId);
+        return ResponseEntity.ok(taskService.getTasksByObjectId(objectId));
+    }
+
+    /**
+     * Получить статистику задач по статусам для объекта и всех его потомков.
+     *
+     * @param objectId ID объекта недвижимости
+     * @return Map<String, Integer> с количеством задач по статусам
+     */
+    @GetMapping("/object/{objectId}/status-stats")
+    public ResponseEntity<java.util.Map<String, Integer>> getTaskStatusStats(@PathVariable Long objectId) {
+        java.util.Map<String, Integer> stats = taskService.getTaskStatusStatsRecursive(objectId);
+        return ResponseEntity.ok(stats);
     }
 }

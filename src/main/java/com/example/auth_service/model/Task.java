@@ -55,4 +55,15 @@ public class Task {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    /**
+     * Пользователь, создавший задачу.
+     */
+    @ManyToOne
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "responsible_user_id")
+    private User responsibleUser;
 }

@@ -169,4 +169,16 @@ public class ObjectController {
         ObjectResponseDto updatedObject = objectService.removeResponsibleUser(id);
         return ResponseEntity.ok(updatedObject);
     }
+
+    /**
+     * Получить путь (хлебные крошки) от корня до текущего объекта.
+     *
+     * @param id идентификатор объекта
+     * @return список объектов от корня до текущего
+     */
+    @GetMapping("/{id}/path")
+    public ResponseEntity<List<ObjectResponseDto>> getObjectPath(@PathVariable Long id) {
+        List<ObjectResponseDto> path = objectService.getObjectPath(id);
+        return ResponseEntity.ok(path);
+    }
 }

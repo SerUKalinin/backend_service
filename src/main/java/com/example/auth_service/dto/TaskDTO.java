@@ -57,4 +57,13 @@ public class TaskDTO {
      * Уникальный идентификатор объекта недвижимости, для которого выполняется задача.
      */
     private Long realEstateObjectId;
+
+    // Имя и фамилия создателя задачи
+    private String createdByFirstName;
+    private String createdByLastName;
+
+    private Long responsibleUserId;
+    private String responsibleUserFirstName;
+    private String responsibleUserLastName;
+
 }

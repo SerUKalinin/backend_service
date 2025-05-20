@@ -23,5 +23,6 @@ databaseChangeLog:
   - include:
       file: 008_create_refresh_tokens.sql
       relativeToChangelogFile: true
-
-
+  - include:
+      file: 009_add_created_by_to_tasks.sql
+      relativeToChangelogFile: true

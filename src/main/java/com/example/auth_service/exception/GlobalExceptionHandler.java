@@ -44,17 +44,34 @@ public class GlobalExceptionHandler {
     /**
      * Обрабатывает исключения, возникающие при отсутствии запрашиваемой сущности в базе данных.
      *
-     * @param ex Исключение {@link UserNotFoundException}, {@link ObjectNotFoundException}, {@link TaskNotFoundException}
+     * @param ex Исключение {@link UserNotFoundException}, {@link ObjectNotFoundException}, {@link TaskNotFoundException}, {@link FileNotFoundException}
      * @return Ответ с кодом 404 NOT FOUND и сообщением об ошибке
      */
     @ExceptionHandler({
             UserNotFoundException.class,
             ObjectNotFoundException.class,
-            TaskNotFoundException.class
+            TaskNotFoundException.class,
+            FileNotFoundException.class
     })
     public ResponseEntity<String> handleNotFoundExceptions(RuntimeException ex) {
         log.error("Не найдена сущность: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    /**
+     * Обрабатывает исключения, связанные с невалидными данными.
+     *
+     * @param ex Исключение {@link InvalidDataException}, {@link InvalidConfirmationCodeException}, {@link InvalidFileException}
+     * @return Ответ с кодом 400 BAD REQUEST и сообщением об ошибке
+     */
+    @ExceptionHandler({
+            InvalidDataException.class,
+            InvalidConfirmationCodeException.class,
+            InvalidFileException.class
+    })
+    public ResponseEntity<String> handleInvalidDataExceptions(RuntimeException ex) {
+        log.error("Некорректные данные: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     /**
@@ -70,38 +87,30 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключение, возникающее при неверном коде подтверждения.
+     * Обрабатывает исключение, связанное с превышением лимита запросов.
      *
-     * @param ex Исключение {@link InvalidConfirmationCodeException}
-     * @return Ответ с кодом 400 BAD REQUEST и сообщением об ошибке
+     * @param ex Исключение {@link RateLimitExceededException}
+     * @return Ответ с кодом 429 TOO MANY REQUESTS и сообщением об ошибке
      */
-    @ExceptionHandler(InvalidConfirmationCodeException.class)
-    public ResponseEntity<String> handleInvalidConfirmationCodeException(InvalidConfirmationCodeException ex) {
-        log.error("Неверный код подтверждения: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<String> handleRateLimitExceededException(RateLimitExceededException ex) {
+        log.error("Превышен лимит запросов: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(ex.getMessage());
     }
 
     /**
-     * Обрабатывает исключение, связанное с некорректной конфигурацией CORS.
+     * Обрабатывает исключения, связанные с системными ошибками.
      *
-     * @param ex Исключение {@link InvalidCorsConfigurationException}
+     * @param ex Исключение {@link InvalidCorsConfigurationException}, {@link RedisConfigurationException}, {@link FileStorageException}
      * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением об ошибке
      */
-    @ExceptionHandler(InvalidCorsConfigurationException.class)
-    public ResponseEntity<String> handleInvalidCorsConfigurationException(InvalidCorsConfigurationException ex) {
-        log.error("Некорректная конфигурация CORS: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
-    }
-
-    /**
-     * Обрабатывает исключение, связанное с ошибками конфигурации Redis.
-     *
-     * @param ex Исключение {@link RedisConfigurationException}
-     * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением об ошибке
-     */
-    @ExceptionHandler(RedisConfigurationException.class)
-    public ResponseEntity<String> handleRedisConfigurationException(RedisConfigurationException ex) {
-        log.error("Ошибка конфигурации Redis: {}", ex.getMessage());
+    @ExceptionHandler({
+            InvalidCorsConfigurationException.class,
+            RedisConfigurationException.class,
+            FileStorageException.class
+    })
+    public ResponseEntity<String> handleSystemExceptions(RuntimeException ex) {
+        log.error("Системная ошибка: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
     }
 

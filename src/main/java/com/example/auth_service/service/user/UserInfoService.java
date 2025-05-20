@@ -36,7 +36,7 @@ public class UserInfoService {
      * @return {@link UserDto} с информацией о пользователе
      * @throws UserNotFoundException если пользователь с указанным именем не найден
      */
-    @Cacheable(value = "userInfo", key = "#username")
+//    @Cacheable(value = "userInfo", key = "#username")
     public UserDto getUserInfo(String username) {
         log.info("Запрос информации пользователя: {}", username);
         return userRepository.findByUsername(username)
