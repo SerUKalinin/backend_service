@@ -4,17 +4,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Исключение, возникающее при ошибках хранения файлов.
- * Используется для общих ошибок, связанных с операциями чтения/записи файлов.
+ * Исключение, возникающее при попытке загрузки невалидного файла.
+ * Используется при нарушении правил валидации файла (размер, тип, имя и т.д.).
  */
-@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-public class FileStorageException extends RuntimeException {
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class InvalidFileException extends RuntimeException {
     /**
      * Создает новое исключение с указанным сообщением об ошибке.
      *
      * @param message сообщение об ошибке
      */
-    public FileStorageException(String message) {
+    public InvalidFileException(String message) {
         super(message);
     }
 
@@ -24,7 +24,7 @@ public class FileStorageException extends RuntimeException {
      * @param message сообщение об ошибке
      * @param cause причина исключения
      */
-    public FileStorageException(String message, Throwable cause) {
+    public InvalidFileException(String message, Throwable cause) {
         super(message, cause);
     }
 } 
