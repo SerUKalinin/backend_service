@@ -106,7 +106,7 @@ public class ObjectService {
         log.info("Запрос на получение объекта с ID: {}", id);
         return objectRepository.findById(id)
                 .map(object -> {
-                    ObjectResponseDto objectDto = objectMapper.toDto(object); // Преобразуем сущность в DTO
+                    ObjectResponseDto objectDto = objectMapper.toDto(object);
                     log.info("Объект найден: {}", objectDto);
                     return ResponseEntity.ok(objectDto);
                 })
