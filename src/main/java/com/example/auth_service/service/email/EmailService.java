@@ -92,7 +92,7 @@ public class EmailService {
         helper.setFrom(fromEmail);
         helper.setTo(to);
         helper.setSubject(subject);
-        helper.setText(content, true); // true означает, что содержимое - HTML
+        helper.setText(content, true);
 
         javaMailSender.send(message);
         log.info("Письмо успешно отправлено на адрес: {}", to);

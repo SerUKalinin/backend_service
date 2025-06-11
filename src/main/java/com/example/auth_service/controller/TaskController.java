@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Контроллер для управления задачами, связанными с объектами недвижимости.
@@ -29,7 +28,6 @@ import java.util.stream.Collectors;
 public class TaskController {
 
     private final TaskService taskService;
-    private final ModelMapper modelMapper;
 
     /**
      * Создать новую задачу.
