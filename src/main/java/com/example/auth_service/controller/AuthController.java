@@ -174,10 +174,9 @@ public class AuthController {
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        // Метод refreshAccessToken теперь выбрасывает AuthException вместо возврата null
+        // Исключение обрабатывается GlobalExceptionHandler
         AuthResponse authResponse = authService.refreshAccessToken(refreshToken, response);
-        if (authResponse == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         return ResponseEntity.ok(authResponse);
     }
 

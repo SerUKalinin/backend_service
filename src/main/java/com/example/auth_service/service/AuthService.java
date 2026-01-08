@@ -22,28 +22,47 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 /**
  * Сервис для аутентификации и регистрации пользователей.
- * Обрабатывает регистрацию пользователей и администраторов, а также вход и выход из системы.
+ * 
+ * <p>Оркестрирует процессы регистрации, входа, подтверждения email, сброса пароля
+ * и управления токенами. Делегирует специализированные операции в соответствующие сервисы.</p>
+ * 
+ * <p><strong>Ответственность:</strong></p>
+ * <ul>
+ *   <li>Оркестрация бизнес-процессов аутентификации</li>
+ *   <li>Координация работы с токенами, сессиями и email</li>
+ *   <li>Валидация бизнес-правил на уровне сервиса</li>
+ * </ul>
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@Transactional(readOnly = true)
 public class AuthService {
+
+    /** Криптографически стойкий генератор случайных чисел для кодов подтверждения. */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    
+    /** Минимальное значение для 6-значного кода подтверждения. */
+    private static final int CONFIRMATION_CODE_MIN = 100_000;
+    
+    /** Максимальное значение для 6-значного кода подтверждения. */
+    private static final int CONFIRMATION_CODE_MAX = 999_999;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -54,188 +73,400 @@ public class AuthService {
     private final EmailService emailService;
     private final SessionService sessionService;
 
+    @Value("${auth_service.frontend.base-url:http://localhost:3000}")
+    private String frontendBaseUrl;
+
+    /* ==================== Registration ==================== */
+
     /**
-     * Регистрирует нового пользователя или администратора.
-     *
-     * @param userSignupDto Данные для регистрации.
-     * @param isAdmin       true, если регистрируется администратор, false — пользователь.
-     * @throws UserAlreadyExistsException Если пользователь с таким именем уже существует.
-     * @throws EmailAlreadyExistsException Если пользователь с таким email уже существует.
-     * @throws MessagingException Если произошла ошибка при отправке письма.
+     * Регистрирует нового пользователя или администратора в системе.
+     * 
+     * <p>Процесс регистрации включает:</p>
+     * <ol>
+     *   <li>Проверку уникальности username и email</li>
+     *   <li>Создание пользователя с неактивным статусом</li>
+     *   <li>Генерацию криптографически стойкого кода подтверждения</li>
+     *   <li>Отправку кода подтверждения на email пользователя</li>
+     * </ol>
+     * 
+     * <p>Пользователь будет активирован только после подтверждения email через метод
+     * {@link #confirmEmail(String, String)}.</p>
+     * 
+     * @param dto данные для регистрации пользователя (username, email, password)
+     * @param isAdmin {@code true} если регистрируется администратор, {@code false} для обычного пользователя
+     * @throws UserAlreadyExistsException если пользователь с таким username уже существует
+     * @throws EmailAlreadyExistsException если пользователь с таким email уже существует
+     * @throws MessagingException если произошла ошибка при отправке email с кодом подтверждения
+     * @see #confirmEmail(String, String)
      */
-    public void register(UserSignupDto userSignupDto, boolean isAdmin) throws MessagingException {
-        log.info("Попытка регистрации {} с именем {}", isAdmin ? "администратора" : "пользователя", userSignupDto.getUsername());
+    @Transactional
+    public void register(UserSignupDto dto, boolean isAdmin) throws MessagingException {
+        log.info("Регистрация {}: {}", isAdmin ? "администратора" : "пользователя", dto.getUsername());
 
-        // Проверка существования пользователя с таким же именем
-        if (userRepository.findByUsername(userSignupDto.getUsername()).isPresent()) {
-            log.warn("Пользователь с именем {} уже существует", userSignupDto.getUsername());
-            throw new UserAlreadyExistsException("Пользователь с таким именем уже существует");
-        }
+        validateUserUniqueness(dto);
 
-        // Проверка существования пользователя с таким же email
-        if (userRepository.findByEmail(userSignupDto.getEmail()).isPresent()) {
-            log.warn("Пользователь с email {} уже существует", userSignupDto.getEmail());
-            throw new EmailAlreadyExistsException("Пользователь с таким email уже существует");
-        }
-
-        // Создание нового пользователя
-        User user = new User();
-        user.setUsername(userSignupDto.getUsername());
-        user.setEmail(userSignupDto.getEmail());
-        user.setPassword(passwordEncoder.encode(userSignupDto.getPassword()));
-        user.setActive(false); // Устанавливаем флаг активности в false
-
-        // Назначение роли для пользователя
-        Role.RoleType roleType = isAdmin ? Role.RoleType.ROLE_ADMIN : Role.RoleType.ROLE_USER;
-        Role role = roleRepository.findByRoleType(roleType)
-                .orElseThrow(() -> new IllegalStateException("Роль не найдена"));
-
-        user.setRoles(Set.of(role));
-
-        // Сохранение пользователя в базу данных
+        User user = createUser(dto, isAdmin);
         userRepository.save(user);
 
-        // Генерация и отправка кода подтверждения
-        String code = generateConfirmationCode();
-        redisService.saveConfirmationCode(userSignupDto.getEmail(), code);
-        emailService.sendConfirmationCode(userSignupDto.getEmail(), code);
+        sendConfirmationCode(user.getEmail());
 
-        log.info("{} с именем {} успешно зарегистрирован. Код подтверждения отправлен на почту.",
-                isAdmin ? "Администратор" : "Пользователь", userSignupDto.getUsername());
+        log.info("Пользователь {} зарегистрирован, код подтверждения отправлен", dto.getUsername());
     }
 
-    /**
-     * Генерация случайного кода подтверждения.
-     *
-     * @return сгенерированный код подтверждения.
-     */
-    private String generateConfirmationCode() {
-        return String.valueOf((int) (Math.random() * 900000) + 100000);
-    }
+    /* ==================== Login ==================== */
 
     /**
-     * Выполняет вход пользователя в систему.
-     *
-     * @param userSigninDto Данные для входа пользователя.
-     * @return JWT токен для аутентификации пользователя.
-     * @throws UserNotFoundException Если пользователь с таким именем не найден.
-     * @throws UserNotActivatedException Если пользователь не активирован.
+     * Выполняет аутентификацию пользователя и выдает токены доступа.
+     * 
+     * <p>Процесс входа включает:</p>
+     * <ol>
+     *   <li>Поиск пользователя по username или email</li>
+     *   <li>Проверку активности аккаунта (должен быть активирован)</li>
+     *   <li>Аутентификацию через Spring Security (проверка пароля)</li>
+     *   <li>Генерацию access и refresh токенов</li>
+     *   <li>Сохранение токенов в Redis и установку refresh token в cookie</li>
+     * </ol>
+     * 
+     * <p><strong>Security:</strong> Проверка активности выполняется ДО аутентификации
+     * для предотвращения лишних операций с неактивными аккаунтами.</p>
+     * 
+     * @param dto данные для входа (username/email и password)
+     * @param response HTTP-ответ для установки cookie с refresh token
+     * @return объект {@link AuthResponse} содержащий access token для аутентификации
+     * @throws UserNotFoundException если пользователь с указанным username/email не найден
+     * @throws UserNotActivatedException если аккаунт пользователя не активирован
+     * @throws org.springframework.security.core.AuthenticationException если неверный пароль
      */
-    public AuthResponse login(UserSigninDto userSigninDto, HttpServletResponse response) {
-        log.info("Попытка входа в систему для пользователя {}", userSigninDto.getUsername());
-        String usernameOrEmail = userSigninDto.getUsername();
-        User user;
-        if (usernameOrEmail.contains("@")) {
-            user = userRepository.findByEmail(usernameOrEmail)
-                    .orElseThrow(() -> new UserNotFoundException("Пользователь с таким email не найден"));
-        } else {
-            user = userRepository.findByUsername(usernameOrEmail)
-                    .orElseThrow(() -> new UserNotFoundException("Пользователь с таким логином не найден"));
-        }
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), userSigninDto.getPassword())
-        );
+    public AuthResponse login(UserSigninDto dto, HttpServletResponse response) {
+        User user = findUser(dto.getUsername());
+
         if (!user.isActive()) {
-            log.warn("Пользователь {} не активирован", userSigninDto.getUsername());
-            throw new UserNotActivatedException("Пользователь не активирован. Пожалуйста, подтвердите ваш email.");
+            throw new UserNotActivatedException("Аккаунт не активирован");
         }
-        String accessToken = jwtUtil.generateToken(
-                user,
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                        .collect(Collectors.toList())
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword())
         );
-        // Генерация refresh token
-        String refreshToken = UUID.randomUUID().toString();
-        // Сохраняем refresh token в Redis
-        saveRefreshToken(user.getUsername(), refreshToken, Duration.ofDays(7));
-        // Устанавливаем refresh token в cookie
-        addRefreshTokenToCookie(refreshToken, response);
-        // Сохраняем access token в сессии (если нужно)
-        sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));
-        log.info("Пользователь {} успешно авторизован", userSigninDto.getUsername());
+
+        String accessToken = generateAccessToken(user);
+        String refreshToken = generateRefreshToken();
+
+        persistTokens(user.getUsername(), accessToken, refreshToken, response);
+
         return new AuthResponse(accessToken);
     }
 
-    public void addJwtToCookie(String token, HttpServletResponse response) {
-        // Добавляем JWT в cookie
-        Cookie cookie = new Cookie("JWT_TOKEN", token);
-        cookie.setHttpOnly(true);  // Невозможность доступа к cookie через JS
-        cookie.setPath("/");  // Чтобы cookie было доступно на всех маршрутах
-        cookie.setMaxAge(60 * 60 * 2);  // Пример: токен живет 2 часа
+    /* ==================== Email confirmation ==================== */
+
+    /**
+     * Подтверждает email пользователя по коду подтверждения и активирует аккаунт.
+     * 
+     * <p>После успешного подтверждения:</p>
+     * <ul>
+     *   <li>Аккаунт пользователя активируется (устанавливается флаг {@code active = true})</li>
+     *   <li>Код подтверждения удаляется из Redis</li>
+     *   <li>Генерируется JWT токен для автоматического входа</li>
+     *   <li>Создается сессия пользователя</li>
+     * </ul>
+     * 
+     * @param email email пользователя, для которого подтверждается аккаунт
+     * @param code код подтверждения, отправленный на email
+     * @return объект {@link AuthResponse} содержащий JWT токен для автоматического входа
+     * @throws InvalidConfirmationCodeException если код неверный, истек или не найден в Redis
+     * @throws UserNotFoundException если пользователь с указанным email не найден
+     * @see #register(UserSignupDto, boolean)
+     * @see #resendConfirmationCode(String)
+     */
+    @Transactional
+    public AuthResponse confirmEmail(String email, String code) {
+        if (!redisService.checkConfirmationCode(email, code)) {
+            throw new InvalidConfirmationCodeException("Неверный или истекший код");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+        user.setActive(true);
+        userRepository.save(user); // Сохраняем изменения в БД
+        redisService.deleteConfirmationCode(email);
+
+        String token = generateAccessToken(user);
+        sessionService.saveSession(user.getUsername(), token, Duration.ofHours(2));
+
+        return new AuthResponse(token);
+    }
+
+    /* ==================== Logout ==================== */
+
+    /**
+     * Выполняет выход пользователя из системы и инвалидирует все токены.
+     * 
+     * <p>Процесс выхода включает:</p>
+     * <ul>
+     *   <li>Извлечение refresh token из cookie запроса</li>
+     *   <li>Удаление refresh token из Redis</li>
+     *   <li>Удаление всех сессий пользователя</li>
+     *   <li>Инвалидацию cookie с refresh token на клиенте</li>
+     * </ul>
+     * 
+     * <p><strong>Security:</strong> Полная инвалидация всех токенов и сессий пользователя
+     * обеспечивает безопасный выход из системы.</p>
+     * 
+     * @param request HTTP-запрос для извлечения refresh token из cookie
+     * @param response HTTP-ответ для удаления cookie с refresh token
+     */
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshToken(request);
+
+        if (refreshToken != null) {
+            String username = redisService.findUsernameByRefreshToken(refreshToken);
+            if (username != null) {
+                redisService.deleteRefreshToken(username, refreshToken);
+                sessionService.removeSession(username); // финальная инвалидация
+            }
+        }
+
+        invalidateRefreshCookie(response);
+    }
+
+    /**
+     * Обновляет access токен на основе валидного refresh токена.
+     * 
+     * <p>Процесс обновления включает:</p>
+     * <ol>
+     *   <li>Проверку валидности refresh token в Redis</li>
+     *   <li>Генерацию нового access токена</li>
+     *   <li>Ротацию refresh token (генерация нового и удаление старого)</li>
+     *   <li>Сохранение новых токенов в Redis и cookie</li>
+     * </ol>
+     * 
+     * <p><strong>Security:</strong> Ротация refresh token повышает безопасность,
+     * так как старый токен становится недействительным сразу после обновления.</p>
+     * 
+     * @param refreshToken refresh токен из cookie запроса
+     * @param response HTTP-ответ для установки нового refresh token в cookie
+     * @return объект {@link AuthResponse} содержащий новый access token
+     * @throws AuthException если refresh token недействителен, истек или не найден
+     * @throws UserNotFoundException если пользователь, связанный с токеном, не найден
+     */
+    public AuthResponse refreshAccessToken(String refreshToken, HttpServletResponse response) {
+        String username = redisService.findUsernameByRefreshToken(refreshToken);
+
+        if (username == null || !redisService.isRefreshTokenValid(username, refreshToken)) {
+            throw new AuthException("Refresh token недействителен");
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+        String newAccessToken = generateAccessToken(user);
+        String newRefreshToken = generateRefreshToken();
+
+        redisService.deleteRefreshToken(username, refreshToken);
+        persistTokens(username, newAccessToken, newRefreshToken, response);
+
+        return new AuthResponse(newAccessToken);
+    }
+
+    /* ==================== Password reset ==================== */
+
+    /**
+     * Отправляет ссылку для сброса пароля на email пользователя.
+     * 
+     * <p>Процесс включает:</p>
+     * <ol>
+     *   <li>Поиск пользователя по email</li>
+     *   <li>Генерацию JWT токена для сброса пароля</li>
+     *   <li>Сохранение токена в Redis с временем жизни 1 час</li>
+     *   <li>Отправку email со ссылкой для сброса пароля</li>
+     * </ol>
+     * 
+     * <p>Ссылка содержит токен, который используется в методе
+     * {@link #resetPassword(String, String)} для сброса пароля.</p>
+     * 
+     * @param email email пользователя, для которого запрашивается сброс пароля
+     * @throws UserNotFoundException если пользователь с указанным email не найден
+     * @throws MessagingException если произошла ошибка при отправке email
+     * @see #resetPassword(String, String)
+     */
+    public void sendPasswordResetLink(String email) throws MessagingException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+        String token = jwtUtil.generatePasswordResetToken(user.getUsername());
+        redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
+
+        emailService.sendPasswordResetEmail(
+                email,
+                frontendBaseUrl + "/reset-password?token=" + token
+        );
+    }
+
+    /**
+     * Сбрасывает пароль пользователя по токену из email.
+     * 
+     * <p>Процесс сброса включает:</p>
+     * <ol>
+     *   <li>Декодирование и валидацию токена сброса пароля</li>
+     *   <li>Поиск пользователя по username из токена</li>
+     *   <li>Хеширование нового пароля</li>
+     *   <li>Сохранение нового пароля в базе данных</li>
+     *   <li>Удаление токена сброса из Redis</li>
+     *   <li>Генерацию нового JWT токена для автоматического входа</li>
+     * </ol>
+     * 
+     * <p><strong>Security:</strong> Токен сброса пароля действителен только 1 час
+     * и может быть использован один раз.</p>
+     * 
+     * @param token JWT токен для сброса пароля, полученный из email
+     * @param newPassword новый пароль пользователя
+     * @return объект {@link AuthResponse} содержащий JWT токен для автоматического входа
+     * @throws AuthException если токен недействителен, истек или имеет неверный формат
+     * @throws UserNotFoundException если пользователь, указанный в токене, не найден
+     * @see #sendPasswordResetLink(String)
+     */
+    @Transactional
+    public AuthResponse resetPassword(String token, String newPassword) {
+        DecodedJWT jwt = decodeResetToken(token);
+
+        User user = userRepository.findByUsername(jwt.getSubject())
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        redisService.deletePasswordResetToken(user.getEmail());
+
+        return new AuthResponse(generateAccessToken(user));
+    }
+
+    /* ==================== Helpers ==================== */
+
+    /**
+     * Валидирует уникальность username и email перед регистрацией.
+     * 
+     * @param dto данные регистрации для проверки
+     * @throws UserAlreadyExistsException если username уже занят
+     * @throws EmailAlreadyExistsException если email уже занят
+     */
+    private void validateUserUniqueness(UserSignupDto dto) {
+        if (userRepository.existsByUsername(dto.getUsername())) {
+            throw new UserAlreadyExistsException("Username занят");
+        }
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new EmailAlreadyExistsException("Email занят");
+        }
+    }
+
+    /**
+     * Находит пользователя по username или email.
+     * 
+     * <p>Определяет тип входа по наличию символа '@' в строке.
+     * Если содержит '@' - ищет по email, иначе - по username.</p>
+     * 
+     * @param usernameOrEmail username или email пользователя
+     * @return найденный пользователь
+     * @throws UserNotFoundException если пользователь не найден
+     */
+    private User findUser(String usernameOrEmail) {
+        return usernameOrEmail.contains("@")
+                ? userRepository.findByEmail(usernameOrEmail)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"))
+                : userRepository.findByUsername(usernameOrEmail)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+    }
+
+    /**
+     * Создает нового пользователя с указанной ролью.
+     * 
+     * <p>Пользователь создается с неактивным статусом и должен быть активирован
+     * через подтверждение email.</p>
+     * 
+     * @param dto данные для регистрации
+     * @param isAdmin {@code true} для администратора, {@code false} для обычного пользователя
+     * @return созданный пользователь (еще не сохранен в БД)
+     * @throws IllegalStateException если роль не найдена в системе
+     */
+    private User createUser(UserSignupDto dto, boolean isAdmin) {
+        Role role = roleRepository.findByRoleType(
+                isAdmin ? Role.RoleType.ROLE_ADMIN : Role.RoleType.ROLE_USER
+        ).orElseThrow(() -> new IllegalStateException("Роль не найдена"));
+
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setActive(false);
+        user.setRoles(Set.of(role));
+        return user;
+    }
+
+    /**
+     * Генерирует и отправляет код подтверждения на email.
+     * 
+     * <p>Генерирует криптографически стойкий 6-значный код с помощью
+     * {@link SecureRandom} и сохраняет его в Redis для последующей проверки.</p>
+     * 
+     * @param email email пользователя для отправки кода
+     * @throws MessagingException если произошла ошибка при отправке email
+     */
+    private void sendConfirmationCode(String email) throws MessagingException {
+        String code = String.valueOf(
+                SECURE_RANDOM.nextInt(CONFIRMATION_CODE_MAX - CONFIRMATION_CODE_MIN + 1)
+                        + CONFIRMATION_CODE_MIN
+        );
+        redisService.saveConfirmationCode(email, code);
+        emailService.sendConfirmationCode(email, code);
+    }
+
+    /**
+     * Сохраняет access и refresh токены в Redis и устанавливает refresh token в cookie.
+     * 
+     * <p>Централизованная логика для устранения дублирования кода в методах
+     * {@link #login(UserSigninDto, HttpServletResponse)} и
+     * {@link #refreshAccessToken(String, HttpServletResponse)}.</p>
+     * 
+     * @param username имя пользователя
+     * @param access access token для сохранения в сессии
+     * @param refresh refresh token для сохранения в Redis и cookie
+     * @param response HTTP-ответ для установки cookie
+     */
+    private void persistTokens(String username, String access, String refresh, HttpServletResponse response) {
+        redisService.saveRefreshToken(username, refresh, Duration.ofDays(7));
+        sessionService.saveSession(username, access, Duration.ofHours(2));
+
+        Cookie cookie = new Cookie("refreshToken", refresh);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge((int) Duration.ofDays(7).getSeconds());
         response.addCookie(cookie);
     }
 
     /**
-     * Подтверждение email пользователя.
-     *
-     * @param email Email пользователя.
-     * @param code  Код подтверждения.
-     * @throws InvalidConfirmationCodeException Если код неверный или истекший.
-     * @throws UserNotFoundException Если пользователь не найден.
+     * Извлекает refresh token из cookie HTTP-запроса.
+     * 
+     * @param request HTTP-запрос содержащий cookie
+     * @return refresh token из cookie или {@code null}, если cookie не найдена
      */
-    public AuthResponse confirmEmail(String email, String code) {
-        log.info("Проверка кода подтверждения для email: {}", email);
-
-        // Проверка кода подтверждения в Redis
-        if (!redisService.checkConfirmationCode(email, code)) {
-            log.warn("Неверный или истекший код подтверждения для email: {}", email);
-            throw new InvalidConfirmationCodeException("Неверный или истекший код подтверждения");
+    private String extractRefreshToken(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie c : request.getCookies()) {
+            if ("refreshToken".equals(c.getName())) {
+                return c.getValue();
+            }
         }
-
-        log.info("Код подтверждения для email: {} верный", email);
-
-        // Найти пользователя по email
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
-
-        // Активировать пользователя
-        user.setActive(true);
-        userRepository.save(user);
-
-        // Удалить код подтверждения из Redis
-        redisService.deleteConfirmationCode(email);
-
-        log.info("Email пользователя {} успешно подтвержден. Аккаунт активирован.", email);
-
-        // Генерация JWT токена
-        String token = jwtUtil.generateToken(
-                user,
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                        .collect(Collectors.toList())
-        );
-
-        // Сохраняем сессию в Redis
-        sessionService.saveSession(user.getUsername(), token, Duration.ofHours(2)); // Сессия на 2 часа
-
-        log.info("Пользователь {} успешно активирован и авторизован", email);
-
-        // Возвращаем объект AuthResponse с токеном
-        return new AuthResponse(token);
+        return null;
     }
 
     /**
-     * Выполняет выход пользователя из системы.
-     *
+     * Инвалидирует cookie с refresh token на клиенте.
+     * 
+     * <p>Устанавливает cookie с пустым значением и временем жизни 0,
+     * что приводит к немедленному удалению cookie в браузере.</p>
+     * 
+     * @param response HTTP-ответ для установки инвалидированной cookie
      */
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = null;
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("refreshToken".equals(cookie.getName())) {
-                    refreshToken = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        if (refreshToken != null) {
-            String username = redisService.findUsernameByRefreshToken(refreshToken);
-            if (username != null) {
-                deleteRefreshToken(username, refreshToken);
-            }
-        }
-        // Удалить cookie у клиента
+    private void invalidateRefreshCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", "");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
@@ -245,207 +476,103 @@ public class AuthService {
     }
 
     /**
-     * Извлекает JWT-токен из заголовка Authorization.
-     *
-     * @param authHeader Заголовок Authorization.
-     * @return JWT-токен.
-     * @throws AuthException если заголовок Authorization отсутствует или имеет неверный формат.
+     * Генерирует JWT access token для пользователя.
+     * 
+     * <p>Централизованная логика генерации токенов для устранения дублирования.
+     * Токен содержит информацию о пользователе и его ролях.</p>
+     * 
+     * @param user пользователь для которого генерируется токен
+     * @return JWT access token
      */
-    private String extractTokenFromAuthHeader(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new AuthException("Некорректный формат заголовка Authorization");
-        }
-        return authHeader.substring(7);
-    }
-
-    public void resendConfirmationCode(String email) throws MessagingException {
-        log.info("Запрос на повторную отправку кода подтверждения для email: {}", email);
-
-        // Проверка, существует ли пользователь с таким email
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь с таким email не найден"));
-
-        // Проверка, активирован ли уже пользователь
-        if (user.isActive()) {
-            log.warn("Пользователь с email {} уже активирован", email);
-            throw new UserAlreadyExistsException("Пользователь с таким email уже активирован");
-        }
-
-        // Генерация нового кода подтверждения
-        String code = generateConfirmationCode();
-
-        // Сохранение нового кода в Redis
-        redisService.saveConfirmationCode(email, code);
-
-        // Отправка нового кода подтверждения на email
-        emailService.sendConfirmationCode(email, code);
-
-        log.info("Новый код подтверждения был успешно отправлен на email: {}", email);
-    }
-
-    /**
-     * Отправляет инструкции для сброса пароля на email пользователя.
-     *
-     * @param email Email пользователя.
-     * @throws MessagingException Если произошла ошибка при отправке письма.
-     * @throws UserNotFoundException Если пользователь с таким email не найден.
-     */
-    public void sendPasswordResetLink(String email) throws MessagingException {
-        log.info("Запрос на сброс пароля для email: {}", email);
-
-        // Проверка, существует ли пользователь с таким email
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь с таким email не найден"));
-
-        // Генерация токена для сброса пароля
-        String token = jwtUtil.generatePasswordResetToken(user.getUsername());
-
-        // Сохранение токена в Redis с временем жизни 1 час
-        redisService.savePasswordResetToken(email, token, Duration.ofHours(1));
-
-        // Формирование ссылки для сброса пароля
-        String resetLink = "http://localhost:3000/reset-password?token=" + token;
-        // Отправка письма со ссылкой
-        emailService.sendPasswordResetEmail(email, resetLink);
-
-        log.info("Ссылка для сброса пароля отправлена на email: {}", email);
-    }
-
-    /**
-     * Сбрасывает пароль пользователя.
-     *
-     * @param token Токен для сброса пароля.
-     * @param newPassword Новый пароль.
-     * @throws AuthException Если токен недействителен или истек срок его действия.
-     */
-    public AuthResponse resetPassword(String token, String newPassword) {
-        log.info("Запрос на сброс пароля с токеном");
-
-        try {
-            // Декодируем токен и получаем имя пользователя
-            DecodedJWT decodedJWT = jwtUtil.decodePasswordResetToken(token);
-            String username = decodedJWT.getSubject();
-
-            // Находим пользователя
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
-
-            // Сбрасываем пароль
-            user.setPassword(passwordEncoder.encode(newPassword));
-            userRepository.save(user);
-
-            // Удаляем токен сброса пароля из Redis
-            redisService.deletePasswordResetToken(user.getEmail());
-
-            log.info("Пароль для пользователя {} успешно сброшен", username);
-
-            // Генерация нового токена и возвращение в AuthResponse
-            String newToken = jwtUtil.generateToken(
-                    user,
-                    user.getRoles().stream()
-                            .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                            .collect(Collectors.toList())
-            );
-
-            return new AuthResponse(newToken);
-
-        } catch (Exception e) {
-            log.error("Ошибка при сбросе пароля: {}", e.getMessage());
-            throw new AuthException("Ошибка при сбросе пароля");
-        }
-    }
-
-    /**
-     * Добавляет refresh token в HttpOnly cookie с настройками безопасности.
-     *
-     * @param refreshToken refresh токен, который нужно сохранить в cookie
-     * @param response     HTTP-ответ, в который добавляется cookie
-     */
-    public void addRefreshTokenToCookie(String refreshToken, HttpServletResponse response) {
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true); // Только по HTTPS
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge((int) Duration.ofDays(7).getSeconds());
-
-        response.addCookie(refreshTokenCookie);
-
-        log.debug("Добавлен refresh token в cookie: имя = {}, срок жизни = {} секунд",
-                refreshTokenCookie.getName(), refreshTokenCookie.getMaxAge());
-    }
-
-    /**
-     * Сохраняет refresh токен в Redis с указанным временем жизни.
-     *
-     * @param username     имя пользователя
-     * @param refreshToken refresh токен
-     * @param duration     время жизни токена
-     */
-    public void saveRefreshToken(String username, String refreshToken, Duration duration) {
-        redisService.saveRefreshToken(username, refreshToken, duration);
-        log.debug("Сохранён refresh token для пользователя: {} на срок {} секунд", username, duration.getSeconds());
-    }
-
-    /**
-     * Проверяет наличие и валидность refresh токена в Redis.
-     *
-     * @param username     имя пользователя
-     * @param refreshToken refresh токен
-     * @return true, если токен валиден, иначе false
-     */
-    public boolean isRefreshTokenValid(String username, String refreshToken) {
-        boolean valid = redisService.isRefreshTokenValid(username, refreshToken);
-        log.debug("Проверка валидности refresh token для пользователя {}: {}", username, valid);
-        return valid;
-    }
-
-    /**
-     * Удаляет refresh токен из Redis.
-     *
-     * @param username     имя пользователя
-     * @param refreshToken refresh токен
-     */
-    public void deleteRefreshToken(String username, String refreshToken) {
-        redisService.deleteRefreshToken(username, refreshToken);
-        log.debug("Удалён refresh token для пользователя: {}", username);
-    }
-
-    /**
-     * Обновляет access токен на основе переданного refresh токена из cookie.
-     *
-     * @param refreshToken refresh токен из cookie
-     * @param response     HTTP-ответ для установки новой cookie
-     * @return новый access токен в обёртке AuthResponse или null, если refresh токен недействителен
-     */
-    public AuthResponse refreshAccessToken(String refreshToken, HttpServletResponse response) {
-        String username = redisService.findUsernameByRefreshToken(refreshToken);
-        if (username == null || !isRefreshTokenValid(username, refreshToken)) {
-            log.warn("Попытка обновления токена: refresh token невалиден или не найден");
-            return null;
-        }
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    log.error("Пользователь с именем {} не найден при обновлении токена", username);
-                    return new UserNotFoundException("Пользователь не найден");
-                });
-
-        String accessToken = jwtUtil.generateToken(
+    private String generateAccessToken(User user) {
+        return jwtUtil.generateToken(
                 user,
                 user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getRoleType().name()))
-                        .collect(Collectors.toList())
+                        .map(r -> new SimpleGrantedAuthority(r.getRoleType().name()))
+                        .toList()
         );
-        log.debug("Сгенерирован новый access token для пользователя: {}", username);
+    }
 
-        // Ротация refresh токена
-        String newRefreshToken = UUID.randomUUID().toString();
-        saveRefreshToken(user.getUsername(), newRefreshToken, Duration.ofDays(7));
-        addRefreshTokenToCookie(newRefreshToken, response);
-        deleteRefreshToken(user.getUsername(), refreshToken);
-        sessionService.saveSession(user.getUsername(), accessToken, Duration.ofHours(2));
+    /**
+     * Генерирует новый refresh token на основе UUID.
+     * 
+     * @return UUID-based refresh token в виде строки
+     */
+    private String generateRefreshToken() {
+        return UUID.randomUUID().toString();
+    }
 
-        log.info("Успешное обновление access и refresh токенов для пользователя: {}", username);
-        return new AuthResponse(accessToken);
+    /**
+     * Декодирует и валидирует JWT токен для сброса пароля.
+     * 
+     * @param token JWT токен для декодирования
+     * @return декодированный JWT токен
+     * @throws AuthException если токен недействителен, истек или имеет неверный формат
+     */
+    private DecodedJWT decodeResetToken(String token) {
+        try {
+            return jwtUtil.decodePasswordResetToken(token);
+        } catch (Exception e) {
+            throw new AuthException("Токен сброса пароля недействителен");
+        }
+    }
+
+    /* ==================== Public utility methods (used by controllers) ==================== */
+
+    /**
+     * Добавляет JWT access токен в HttpOnly cookie.
+     * 
+     * <p>Используется в контроллере для установки access token в cookie
+     * после подтверждения email. Основной механизм работы с токенами
+     * осуществляется через refresh token в cookie.</p>
+     * 
+     * <p><strong>Security:</strong> Cookie устанавливается с флагами:</p>
+     * <ul>
+     *   <li>{@code HttpOnly = true} - защита от XSS атак</li>
+     *   <li>{@code Secure = true} - передача только по HTTPS</li>
+     *   <li>Время жизни: 2 часа</li>
+     * </ul>
+     * 
+     * @param token JWT access токен для сохранения в cookie
+     * @param response HTTP-ответ для установки cookie
+     */
+    public void addJwtToCookie(String token, HttpServletResponse response) {
+        Cookie cookie = new Cookie("JWT_TOKEN", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 2); // 2 часа
+        response.addCookie(cookie);
+    }
+
+    /**
+     * Повторно отправляет код подтверждения на email пользователя.
+     * 
+     * <p>Используется когда пользователь не получил код подтверждения
+     * или код истек. Генерируется новый криптографически стойкий код
+     * и отправляется на email.</p>
+     * 
+     * <p><strong>Ограничения:</strong></p>
+     * <ul>
+     *   <li>Пользователь должен существовать в системе</li>
+     *   <li>Аккаунт пользователя должен быть неактивирован</li>
+     * </ul>
+     * 
+     * @param email email пользователя, на который отправляется код
+     * @throws UserNotFoundException если пользователь с указанным email не найден
+     * @throws UserAlreadyExistsException если аккаунт пользователя уже активирован
+     * @throws MessagingException если произошла ошибка при отправке email
+     * @see #register(UserSignupDto, boolean)
+     * @see #confirmEmail(String, String)
+     */
+    public void resendConfirmationCode(String email) throws MessagingException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+        if (user.isActive()) {
+            throw new UserAlreadyExistsException("Пользователь уже активирован");
+        }
+
+        sendConfirmationCode(email);
     }
 }

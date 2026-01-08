@@ -1,5 +1,6 @@
 package com.example.auth_service.mapper;
 
+import com.example.auth_service.dto.ObjectRequestDto;
 import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.model.ObjectEntity;
 import org.mapstruct.Mapper;
@@ -55,13 +56,12 @@ public class ObjectMapper {
      * @param dto DTO, которое нужно преобразовать
      * @return преобразованная сущность
      */
-    public ObjectEntity toEntity(ObjectResponseDto dto) {
+    public ObjectEntity toEntity(ObjectRequestDto dto) {
         if (dto == null) {
             return null;
         }
 
         ObjectEntity entity = new ObjectEntity();
-        entity.setId(dto.getId());
         entity.setName(dto.getName());
         entity.setObjectType(dto.getObjectType());
         // Можно добавить дополнительные поля в объект сущности, если необходимо
