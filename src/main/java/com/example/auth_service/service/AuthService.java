@@ -52,7 +52,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AuthService {
 
     /** Криптографически стойкий генератор случайных чисел для кодов подтверждения. */
@@ -137,6 +136,7 @@ public class AuthService {
      * @throws UserNotActivatedException если аккаунт пользователя не активирован
      * @throws org.springframework.security.core.AuthenticationException если неверный пароль
      */
+    @Transactional
     public AuthResponse login(UserSigninDto dto, HttpServletResponse response) {
         User user = findUser(dto.getUsername());
 
