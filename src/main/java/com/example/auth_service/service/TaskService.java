@@ -4,126 +4,154 @@ import com.example.auth_service.dto.TaskCreateDTO;
 import com.example.auth_service.dto.TaskDTO;
 import com.example.auth_service.dto.TaskUpdateDTO;
 import com.example.auth_service.exception.TaskNotFoundException;
+import com.example.auth_service.mapper.TaskMapper;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.Task;
 import com.example.auth_service.model.TaskStatus;
+import com.example.auth_service.model.User;
 import com.example.auth_service.repository.ObjectRepository;
 import com.example.auth_service.repository.TaskRepository;
 import com.example.auth_service.repository.UserRepository;
-import com.example.auth_service.model.User;
+import com.example.auth_service.service.security.SecurityService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
- * Сервис для управления задачами.
- * Предоставляет функциональность для создания, получения, обновления и удаления задач.
+ * Сервис для управления задачами (Task).
+ * <p>
+ * Предоставляет методы для создания, чтения, обновления, удаления и статистики задач.
+ * Использует MapStruct для маппинга между DTO и сущностью Task.
+ * </p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final ModelMapper modelMapper;
-    private final UserRepository userRepository;
     private final ObjectRepository objectRepository;
+    private final UserRepository userRepository;
+    private final TaskMapper taskMapper;
+    private final SecurityService securityService;
 
     /**
-     * Создание новой задачи.
+     * Создаёт новую задачу в системе.
      *
-     * @param taskCreateDTO DTO объекта для создания задачи.
-     * @return TaskDTO объект созданной задачи.
+     * @param dto {@link TaskCreateDTO} с данными для создания задачи
+     * @return {@link TaskDTO} с данными созданной задачи
+     * @throws EntityNotFoundException если объект недвижимости не найден
      */
-    public TaskDTO createTask(TaskCreateDTO taskCreateDTO) {
-        log.info("Создание задачи: {}", taskCreateDTO);
+    @Transactional
+    public TaskDTO createTask(TaskCreateDTO dto) {
+        log.info("Создание задачи: {}", dto);
 
-        Task task = new Task();
-        task.setTitle(taskCreateDTO.getTitle());
-        task.setDescription(taskCreateDTO.getDescription());
-        task.setDeadline(taskCreateDTO.getDeadline());
+        ObjectEntity object = objectRepository.findById(dto.getRealEstateObjectId())
+                .orElseThrow(() -> new EntityNotFoundException("Объект недвижимости не найден"));
+
+        User creator = getCurrentUser();
+
+        Task task = taskMapper.toEntity(dto);
+        task.setRealEstateObject(object);
+        task.setCreatedBy(creator);
         task.setStatus(TaskStatus.NEW);
-        task.setRealEstateObject(new ObjectEntity(taskCreateDTO.getRealEstateObjectId()));
 
-        // Устанавливаем автора задачи
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
-        task.setCreatedBy(user);
+        taskRepository.save(task);
 
-        Task savedTask = taskRepository.save(task);
-        TaskDTO dto = modelMapper.map(savedTask, TaskDTO.class);
-        if (savedTask.getCreatedBy() != null) {
-            dto.setCreatedByFirstName(savedTask.getCreatedBy().getFirstName());
-            dto.setCreatedByLastName(savedTask.getCreatedBy().getLastName());
-        }
-        return dto;
+        return taskMapper.toDto(task);
     }
 
     /**
-     * Получить все задачи.
+     * Получает все задачи в системе.
      *
-     * @return Список всех задач в формате TaskDTO.
+     * @return список {@link TaskDTO} всех задач
      */
     public List<TaskDTO> getAllTasks() {
-        return taskRepository.findAll().stream()
-                .map(task -> modelMapper.map(task, TaskDTO.class))
+        return taskRepository.findAll()
+                .stream()
+                .map(taskMapper::toDto)
                 .toList();
     }
 
     /**
-     * Получить задачу по её идентификатору.
+     * Получает задачу по её идентификатору.
      *
-     * @param id Идентификатор задачи.
-     * @return TaskDTO объект найденной задачи.
-     * @throws TaskNotFoundException Если задача с указанным идентификатором не найдена.
+     * @param id идентификатор задачи
+     * @return {@link TaskDTO} с данными задачи
+     * @throws TaskNotFoundException если задача не найдена
      */
     public TaskDTO getTaskById(Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
-        TaskDTO dto = modelMapper.map(task, TaskDTO.class);
-        if (task.getCreatedBy() != null) {
-            dto.setCreatedByFirstName(task.getCreatedBy().getFirstName());
-            dto.setCreatedByLastName(task.getCreatedBy().getLastName());
-        }
-        return dto;
+        return taskMapper.toDto(findTask(id));
     }
 
     /**
-     * Обновить существующую задачу.
+     * Получает список задач, связанных с конкретным объектом недвижимости.
      *
-     * @param id Идентификатор задачи.
-     * @param taskUpdateDTO DTO с новыми данными для обновления задачи.
-     * @return TaskDTO объект обновленной задачи.
-     * @throws TaskNotFoundException Если задача с указанным идентификатором не найдена.
+     * @param objectId идентификатор объекта недвижимости
+     * @return список {@link TaskDTO} задач для данного объекта
+     */
+    public List<TaskDTO> getTasksByObjectId(Long objectId) {
+        log.info("Получение задач для объекта {}", objectId);
+        return taskRepository.findByRealEstateObjectId(objectId)
+                .stream()
+                .map(taskMapper::toDto)
+                .toList();
+    }
+
+    /**
+     * Обновляет данные существующей задачи.
+     *
+     * @param id  идентификатор задачи
+     * @param dto {@link TaskUpdateDTO} с новыми данными задачи
+     * @return {@link TaskDTO} обновлённой задачи
+     * @throws TaskNotFoundException если задача не найдена
      */
     @Transactional
-    public TaskDTO updateTask(Long id, TaskUpdateDTO taskUpdateDTO) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
-
-        modelMapper.map(taskUpdateDTO, task);
-        return modelMapper.map(taskRepository.save(task), TaskDTO.class);
+    public TaskDTO updateTask(Long id, TaskUpdateDTO dto) {
+        Task task = findTask(id);
+        taskMapper.updateTaskFromDto(dto, task);
+        return taskMapper.toDto(task);
     }
 
     /**
-     * Удалить задачу по её идентификатору.
+     * Назначает ответственного пользователя на задачу.
      *
-     * @param id Идентификатор задачи.
-     * @throws TaskNotFoundException Если задача с указанным идентификатором не найдена.
+     * @param taskId идентификатор задачи
+     * @param userId идентификатор пользователя
+     * @throws EntityNotFoundException если задача или пользователь не найдены
      */
+    @Transactional
+    public void assignResponsible(Long taskId, Long userId) {
+        Task task = findTask(taskId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
+        task.setResponsibleUser(user);
+    }
+
+    /**
+     * Убирает ответственного пользователя с задачи.
+     *
+     * @param taskId идентификатор задачи
+     * @throws TaskNotFoundException если задача не найдена
+     */
+    @Transactional
+    public void removeResponsible(Long taskId) {
+        findTask(taskId).setResponsibleUser(null);
+    }
+
+    /**
+     * Удаляет задачу по идентификатору.
+     *
+     * @param id идентификатор задачи
+     * @throws TaskNotFoundException если задача не найдена
+     */
+    @Transactional
     public void deleteTask(Long id) {
         if (!taskRepository.existsById(id)) {
             throw new TaskNotFoundException("Задача не найдена");
@@ -131,68 +159,57 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
-    public void assignResponsible(Long taskId, Long userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        task.setResponsibleUser(user);
-        taskRepository.save(task);
-    }
+    /**
+     * Получает статистику задач по статусам для объекта и всех его потомков.
+     *
+     * @param objectId идентификатор объекта недвижимости
+     * @return {@link Map} с ключом статус задачи и значением количество задач в этом статусе
+     */
+    public Map<String, Integer> getTaskStatusStatsRecursive(Long objectId) {
+        List<Long> ids = new ArrayList<>();
+        ids.add(objectId);
+        ids.addAll(getAllDescendantIds(objectId));
 
-    public void removeResponsible(Long taskId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
-        task.setResponsibleUser(null);
-        taskRepository.save(task);
+        return taskRepository.findByRealEstateObjectIdIn(ids).stream()
+                .collect(Collectors.groupingBy(
+                        task -> task.getStatus().name(),
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
     }
 
     /**
-     * Получить все задачи для конкретного объекта недвижимости.
+     * Ищет задачу по идентификатору.
      *
-     * @param objectId ID объекта недвижимости
-     * @return список задач для данного объекта
+     * @param id идентификатор задачи
+     * @return {@link Task} найденная задача
+     * @throws TaskNotFoundException если задача не найдена
      */
-    public List<TaskDTO> getTasksByObjectId(Long objectId) {
-        log.info("Получение задач для объекта с ID: {}", objectId);
-        return taskRepository.findByRealEstateObjectId(objectId).stream()
-                .map(task -> {
-                    TaskDTO dto = modelMapper.map(task, TaskDTO.class);
-                    if (task.getCreatedBy() != null) {
-                        dto.setCreatedByFirstName(task.getCreatedBy().getFirstName());
-                        dto.setCreatedByLastName(task.getCreatedBy().getLastName());
-                    }
-                    if (task.getResponsibleUser() != null) {
-                        dto.setResponsibleUserFirstName(task.getResponsibleUser().getFirstName());
-                        dto.setResponsibleUserLastName(task.getResponsibleUser().getLastName());
-                    }
-                    return dto;
-                })
-                .collect(Collectors.toList());
+    private Task findTask(Long id) {
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
     }
 
-    // Получить статистику задач по статусам для объекта и всех его потомков
-    public Map<String, Integer> getTaskStatusStatsRecursive(Long objectId) {
-        List<Long> allObjectIds = getAllDescendantIds(objectId);
-        allObjectIds.add(objectId);
-
-        List<Task> tasks = taskRepository.findByRealEstateObjectIdIn(allObjectIds);
-        Map<String, Integer> statusCounts = new HashMap<>();
-        for (TaskStatus status : TaskStatus.values()) {
-            statusCounts.put(status.name(), 0);
-        }
-        for (Task task : tasks) {
-            String status = task.getStatus().name();
-            statusCounts.put(status, statusCounts.getOrDefault(status, 0) + 1);
-        }
-        return statusCounts;
+    /**
+     * Получает текущего аутентифицированного пользователя.
+     *
+     * @return {@link User} текущий пользователь
+     * @throws EntityNotFoundException если пользователь не найден
+     */
+    private User getCurrentUser() {
+        String username = securityService.getCurrentUsername();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
     }
 
-    // Рекурсивно получить все id потомков
+    /**
+     * Получает список идентификаторов всех потомков объекта недвижимости.
+     *
+     * @param parentId идентификатор родительского объекта
+     * @return список идентификаторов всех потомков
+     */
     private List<Long> getAllDescendantIds(Long parentId) {
         List<Long> result = new ArrayList<>();
-        List<ObjectEntity> children = objectRepository.findByParentId(parentId);
-        for (ObjectEntity child : children) {
+        for (ObjectEntity child : objectRepository.findByParentId(parentId)) {
             result.add(child.getId());
             result.addAll(getAllDescendantIds(child.getId()));
         }

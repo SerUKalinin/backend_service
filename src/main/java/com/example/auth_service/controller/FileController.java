@@ -1,88 +1,76 @@
 package com.example.auth_service.controller;
 
-import com.example.auth_service.exception.FileNotFoundException;
-import com.example.auth_service.exception.FileStorageException;
-import com.example.auth_service.exception.InvalidFileException;
 import com.example.auth_service.service.FileStorageService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.Map;
 
 /**
- * Контроллер для управления файлами.
- * Предоставляет эндпоинты для загрузки, скачивания и удаления файлов.
+ * REST-контроллер для управления файлами, прикреплёнными к задачам.
+ * <p>
+ * Предоставляет методы для загрузки, получения, скачивания и удаления файлов,
+ * связанных с задачами. Все операции делегируются в {@link FileStorageService}.
+ * </p>
  */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/files")
 public class FileController {
 
     private final FileStorageService fileStorageService;
 
-    @Autowired
-    public FileController(FileStorageService fileStorageService) {
-        this.fileStorageService = fileStorageService;
-    }
-
     /**
-     * Загружает файлы для конкретной задачи.
+     * Загружает один или несколько файлов для конкретной задачи.
      *
-     * @param taskId идентификатор задачи
-     * @param files массив файлов для загрузки
-     * @return ResponseEntity со списком информации о загруженных файлах
+     * @param taskId ID задачи, к которой прикрепляются файлы
+     * @param files  Массив файлов для загрузки
+     * @return {@link ResponseEntity} с списком {@link Map}, содержащих информацию о загруженных файлах
      */
     @PostMapping("/upload")
     public ResponseEntity<List<Map<String, String>>> uploadFiles(
-            @RequestParam("taskId") Long taskId,
-            @RequestParam("files") MultipartFile[] files) {
-        log.info("Получен запрос на загрузку файлов для задачи {}", taskId);
+            @RequestParam Long taskId,
+            @RequestParam MultipartFile[] files) {
         return fileStorageService.uploadFiles(taskId, files);
     }
 
     /**
-     * Получает список файлов для конкретной задачи.
+     * Получает список всех файлов, прикреплённых к задаче.
      *
-     * @param taskId идентификатор задачи
-     * @return ResponseEntity со списком информации о файлах задачи
+     * @param taskId ID задачи
+     * @return {@link ResponseEntity} со списком {@link Map}, содержащих информацию о файлах задачи
      */
     @GetMapping("/task/{taskId}")
     public ResponseEntity<List<Map<String, String>>> getTaskFiles(@PathVariable Long taskId) {
-        log.info("Получен запрос на получение списка файлов для задачи {}", taskId);
         return fileStorageService.getTaskFiles(taskId);
     }
 
     /**
-     * Скачивает файл по его имени.
-     * Файл будет отправлен как вложение (attachment).
+     * Скачивает файл по имени.
      *
-     * @param fileName имя файла для скачивания
-     * @return ResponseEntity с файлом для скачивания
-     * @throws InvalidFileException если имя файла пустое
-     * @throws FileNotFoundException если файл не найден
+     * @param fileName Имя файла для скачивания
+     * @return {@link ResponseEntity} с {@link Resource} файла
      */
     @GetMapping("/download/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
-        log.info("Получен запрос на скачивание файла: {}", fileName);
         return fileStorageService.downloadFile(fileName);
     }
 
     /**
-     * Удаляет файл по его имени.
+     * Удаляет файл по имени.
      *
-     * @param fileName имя файла для удаления
-     * @return ResponseEntity с пустым телом и статусом OK
-     * @throws InvalidFileException если имя файла пустое
-     * @throws FileNotFoundException если файл не найден
-     * @throws FileStorageException если произошла ошибка при удалении файла
+     * @param fileName Имя файла для удаления
+     * @return {@link ResponseEntity} без содержимого (HTTP 200 OK), если удаление прошло успешно
      */
     @DeleteMapping("/{fileName:.+}")
     public ResponseEntity<Void> deleteFile(@PathVariable String fileName) {
-        log.info("Получен запрос на удаление файла: {}", fileName);
-        return fileStorageService.deleteFile(fileName);
+        fileStorageService.deleteFile(fileName);
+        return ResponseEntity.ok().build();
     }
-} 
+}

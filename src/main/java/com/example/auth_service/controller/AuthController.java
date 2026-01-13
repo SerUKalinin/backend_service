@@ -1,33 +1,33 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.annotation.RateLimit;
-import com.example.auth_service.dto.AuthResponse;
-import com.example.auth_service.dto.UserSigninDto;
-import com.example.auth_service.dto.UserSignupDto;
-import com.example.auth_service.dto.EmailVerificationDto;
-import com.example.auth_service.dto.PasswordResetDto;
-import com.example.auth_service.dto.ForgotPasswordDto;
-import com.example.auth_service.service.AuthService;
+import com.example.auth_service.dto.*;
+import com.example.auth_service.service.auth.AuthService;
 import com.example.auth_service.service.SessionService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import java.time.Duration;
 
 /**
- * Контроллер для аутентификации и регистрации пользователей.
+ * REST-контроллер для аутентификации и регистрации пользователей.
  * <p>
- * Этот контроллер предоставляет REST-эндпоинты для регистрации пользователей и администраторов, входа в систему,
- * выхода, подтверждения email, обновления JWT-токена, сброса пароля и проверки токена.
- * Также используется аннотация {@link RateLimit} для ограничения количества запросов.
+ * Обрабатывает все операции, связанные с:
+ * <ul>
+ *     <li>Регистрацией пользователей и администраторов</li>
+ *     <li>Входом и выходом из системы</li>
+ *     <li>Подтверждением и повторной отправкой кода email</li>
+ *     <li>Сбросом пароля</li>
+ *     <li>Обновлением и валидацией JWT токенов</li>
+ * </ul>
+ * Использует фасадный сервис {@link AuthService} для делегирования всех операций
+ * на сервисы работы с аккаунтами и токенами.
  * </p>
  */
 @Slf4j
@@ -41,51 +41,39 @@ public class AuthController {
     private final SessionService sessionService;
 
     /**
-     * Регистрирует нового пользователя.
-     * <p>
-     * Отправляет код подтверждения на email.
-     * Доступ ограничен: не более 3 запросов в час с одного IP.
-     * </p>
+     * Регистрация нового пользователя.
      *
-     * @param userSignupDto DTO с данными для регистрации пользователя.
-     * @throws MessagingException если не удалось отправить email.
+     * @param userSignupDto данные нового пользователя
+     * @throws MessagingException если произошла ошибка при отправке письма подтверждения
      */
     @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/register-user")
     @ResponseStatus(HttpStatus.CREATED)
     public void register(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
         log.info("Регистрация пользователя: {}", userSignupDto.getEmail());
-        authService.register(userSignupDto, false);  // false - для обычного пользователя
+        authService.register(userSignupDto, false);
     }
 
     /**
-     * Регистрирует нового администратора.
-     * <p>
-     * Администратор отличается флагом "isAdmin = true".
-     * Доступ ограничен: не более 1 запроса в час с одного IP.
-     * </p>
+     * Регистрация нового администратора.
      *
-     * @param userSignupDto DTO с данными администратора.
-     * @throws MessagingException если не удалось отправить email.
+     * @param userSignupDto данные администратора
+     * @throws MessagingException если произошла ошибка при отправке письма подтверждения
      */
     @RateLimit(value = 1, timeWindow = 3600)
     @PostMapping("/register-admin")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
         log.info("Регистрация администратора: {}", userSignupDto.getEmail());
-        authService.register(userSignupDto, true);  // true - для администратора
+        authService.register(userSignupDto, true);
     }
 
     /**
-     * Аутентифицирует пользователя по логину и паролю.
-     * <p>
-     * Возвращает JWT-токен в теле ответа и в cookie.
-     * Доступ ограничен: не более 5 запросов в минуту с одного IP.
-     * </p>
+     * Аутентификация пользователя и получение JWT токена.
      *
-     * @param userSigninDto DTO с данными для входа.
-     * @param response HTTP-ответ, в который добавляется cookie с токеном.
-     * @return Ответ с JWT-токеном.
+     * @param userSigninDto данные для входа (username/email и пароль)
+     * @param response      HTTP-ответ для возможной установки cookie
+     * @return {@link AuthResponse} с access токеном
      */
     @RateLimit(value = 5, timeWindow = 60)
     @PostMapping("/login")
@@ -96,13 +84,10 @@ public class AuthController {
     }
 
     /**
-     * Выходит из системы, удаляя токен из Redis.
-     * <p>
-     * Доступ ограничен: не более 10 запросов в минуту с одного IP.
-     * </p>
+     * Выход пользователя и удаление его сессии.
      *
-     * @param request HTTP-запрос, содержащий cookie с токеном.
-     * @param response HTTP-ответ, в который удаляется cookie с токеном.
+     * @param request  HTTP-запрос с cookie refresh token
+     * @param response HTTP-ответ для очистки cookie
      */
     @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/logout")
@@ -113,82 +98,54 @@ public class AuthController {
     }
 
     /**
-     * Подтверждает email пользователя по коду.
-     * <p>
-     * Возвращает JWT-токен в теле и в cookie.
-     * Доступ ограничен: не более 3 запросов в минуту с одного IP.
-     * </p>
+     * Подтверждение email пользователя с кодом.
      *
-     * @param emailVerificationDto DTO с email и кодом подтверждения.
-     * @param response HTTP-ответ, в который добавляется cookie с токеном.
-     * @return Ответ с JWT-токеном.
+     * @param emailVerificationDto содержит email и код подтверждения
+     * @param response            HTTP-ответ для установки JWT cookie
+     * @return {@link AuthResponse} с access токеном
      */
     @RateLimit(value = 3, timeWindow = 60)
     @PostMapping("/verify-email")
     public ResponseEntity<AuthResponse> verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto, HttpServletResponse response) {
-        log.info("Получен запрос на проверку email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
+        log.info("Проверка email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
         AuthResponse authResponse = authService.confirmEmail(emailVerificationDto.getEmail(), emailVerificationDto.getCode());
         authService.addJwtToCookie(authResponse.getJwtToken(), response);
         return ResponseEntity.ok(authResponse);
     }
 
     /**
-     * Повторно отправляет код подтверждения на указанный email.
-     * <p>
-     * Доступ ограничен: не более 3 запросов в час с одного IP.
-     * </p>
+     * Повторная отправка кода подтверждения email.
      *
-     * @param email Адрес электронной почты пользователя.
-     * @throws MessagingException если не удалось отправить email.
+     * @param email email пользователя
+     * @throws MessagingException если произошла ошибка при отправке письма
      */
     @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/resend-verification")
     @ResponseStatus(HttpStatus.OK)
     public void resendEmailVerification(@RequestParam String email) throws MessagingException {
-        log.info("Запрос на повторную отправку кода подтверждения на email: {}", email);
+        log.info("Повторная отправка кода подтверждения на email: {}", email);
         authService.resendConfirmationCode(email);
     }
 
     /**
-     * Обновляет JWT-токен пользователя, если токен валиден и сессия активна.
-     * <p>
-     * Доступ ограничен: не более 10 запросов в минуту с одного IP.
-     * </p>
+     * Обновление JWT токена на основе refresh token.
      *
-     * @param request HTTP-запрос, содержащий cookie с токеном.
-     * @param response HTTP-ответ, в который добавляется cookie с новым токеном.
-     * @return Ответ с новым токеном или статус 401, если обновление невозможно.
+     * @param request  HTTP-запрос с cookie refresh token
+     * @param response HTTP-ответ для установки новых cookie
+     * @return {@link AuthResponse} с новым access токеном
      */
     @RateLimit(value = 10, timeWindow = 60)
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = null;
-        if (request.getCookies() != null) {
-            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("refreshToken".equals(cookie.getName())) {
-                    refreshToken = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        AuthResponse authResponse = authService.refreshAccessToken(refreshToken, response);
-        if (authResponse == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        AuthResponse authResponse = authService.refreshToken(request, response);
         return ResponseEntity.ok(authResponse);
     }
 
     /**
-     * Отправляет ссылку на сброс пароля на указанный email.
-     * <p>
-     * Доступ ограничен: не более 3 запросов в час с одного IP.
-     * </p>
+     * Запрос на сброс пароля пользователя.
      *
-     * @param forgotPasswordDto DTO с email пользователя.
-     * @throws MessagingException если не удалось отправить email.
+     * @param forgotPasswordDto содержит email пользователя
+     * @throws MessagingException если произошла ошибка при отправке письма
      */
     @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/forgot-password")
@@ -199,13 +156,10 @@ public class AuthController {
     }
 
     /**
-     * Сбрасывает пароль пользователя по токену из письма.
-     * <p>
-     * Доступ ограничен: не более 3 запросов в час с одного IP.
-     * </p>
+     * Сброс пароля пользователя.
      *
-     * @param passwordResetDto DTO с токеном и новым паролем.
-     * @return Ответ с JWT-токеном.
+     * @param passwordResetDto содержит token и новый пароль
+     * @return {@link AuthResponse} с новым access токеном
      */
     @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/reset-password")
@@ -216,39 +170,19 @@ public class AuthController {
     }
 
     /**
-     * Проверяет валидность переданного JWT-токена.
-     * <p>
-     * Если токен валиден и сессия активна, возвращается статус 200 OK.
-     * Иначе — статус 401 Unauthorized.
-     * Доступ ограничен: не более 10 запросов в минуту с одного IP.
-     * </p>
+     * Валидация JWT токена.
      *
-     * @param authHeader Заголовок Authorization с токеном.
-     * @return Статус 200 OK при успехе или 401 Unauthorized.
+     * @param authHeader заголовок Authorization в формате "Bearer {token}"
+     * @return HTTP 200 если токен валиден, HTTP 401 если нет
      */
     @RateLimit(value = 10, timeWindow = 60)
     @GetMapping("/validate")
     public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader) {
-        log.info("Запрос на валидацию токена");
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            try {
-                DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
-                String username = decodedJWT.getSubject();
-
-                if (sessionService.isSessionValid(username, token)) {
-                    sessionService.updateSession(username, token, Duration.ofHours(2));
-                    log.info("Токен успешно валидирован для пользователя: {}", username);
-                    return ResponseEntity.ok().build();
-                }
-            } catch (Exception e) {
-                log.error("Ошибка при валидации токена: {}", e.getMessage());
-            }
+            authService.validateJwtToken(token);
+            return ResponseEntity.ok().build();
         }
-        log.warn("Не удалось валидировать токен");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-
 }
-

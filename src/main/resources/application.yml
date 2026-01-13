@@ -56,6 +56,8 @@ auth_service:
   issuer: auth_service
   jwtSecret: mySecretKey
   jwtLifeTimeDuration: 86400000
+  frontend:
+    base-url: http://localhost:3000
 
 file:
   upload-dir: ./uploads

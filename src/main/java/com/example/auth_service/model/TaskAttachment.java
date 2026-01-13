@@ -1,19 +1,7 @@
 package com.example.auth_service.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 /**
@@ -33,15 +21,23 @@ public class TaskAttachment {
     private Long id;
 
     /** Задача, к которой прикреплено вложение. */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
-    /** Путь к файлу вложения. */
+    /** Сохранённое имя файла на диске */
     @Column(nullable = false)
     private String filePath;
 
-    /** Дата и время загрузки вложения. */
+    /** Оригинальное имя файла */
+    @Column(nullable = false)
+    private String originalFileName;
+
+    /** Размер файла в байтах */
+    @Column(nullable = false)
+    private Long size;
+
+    /** Дата и время загрузки вложения */
     @Column(nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 

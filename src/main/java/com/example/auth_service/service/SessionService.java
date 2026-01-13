@@ -27,12 +27,14 @@ public class SessionService {
      * Получает токен сессии пользователя из Redis.
      */
     public boolean isSessionValid(String username, String token) {
-        boolean isValid = redisSessionRepository.isSessionExists(username, token) && 
-                         !redisSessionRepository.isSessionExpired(username, token);
-        if (!isValid) {
+        if (!redisSessionRepository.isSessionExists(username, token)
+                || redisSessionRepository.isSessionExpired(username, token)) {
+
             log.warn("Сессия пользователя {} невалидна", username);
+            return false;
         }
-        return isValid;
+
+        return true;
     }
 
     /**

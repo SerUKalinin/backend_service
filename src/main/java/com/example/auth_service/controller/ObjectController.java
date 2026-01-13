@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.ObjectRequestDto;
 import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.model.ObjectType;
 import com.example.auth_service.service.ObjectService;
@@ -11,10 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Контроллер для управления объектами недвижимости.
+ * REST-контроллер для управления объектами недвижимости.
  * <p>
- * Предоставляет CRUD-операции, а также функциональность назначения ответственных пользователей
- * и фильтрации объектов по различным критериям (тип, родитель, создатель).
+ * Предоставляет методы для CRUD операций над объектами, получения дочерних объектов,
+ * назначение и удаление ответственных пользователей, а также получение объектов текущего пользователя.
+ * Все операции делегируются в {@link ObjectService}.
  * </p>
  */
 @Slf4j
@@ -27,9 +29,9 @@ public class ObjectController {
     private final ObjectService objectService;
 
     /**
-     * Получить все объекты недвижимости.
+     * Получение списка всех объектов недвижимости.
      *
-     * @return список всех объектов недвижимости
+     * @return {@link ResponseEntity} со списком {@link ObjectResponseDto} всех объектов.
      */
     @GetMapping
     public ResponseEntity<List<ObjectResponseDto>> getAllObjects() {
@@ -39,21 +41,23 @@ public class ObjectController {
     }
 
     /**
-     * Получить объект недвижимости по его ID.
+     * Получение объекта по его ID.
      *
-     * @param id идентификатор объекта
-     * @return объект недвижимости, если найден
+     * @param id ID объекта
+     * @return {@link ResponseEntity} с {@link ObjectResponseDto} объекта
      */
     @GetMapping("/{id}")
     public ResponseEntity<ObjectResponseDto> getObjectById(@PathVariable Long id) {
-        return objectService.getObjectById(id);
+        log.info("Получение объекта с ID {}", id);
+        ObjectResponseDto object = objectService.getObjectById(id);
+        return ResponseEntity.ok(object);
     }
 
     /**
-     * Получить объекты по их типу.
+     * Получение объектов по типу.
      *
-     * @param type тип объекта недвижимости (например, ЭТАЖ, КВАРТИРА и т.д.)
-     * @return список объектов данного типа
+     * @param type Тип объекта ({@link ObjectType})
+     * @return {@link ResponseEntity} со списком объектов указанного типа
      */
     @GetMapping("/by-type")
     public ResponseEntity<List<ObjectResponseDto>> getObjectsByType(@RequestParam ObjectType type) {
@@ -62,10 +66,10 @@ public class ObjectController {
     }
 
     /**
-     * Получить дочерние объекты по ID родительского объекта.
+     * Получение дочерних объектов для указанного объекта.
      *
-     * @param id идентификатор родительского объекта
-     * @return список дочерних объектов
+     * @param id ID родительского объекта
+     * @return {@link ResponseEntity} со списком дочерних объектов
      */
     @GetMapping("/{id}/children")
     public ResponseEntity<List<ObjectResponseDto>> getChildren(@PathVariable Long id) {
@@ -74,111 +78,106 @@ public class ObjectController {
     }
 
     /**
-     * Создать новый объект недвижимости.
+     * Создание нового объекта недвижимости.
      *
-     * @param objectDto данные нового объекта недвижимости
-     * @return созданный объект
+     * @param objectDto DTO с данными нового объекта
+     * @return {@link ResponseEntity} с {@link ObjectResponseDto} созданного объекта
      */
     @PostMapping
-    public ResponseEntity<ObjectResponseDto> createObject(@RequestBody ObjectResponseDto objectDto) {
-        log.info("Запрос на создание объекта: {}", objectDto);
+    public ResponseEntity<ObjectResponseDto> createObject(@RequestBody ObjectRequestDto objectDto) {
+        log.info("Создание объекта: {}", objectDto);
         ObjectResponseDto createdObject = objectService.createObject(objectDto);
-        log.info("Объект создан: {}", createdObject);
         return ResponseEntity.ok(createdObject);
     }
 
     /**
-     * Обновить существующий объект недвижимости.
+     * Обновление существующего объекта по ID.
      *
-     * @param id     идентификатор обновляемого объекта
-     * @param object новые данные объекта
-     * @return обновленный объект недвижимости
+     * @param id        ID объекта
+     * @param objectDto DTO с обновлёнными данными объекта
+     * @return {@link ResponseEntity} с {@link ObjectResponseDto} обновлённого объекта
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ObjectResponseDto> updateObject(@PathVariable Long id, @RequestBody ObjectResponseDto object) {
-        log.info("Запрос на обновление объекта с ID {}: {}", id, object);
-        ObjectResponseDto updatedObject = objectService.updateObject(id, object);
-        log.info("Объект обновлен: {}", updatedObject);
+    public ResponseEntity<ObjectResponseDto> updateObject(@PathVariable Long id, @RequestBody ObjectRequestDto objectDto) {
+        log.info("Обновление объекта с ID {}: {}", id, objectDto);
+        ObjectResponseDto updatedObject = objectService.updateObject(id, objectDto);
         return ResponseEntity.ok(updatedObject);
     }
 
     /**
-     * Удалить объект недвижимости по его ID.
+     * Удаление объекта по ID.
      *
-     * @param id идентификатор удаляемого объекта
-     * @return HTTP 204 No Content в случае успешного удаления
+     * @param id ID объекта
+     * @return {@link ResponseEntity} без содержимого (HTTP 204), если удаление прошло успешно
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteObject(@PathVariable Long id) {
-        log.info("Запрос на удаление объекта с ID: {}", id);
+        log.info("Удаление объекта с ID: {}", id);
         objectService.deleteObject(id);
-        log.info("Объект с ID {} удален", id);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * Получить все объекты, созданные текущим пользователем.
+     * Получение объектов текущего пользователя.
      *
-     * @return список объектов, созданных текущим пользователем
+     * @return {@link ResponseEntity} со списком объектов текущего пользователя
      */
     @GetMapping("/my-objects")
     public ResponseEntity<List<ObjectResponseDto>> getCurrentUserObjects() {
-        log.info("Запрос на получение объектов текущего пользователя");
-        List<ObjectResponseDto> objects = objectService.getCurrentUserObjects();
-        return ResponseEntity.ok(objects);
+        log.info("Получение объектов текущего пользователя");
+        return ResponseEntity.ok(objectService.getCurrentUserObjects());
     }
 
     /**
-     * Получить все объекты, за которые отвечает указанный пользователь.
+     * Получение объектов по ответственному пользователю.
      *
-     * @param userId идентификатор пользователя
-     * @return список объектов, за которые отвечает пользователь
+     * @param userId ID ответственного пользователя
+     * @return {@link ResponseEntity} со списком объектов, за которые отвечает указанный пользователь
      */
     @GetMapping("/by-responsible/{userId}")
     public ResponseEntity<List<ObjectResponseDto>> getObjectsByResponsibleUser(@PathVariable Long userId) {
-        log.info("Запрос на получение объектов для ответственного пользователя: {}", userId);
-        List<ObjectResponseDto> objects = objectService.getObjectsByResponsibleUser(userId);
-        return ResponseEntity.ok(objects);
+        log.info("Получение объектов для ответственного пользователя: {}", userId);
+        return ResponseEntity.ok(objectService.getObjectsByResponsibleUser(userId));
     }
 
     /**
-     * Назначить ответственного пользователя за объект недвижимости.
+     * Назначение ответственного пользователя для объекта.
      *
-     * @param id     идентификатор объекта
-     * @param userId идентификатор пользователя
-     * @return обновлённый объект недвижимости
+     * @param id     ID объекта
+     * @param userId ID пользователя
+     * @return {@link ResponseEntity} с {@link ObjectResponseDto} обновлённого объекта
      */
     @PutMapping("/{id}/assign-responsible/{userId}")
     public ResponseEntity<ObjectResponseDto> assignResponsibleUser(
             @PathVariable Long id,
             @PathVariable Long userId) {
-        log.info("Запрос на назначение ответственного пользователя {} для объекта {}", userId, id);
+        log.info("Назначение ответственного пользователя {} для объекта {}", userId, id);
         ObjectResponseDto updatedObject = objectService.assignResponsibleUser(id, userId);
         return ResponseEntity.ok(updatedObject);
     }
 
     /**
-     * Удалить назначенного ответственного пользователя из объекта.
+     * Удаление ответственного пользователя с объекта.
      *
-     * @param id идентификатор объекта
-     * @return обновлённый объект недвижимости
+     * @param id ID объекта
+     * @return {@link ResponseEntity} с {@link ObjectResponseDto} обновлённого объекта
      */
     @PutMapping("/{id}/remove-responsible")
     public ResponseEntity<ObjectResponseDto> removeResponsibleUser(@PathVariable Long id) {
-        log.info("Запрос на удаление ответственного пользователя для объекта {}", id);
+        log.info("Удаление ответственного пользователя для объекта {}", id);
         ObjectResponseDto updatedObject = objectService.removeResponsibleUser(id);
         return ResponseEntity.ok(updatedObject);
     }
 
     /**
-     * Получить путь (хлебные крошки) от корня до текущего объекта.
+     * Получение пути (хлебных крошек) до объекта.
      *
-     * @param id идентификатор объекта
-     * @return список объектов от корня до текущего
+     * @param id ID объекта
+     * @return {@link ResponseEntity} со списком объектов, представляющих путь к объекту
      */
     @GetMapping("/{id}/path")
     public ResponseEntity<List<ObjectResponseDto>> getObjectPath(@PathVariable Long id) {
-        List<ObjectResponseDto> path = objectService.getObjectPath(id);
-        return ResponseEntity.ok(path);
+        log.info("Получение пути (хлебных крошек) для объекта {}", id);
+        return ResponseEntity.ok(objectService.getObjectPath(id));
     }
 }

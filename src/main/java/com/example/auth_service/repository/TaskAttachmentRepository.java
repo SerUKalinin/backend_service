@@ -28,4 +28,7 @@ public interface TaskAttachmentRepository extends JpaRepository<TaskAttachment, 
      * @return Optional с найденным вложением или пустой Optional, если вложение не найдено
      */
     Optional<TaskAttachment> findByFilePath(String filePath);
-} 
+
+    Optional<TaskAttachment> findByTaskIdAndFilePath(Long taskId, String filePath);
+
+}
