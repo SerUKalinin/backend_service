@@ -1,7 +1,7 @@
 package com.example.auth_service.controller;
 
-import com.example.auth_service.model.TaskAttachment;
 import com.example.auth_service.service.FileStorageService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Контроллер для управления файлами, прикреплёнными к задачам.
+ * REST-контроллер для управления файлами, прикреплёнными к задачам.
  * <p>
  * Предоставляет методы для загрузки, получения, скачивания и удаления файлов,
  * связанных с задачами. Все операции делегируются в {@link FileStorageService}.
@@ -20,14 +20,11 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/files")
 public class FileController {
 
     private final FileStorageService fileStorageService;
-
-    public FileController(FileStorageService fileStorageService) {
-        this.fileStorageService = fileStorageService;
-    }
 
     /**
      * Загружает один или несколько файлов для конкретной задачи.

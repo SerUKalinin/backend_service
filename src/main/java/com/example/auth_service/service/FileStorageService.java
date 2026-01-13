@@ -93,11 +93,11 @@ public class FileStorageService {
      *
      * <p>В процессе загрузки:</p>
      * <ol>
-     *   <li>Проверяется существование задачи</li>
-     *   <li>Валидируется каждый файл (размер, расширение)</li>
-     *   <li>Файл сохраняется в файловой системе</li>
-     *   <li>Метаданные сохраняются в базе данных</li>
-     *   <li>Формируется ссылка для скачивания</li>
+     *     <li>Проверяется существование задачи</li>
+     *     <li>Валидируется каждый файл (размер, расширение)</li>
+     *     <li>Файл сохраняется в файловой системе</li>
+     *     <li>Метаданные сохраняются в базе данных</li>
+     *     <li>Формируется ссылка для скачивания</li>
      * </ol>
      *
      * @param taskId идентификатор задачи
@@ -112,40 +112,69 @@ public class FileStorageService {
             throw new InvalidFileException("Файлы не выбраны");
         }
 
+        // Проверяем существование задачи
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Задача не найдена: " + taskId));
 
-        List<Map<String, String>> responses = new ArrayList<>();
+        List<Map<String, String>> responses = Arrays.stream(files)
+                .peek(this::validateFile) // Валидируем каждый файл
+                .map(file -> {
+                    // Генерация безопасного имени файла
+                    String ext = Optional.ofNullable(StringUtils.getFilenameExtension(file.getOriginalFilename()))
+                            .map(String::toLowerCase)
+                            .orElse("");
+                    String storedFileName = UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
 
-        for (MultipartFile file : files) {
-            validateFile(file);
-            String storedFileName = storeFile(file);
+                    // Сохраняем файл
+                    try {
+                        Files.copy(file.getInputStream(),
+                                fileStorageLocation.resolve(storedFileName),
+                                StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        throw new FileStorageException("Ошибка при сохранении файла: " + file.getOriginalFilename(), e);
+                    }
 
-            TaskAttachment attachment = TaskAttachment.builder()
-                    .task(task)
-                    .filePath(storedFileName)
-                    .originalFileName(file.getOriginalFilename())
-                    .size(file.getSize())
-                    .build();
-            taskAttachmentRepository.save(attachment);
+                    // Сохраняем метаданные
+                    TaskAttachment attachment = TaskAttachment.builder()
+                            .task(task)
+                            .filePath(storedFileName)
+                            .originalFileName(Optional.ofNullable(file.getOriginalFilename()).orElse("unknown"))
+                            .size(file.getSize())
+                            .build();
+                    taskAttachmentRepository.save(attachment);
 
-            String fileUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/api/files/download/")
-                    .path(storedFileName)
-                    .toUriString();
+                    // Формируем ссылку для скачивания
+                    String fileUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                            .path("/api/files/download/")
+                            .path(storedFileName)
+                            .toUriString();
 
-            Map<String, String> info = new HashMap<>();
-            info.put("fileName", storedFileName);
-            info.put("originalFileName", file.getOriginalFilename());
-            info.put("fileDownloadUri", fileUri);
-            info.put("fileType", file.getContentType());
-            info.put("size", String.valueOf(file.getSize()));
+                    log.info("Файл {} сохранён как {}", file.getOriginalFilename(), storedFileName);
 
-            responses.add(info);
-        }
+                    return buildFileInfo(attachment, fileUri);
+                })
+                .toList();
 
         return ResponseEntity.ok(responses);
     }
+
+    /**
+     * Формирует информацию о файле для ответа клиенту.
+     *
+     * @param attachment объект TaskAttachment с метаданными файла
+     * @param fileUri URI для скачивания файла
+     * @return Map с данными файла
+     */
+    private Map<String, String> buildFileInfo(TaskAttachment attachment, String fileUri) {
+        Map<String, String> info = new HashMap<>();
+        info.put("fileName", attachment.getFilePath());
+        info.put("originalFileName", attachment.getOriginalFileName());
+        info.put("fileDownloadUri", fileUri);
+        info.put("fileType", getFileType(attachment.getFilePath()));
+        info.put("size", String.valueOf(attachment.getSize()));
+        return info;
+    }
+
 
     /**
      * Возвращает список файлов, прикреплённых к задаче.
@@ -206,7 +235,7 @@ public class FileStorageService {
     }
 
     /**
-     * Удаляет файл и связанные с ним метаданные.
+     * Удаляет файл и связанные с ним метаданные из базы и файловой системы.
      *
      * @param fileName имя файла в хранилище
      * @throws FileNotFoundException если файл не найден
@@ -220,6 +249,12 @@ public class FileStorageService {
 
     /* ==================== Internal helpers ==================== */
 
+    /**
+     * Валидирует файл на предмет размера и допустимого расширения.
+     *
+     * @param file файл для проверки
+     * @throws InvalidFileException если файл пустой, слишком большой или недопустимого типа
+     */
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new InvalidFileException("Файл пустой");
@@ -234,6 +269,13 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Сохраняет файл в файловую систему.
+     *
+     * @param file файл для сохранения
+     * @return сгенерированное уникальное имя файла
+     * @throws FileStorageException при ошибке сохранения
+     */
     private String storeFile(MultipartFile file) {
         String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
         String fileName = UUID.randomUUID() + "." + ext;
@@ -250,6 +292,13 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Загружает файл из файловой системы как {@link Resource}.
+     *
+     * @param fileName имя файла
+     * @return ресурс для скачивания
+     * @throws FileNotFoundException если файл не найден
+     */
     private Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = fileStorageLocation.resolve(fileName).normalize();
@@ -263,6 +312,13 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Удаляет файл из файловой системы.
+     *
+     * @param fileName имя файла
+     * @throws FileNotFoundException если файл не найден
+     * @throws FileStorageException при ошибке удаления
+     */
     private void deleteFileInternal(String fileName) {
         try {
             Path path = fileStorageLocation.resolve(fileName).normalize();
@@ -275,6 +331,12 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Определяет MIME-тип файла по расширению.
+     *
+     * @param fileName имя файла
+     * @return MIME-тип файла
+     */
     private String getFileType(String fileName) {
         String ext = StringUtils.getFilenameExtension(fileName);
         if (ext == null) {
