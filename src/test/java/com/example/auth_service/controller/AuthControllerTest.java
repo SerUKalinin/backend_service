@@ -1,6 +1,11 @@
 package com.example.auth_service.controller;
 
-import com.example.auth_service.dto.*;
+import com.example.auth_service.dto.AuthResponse;
+import com.example.auth_service.dto.EmailVerificationDto;
+import com.example.auth_service.dto.ForgotPasswordDto;
+import com.example.auth_service.dto.PasswordResetDto;
+import com.example.auth_service.dto.UserSigninDto;
+import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.service.SessionService;
 import com.example.auth_service.service.auth.AuthService;
 import com.example.auth_service.service.security.jwt.JwtUtil;
@@ -11,15 +16,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AuthControllerTest {
 
     private AuthService authService;
-    private JwtUtil jwtUtil;
-    private SessionService sessionService;
     private AuthController authController;
     private HttpServletRequest request;
     private HttpServletResponse response;
@@ -27,8 +34,8 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         authService = mock(AuthService.class);
-        jwtUtil = mock(JwtUtil.class);
-        sessionService = mock(SessionService.class);
+        JwtUtil jwtUtil = mock(JwtUtil.class);
+        SessionService sessionService = mock(SessionService.class);
         authController = new AuthController(authService, jwtUtil, sessionService);
 
         request = mock(HttpServletRequest.class);

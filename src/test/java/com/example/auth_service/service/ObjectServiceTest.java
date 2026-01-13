@@ -3,7 +3,6 @@ package com.example.auth_service.service;
 import com.example.auth_service.dto.ObjectRequestDto;
 import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.exception.ObjectNotFoundException;
-import com.example.auth_service.exception.UserNotFoundException;
 import com.example.auth_service.mapper.ObjectMapper;
 import com.example.auth_service.model.ObjectEntity;
 import com.example.auth_service.model.ObjectType;
@@ -12,9 +11,7 @@ import com.example.auth_service.repository.ObjectRepository;
 import com.example.auth_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.springframework.security.authentication.TestingAuthenticationToken;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,8 +19,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ObjectServiceTest {
 

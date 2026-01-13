@@ -6,7 +6,6 @@ import com.example.auth_service.dto.UserSignupDto;
 import com.example.auth_service.exception.InvalidConfirmationCodeException;
 import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.exception.UserNotActivatedException;
-import com.example.auth_service.exception.UserNotFoundException;
 import com.example.auth_service.model.Role;
 import com.example.auth_service.model.User;
 import com.example.auth_service.repository.RoleRepository;
@@ -28,8 +27,17 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AuthAccountServiceTest {
 
@@ -37,7 +45,6 @@ class AuthAccountServiceTest {
     private RoleRepository roleRepository;
     private PasswordEncoder passwordEncoder;
     private JwtUtil jwtUtil;
-    private AuthenticationManager authenticationManager;
     private RedisService redisService;
     private EmailService emailService;
     private SessionService sessionService;
@@ -50,7 +57,7 @@ class AuthAccountServiceTest {
         roleRepository = mock(RoleRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
         jwtUtil = mock(JwtUtil.class);
-        authenticationManager = mock(AuthenticationManager.class);
+        AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
         redisService = mock(RedisService.class);
         emailService = mock(EmailService.class);
         sessionService = mock(SessionService.class);
