@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.Set;
 
@@ -34,19 +35,24 @@ public class UserUpdateService {
      * @return {@link UserDto} с информацией о пользователе
      */
     private UserDto createUserDto(com.example.auth_service.model.User user) {
+        // Преобразуем Set<Role> в List<String> с названиями ролей
+        List<String> roles = user.getRoles().isEmpty()
+                ? List.of("ROLE_USER") // если нет ролей, дефолтная
+                : user.getRoles().stream()
+                .map(role -> role.getRoleType().toString())
+                .toList(); // Java 17+
+
         return new UserDto(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getRoles().stream()
-                        .findFirst()
-                        .map(role -> role.getRoleType().toString())
-                        .orElse("ROLE_USER"),
+                roles,
                 user.isActive()
         );
     }
+
 
     /**
      * Обновить email пользователя.

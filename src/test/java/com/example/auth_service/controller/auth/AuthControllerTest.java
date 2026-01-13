@@ -8,7 +8,7 @@
 //import com.example.auth_service.exception.InvalidConfirmationCodeException;
 //import com.example.auth_service.exception.UserNotActivatedException;
 //import com.example.auth_service.exception.UserNotFoundException;
-//import com.example.auth_service.service.AuthService;
+//import com.example.auth_service.service.auth.AuthService;
 //import jakarta.mail.MessagingException;
 //import jakarta.validation.ConstraintViolation;
 //import jakarta.validation.Validator;
