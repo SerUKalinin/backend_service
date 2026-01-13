@@ -49,8 +49,6 @@ public class ObjectService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
-    /* ==================== Current User ==================== */
-
     /**
      * Возвращает текущего аутентифицированного пользователя.
      *
@@ -67,8 +65,6 @@ public class ObjectService {
                 .orElseThrow(() -> new UserNotFoundException("Текущий пользователь не найден"));
     }
 
-    /* ==================== Helpers ==================== */
-
     /**
      * Разрешает родительский объект по идентификатору.
      *
@@ -77,9 +73,7 @@ public class ObjectService {
      * @throws ObjectNotFoundException если родительский объект не найден
      */
     private ObjectEntity resolveParent(Long parentId) {
-        if (parentId == null) {
-            return null;
-        }
+        if (parentId == null) return null;
         return objectRepository.findById(parentId)
                 .orElseThrow(() -> new ObjectNotFoundException("Родительский объект не найден"));
     }
@@ -92,14 +86,10 @@ public class ObjectService {
      * @throws UserNotFoundException если пользователь не найден
      */
     private User resolveResponsibleUser(Long userId) {
-        if (userId == null) {
-            return null;
-        }
+        if (userId == null) return null;
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Ответственный пользователь не найден"));
     }
-
-    /* ==================== CRUD ==================== */
 
     /**
      * Создаёт новый объект.
@@ -144,8 +134,7 @@ public class ObjectService {
 
         ObjectEntity updated = objectRepository.findById(id)
                 .map(existing -> {
-                    existing.setName(dto.getName());
-                    existing.setObjectType(dto.getObjectType());
+                    objectMapper.updateEntityFromDto(dto, existing); // MapStruct обновляет name и type
                     existing.setParent(resolveParent(dto.getParentId()));
                     existing.setResponsibleUser(resolveResponsibleUser(dto.getResponsibleUserId()));
                     return objectRepository.save(existing);
@@ -170,16 +159,12 @@ public class ObjectService {
                 .orElseThrow(() -> new ObjectNotFoundException("Объект не найден"));
 
         if (objectRepository.existsByParentId(id)) {
-            throw new IllegalStateException(
-                    "Объект имеет дочерние элементы и не может быть удален"
-            );
+            throw new IllegalStateException("Объект имеет дочерние элементы и не может быть удален");
         }
 
         objectRepository.delete(object);
         log.info("Объект с ID {} удалён", id);
     }
-
-    /* ==================== Queries ==================== */
 
     /**
      * Возвращает объект по идентификатору.
@@ -258,8 +243,6 @@ public class ObjectService {
                 .collect(Collectors.toList());
     }
 
-    /* ==================== Responsible Assignment ==================== */
-
     /**
      * Назначает ответственного пользователя для объекта.
      *
@@ -294,8 +277,6 @@ public class ObjectService {
         log.info("Ответственный пользователь удалён для объекта {}", objectId);
         return objectMapper.toDto(saved);
     }
-
-    /* ==================== Path (breadcrumbs) ==================== */
 
     /**
      * Возвращает путь объекта от корневого элемента до текущего.

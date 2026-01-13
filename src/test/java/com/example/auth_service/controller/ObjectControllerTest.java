@@ -1,195 +1,159 @@
-//package com.example.auth_service.controller;
-//
-//import com.example.auth_service.model.ObjectEntity;
-//import com.example.auth_service.model.ObjectType;
-//import com.example.auth_service.service.ObjectService;
-//import org.junit.jupiter.api.DisplayName;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//
-//import java.time.LocalDateTime;
-//import java.util.Arrays;
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class ObjectControllerTest {
-//
-//    @Mock
-//    private ObjectService objectService;
-//
-//    @InjectMocks
-//    private ObjectController objectController;
-//
-//    private ObjectEntity createTestObject(Long id, String name, ObjectType objectType, ObjectEntity parent) {
-//        return ObjectEntity.builder()
-//                .id(id)
-//                .name(name)
-//                .objectType(objectType)
-//                .parent(parent)
-//                .createdAt(LocalDateTime.now())
-//                .updatedAt(LocalDateTime.now())
-//                .build();
-//    }
-//
-//    @Test
-//    @DisplayName("GET /real-estate-objects - Получение всех объектов (успешный сценарий)")
-//    void getAllObjects_ShouldReturnAllObjects() {
-//        // Подготовка тестовых данных
-//        ObjectEntity project = createTestObject(1L, "ЖК Ромашка", ObjectType.BUILDING, null);
-//        ObjectEntity building = createTestObject(2L, "Корпус 1", ObjectType.BUILDING, project);
-//        List<ObjectEntity> expectedObjects = Arrays.asList(project, building);
-//
-//        when(objectService.getAllObjects()).thenReturn(expectedObjects);
-//
-//        // Выполнение запроса
-//        ResponseEntity<List<ObjectEntity>> response = objectController.getAllObjects();
-//
-//        // Проверки
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertEquals(2, response.getBody().size());
-//        assertEquals("ЖК Ромашка", response.getBody().get(0).getName());
-//        verify(objectService, times(1)).getAllObjects();
-//    }
-//
-//    @Test
-//    @DisplayName("GET /real-estate-objects/{id} - Получение существующего объекта (успешный сценарий)")
-//    void getObjectById_WhenExists_ShouldReturnObject() {
-//        // Подготовка тестовых данных
-//        Long id = 1L;
-//        ObjectEntity building = createTestObject(id, "ЖК Ромашка", ObjectType.BUILDING, null);
-//
-//        when(objectService.getObjectById(id)).thenReturn(Optional.of(building));
-//
-//        // Выполнение запроса
-//        ResponseEntity<ObjectEntity> response = objectController.getObjectsById(id);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertNotNull(response.getBody());
-//        assertEquals("ЖК Ромашка", response.getBody().getName());
-//        verify(objectService, times(1)).getObjectById(id);
-//    }
-//
-//    @Test
-//    @DisplayName("GET /real-estate-objects/{id} - Попытка получить несуществующий объект (негативный сценарий)")
-//    void getObjectById_WhenNotExists_ShouldReturnNotFound() {
-//        // Подготовка тестовых данных
-//        Long id = 999L;
-//
-//        when(objectService.getObjectById(id)).thenReturn(Optional.empty());
-//
-//        // Выполнение запроса
-//        ResponseEntity<ObjectEntity> response = objectController.getObjectsById(id);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-//        verify(objectService, times(1)).getObjectById(id);
-//    }
-//
-//    @Test
-//    @DisplayName("GET /real-estate-objects/by-type - Получение объектов по типу (успешный сценарий)")
-//    void getObjectsByType_ShouldReturnFilteredObjects() {
-//        // Подготовка тестовых данных
-//        ObjectType type = ObjectType.APARTMENT;
-//        ObjectEntity apartment1 = createTestObject(1L, "Квартира 101", ObjectType.APARTMENT, null);
-//        ObjectEntity apartment2 = createTestObject(2L, "Квартира 102", ObjectType.APARTMENT, null);
-//        List<ObjectEntity> expectedApartments = Arrays.asList(apartment1, apartment2);
-//
-//        when(objectService.getObjectsByType(type)).thenReturn(expectedApartments);
-//
-//        // Выполнение запроса
-//        ResponseEntity<List<ObjectEntity>> response = objectController.getObjectsByType(type);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertEquals(2, response.getBody().size());
-//        assertTrue(response.getBody().stream().allMatch(o -> o.getObjectType() == ObjectType.APARTMENT));
-//        verify(objectService, times(1)).getObjectsByType(type);
-//    }
-//
-//    @Test
-//    @DisplayName("GET /real-estate-objects/{id}/children - Получение дочерних объектов (успешный сценарий)")
-//    void getChildren_ShouldReturnChildObjects() {
-//        // Подготовка тестовых данных
-//        Long parentId = 1L;
-//        ObjectEntity parent = createTestObject(parentId, "ЖК Ромашка", ObjectType.BUILDING, null);
-//        ObjectEntity child1 = createTestObject(2L, "Корпус 1", ObjectType.BUILDING, parent);
-//        ObjectEntity child2 = createTestObject(3L, "Корпус 2", ObjectType.BUILDING, parent);
-//        List<ObjectEntity> expectedChildren = Arrays.asList(child1, child2);
-//
-//        when(objectService.getChildren(parentId)).thenReturn(expectedChildren);
-//
-//        // Выполнение запроса
-//        ResponseEntity<List<ObjectEntity>> response = objectController.getChildren(parentId);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertEquals(2, response.getBody().size());
-//        assertTrue(response.getBody().stream().allMatch(o -> o.getParent().getId().equals(parentId)));
-//        verify(objectService, times(1)).getChildren(parentId);
-//    }
-//
-//    @Test
-//    @DisplayName("POST /real-estate-objects - Создание нового объекта (успешный сценарий)")
-//    void createObject_ShouldCreateNewObject() {
-//        // Подготовка тестовых данных
-//        ObjectEntity newObject = createTestObject(null, "Новый проект", ObjectType.BUILDING, null);
-//        ObjectEntity savedObject = createTestObject(1L, "Новый проект", ObjectType.BUILDING, null);
-//
-//        when(objectService.createObject(newObject)).thenReturn(savedObject);
-//
-//        // Выполнение запроса
-//        ResponseEntity<ObjectEntity> response = objectController.createObject(newObject);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertNotNull(response.getBody().getId());
-//        assertEquals("Новый проект", response.getBody().getName());
-//        verify(objectService, times(1)).createObject(newObject);
-//    }
-//
-//    @Test
-//    @DisplayName("PUT /real-estate-objects/{id} - Обновление существующего объекта (успешный сценарий)")
-//    void updateObject_ShouldUpdateExistingObject() {
-//        // Подготовка тестовых данных
-//        Long id = 1L;
-//        ObjectEntity existingObject = createTestObject(id, "Старое название", ObjectType.BUILDING, null);
-//        ObjectEntity updatedData = createTestObject(null, "Новое название", ObjectType.BUILDING, null);
-//        ObjectEntity updatedObject = createTestObject(id, "Новое название", ObjectType.BUILDING, null);
-//
-//        when(objectService.updateObject(id, updatedData)).thenReturn(updatedObject);
-//
-//        // Выполнение запроса
-//        ResponseEntity<ObjectEntity> response = objectController.updateObject(id, updatedData);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertEquals(id, response.getBody().getId());
-//        assertEquals("Новое название", response.getBody().getName());
-//        verify(objectService, times(1)).updateObject(id, updatedData);
-//    }
-//
-//    @Test
-//    @DisplayName("DELETE /real-estate-objects/{id} - Удаление объекта (успешный сценарий)")
-//    void deleteObject_ShouldDeleteObject() {
-//        // Подготовка тестовых данных
-//        Long id = 1L;
-//        doNothing().when(objectService).deleteObject(id);
-//
-//        // Выполнение запроса
-//        ResponseEntity<Void> response = objectController.deleteObject(id);
-//
-//        // Проверки
-//        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-//        verify(objectService, times(1)).deleteObject(id);
-//    }
-//}
+package com.example.auth_service.controller;
+
+import com.example.auth_service.dto.ObjectRequestDto;
+import com.example.auth_service.dto.ObjectResponseDto;
+import com.example.auth_service.model.ObjectType;
+import com.example.auth_service.service.ObjectService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class ObjectControllerTest {
+
+    private ObjectService objectService;
+    private ObjectController objectController;
+
+    @BeforeEach
+    void setUp() {
+        objectService = mock(ObjectService.class);
+        objectController = new ObjectController(objectService);
+    }
+
+    @Test
+    void getAllObjects_shouldReturnList() {
+        List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
+        when(objectService.getAllObjects()).thenReturn(mockList);
+
+        ResponseEntity<List<ObjectResponseDto>> response = objectController.getAllObjects();
+
+        assertEquals(mockList, response.getBody());
+        verify(objectService).getAllObjects();
+    }
+
+    @Test
+    void getObjectById_shouldReturnObject() {
+        ObjectResponseDto dto = new ObjectResponseDto();
+        when(objectService.getObjectById(1L)).thenReturn(dto);
+
+        ResponseEntity<ObjectResponseDto> response = objectController.getObjectById(1L);
+
+        assertEquals(dto, response.getBody());
+        verify(objectService).getObjectById(1L);
+    }
+
+    @Test
+    void getObjectsByType_shouldReturnList() {
+        List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
+        when(objectService.getObjectsByType(ObjectType.BUILDING)).thenReturn(mockList);
+
+        ResponseEntity<List<ObjectResponseDto>> response = objectController.getObjectsByType(ObjectType.BUILDING);
+
+        assertEquals(mockList, response.getBody());
+        verify(objectService).getObjectsByType(ObjectType.BUILDING);
+    }
+
+    @Test
+    void getChildren_shouldReturnList() {
+        List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
+        when(objectService.getChildren(1L)).thenReturn(mockList);
+
+        ResponseEntity<List<ObjectResponseDto>> response = objectController.getChildren(1L);
+
+        assertEquals(mockList, response.getBody());
+        verify(objectService).getChildren(1L);
+    }
+
+    @Test
+    void createObject_shouldReturnCreatedObject() {
+        ObjectRequestDto request = new ObjectRequestDto();
+        ObjectResponseDto responseDto = new ObjectResponseDto();
+        when(objectService.createObject(request)).thenReturn(responseDto);
+
+        ResponseEntity<ObjectResponseDto> response = objectController.createObject(request);
+
+        assertEquals(responseDto, response.getBody());
+        verify(objectService).createObject(request);
+    }
+
+    @Test
+    void updateObject_shouldReturnUpdatedObject() {
+        ObjectRequestDto request = new ObjectRequestDto();
+        ObjectResponseDto responseDto = new ObjectResponseDto();
+        when(objectService.updateObject(1L, request)).thenReturn(responseDto);
+
+        ResponseEntity<ObjectResponseDto> response = objectController.updateObject(1L, request);
+
+        assertEquals(responseDto, response.getBody());
+        verify(objectService).updateObject(1L, request);
+    }
+
+    @Test
+    void deleteObject_shouldCallService() {
+        ResponseEntity<Void> response = objectController.deleteObject(1L);
+
+        assertEquals(204, response.getStatusCodeValue());
+        verify(objectService).deleteObject(1L);
+    }
+
+    @Test
+    void getCurrentUserObjects_shouldReturnList() {
+        List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
+        when(objectService.getCurrentUserObjects()).thenReturn(mockList);
+
+        ResponseEntity<List<ObjectResponseDto>> response = objectController.getCurrentUserObjects();
+
+        assertEquals(mockList, response.getBody());
+        verify(objectService).getCurrentUserObjects();
+    }
+
+    @Test
+    void getObjectsByResponsibleUser_shouldReturnList() {
+        List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
+        when(objectService.getObjectsByResponsibleUser(2L)).thenReturn(mockList);
+
+        ResponseEntity<List<ObjectResponseDto>> response = objectController.getObjectsByResponsibleUser(2L);
+
+        assertEquals(mockList, response.getBody());
+        verify(objectService).getObjectsByResponsibleUser(2L);
+    }
+
+    @Test
+    void assignResponsibleUser_shouldReturnUpdatedObject() {
+        ObjectResponseDto responseDto = new ObjectResponseDto();
+        when(objectService.assignResponsibleUser(1L, 2L)).thenReturn(responseDto);
+
+        ResponseEntity<ObjectResponseDto> response = objectController.assignResponsibleUser(1L, 2L);
+
+        assertEquals(responseDto, response.getBody());
+        verify(objectService).assignResponsibleUser(1L, 2L);
+    }
+
+    @Test
+    void removeResponsibleUser_shouldReturnUpdatedObject() {
+        ObjectResponseDto responseDto = new ObjectResponseDto();
+        when(objectService.removeResponsibleUser(1L)).thenReturn(responseDto);
+
+        ResponseEntity<ObjectResponseDto> response = objectController.removeResponsibleUser(1L);
+
+        assertEquals(responseDto, response.getBody());
+        verify(objectService).removeResponsibleUser(1L);
+    }
+
+    @Test
+    void getObjectPath_shouldReturnList() {
+        List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
+        when(objectService.getObjectPath(1L)).thenReturn(mockList);
+
+        ResponseEntity<List<ObjectResponseDto>> response = objectController.getObjectPath(1L);
+
+        assertEquals(mockList, response.getBody());
+        verify(objectService).getObjectPath(1L);
+    }
+}

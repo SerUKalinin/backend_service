@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * DTO для передачи данных пользователя.
  * Используется для обмена данными о пользователе между слоями приложения (например, для отображения информации о пользователе).
@@ -47,7 +49,7 @@ public class UserDto {
      * Роль пользователя.
      * Роль пользователя в системе (например, ADMIN, USER, MANAGER).
      */
-    private String roles;
+    private List<String> roles;
 
     /**
      * Статус активации пользователя.
