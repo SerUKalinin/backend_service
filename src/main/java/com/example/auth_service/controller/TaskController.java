@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Контроллер для управления задачами, связанными с объектами недвижимости.
@@ -148,7 +149,7 @@ public class TaskController {
      * @return {@link ResponseEntity} с {@link java.util.Map} где ключ — статус задачи, значение — количество задач
      */
     @GetMapping("/object/{objectId}/status-stats")
-    public ResponseEntity<java.util.Map<String, Integer>> getTaskStatusStats(@PathVariable Long objectId) {
+    public ResponseEntity<Map<String, Integer>> getTaskStatusStats(@PathVariable Long objectId) {
         java.util.Map<String, Integer> stats = taskService.getTaskStatusStatsRecursive(objectId);
         return ResponseEntity.ok(stats);
     }
