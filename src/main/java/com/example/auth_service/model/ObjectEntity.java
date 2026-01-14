@@ -71,6 +71,7 @@ public class ObjectEntity {
      * Дата и время создания объекта.
      * Устанавливается при создании сущности и не обновляется.
      */
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

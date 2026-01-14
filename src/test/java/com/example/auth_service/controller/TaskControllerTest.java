@@ -7,6 +7,8 @@ import com.example.auth_service.dto.TaskUpdateDTO;
 import com.example.auth_service.service.TaskService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -44,14 +46,15 @@ class TaskControllerTest {
     }
 
     @Test
-    void getAllTasks_shouldReturnList() {
+    void getAllTasks_shouldReturnPage() {
         List<TaskDTO> tasks = List.of(new TaskDTO());
-        when(taskService.getAllTasks()).thenReturn(tasks);
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(taskService.getAllTasks(pageable)).thenReturn(new PageImpl<>(tasks));
 
-        ResponseEntity<List<TaskDTO>> response = taskController.getAllTasks();
+        ResponseEntity<?> response = taskController.getAllTasks(0, 10);
 
-        assertEquals(tasks, response.getBody());
-        verify(taskService).getAllTasks();
+        assertEquals(tasks, ((PageImpl<TaskDTO>) response.getBody()).getContent());
+        verify(taskService).getAllTasks(pageable);
     }
 
     @Test
@@ -105,14 +108,15 @@ class TaskControllerTest {
     }
 
     @Test
-    void getTasksByObjectId_shouldReturnList() {
+    void getTasksByObjectId_shouldReturnPage() {
         List<TaskDTO> tasks = List.of(new TaskDTO());
-        when(taskService.getTasksByObjectId(1L)).thenReturn(tasks);
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(taskService.getTasksByObjectId(1L, pageable)).thenReturn(new PageImpl<>(tasks));
 
-        ResponseEntity<List<TaskDTO>> response = taskController.getTasksByObjectId(1L);
+        ResponseEntity<?> response = taskController.getTasksByObjectId(1L, 0, 10);
 
-        assertEquals(tasks, response.getBody());
-        verify(taskService).getTasksByObjectId(1L);
+        assertEquals(tasks, ((PageImpl<TaskDTO>) response.getBody()).getContent());
+        verify(taskService).getTasksByObjectId(1L, pageable);
     }
 
     @Test

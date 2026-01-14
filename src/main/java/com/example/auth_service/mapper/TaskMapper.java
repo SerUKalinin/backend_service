@@ -52,6 +52,7 @@ public interface TaskMapper {
     @Mapping(target = "responsibleUser", ignore = true)
     @Mapping(target = "realEstateObject", ignore = true)
     @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Task toEntity(TaskCreateDTO dto);
 
     /**

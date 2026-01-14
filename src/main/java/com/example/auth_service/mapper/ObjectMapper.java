@@ -23,6 +23,7 @@ public interface ObjectMapper {
     @Mapping(target = "responsibleUserId", source = "responsibleUser.id")
     @Mapping(target = "responsibleUserFirstName", source = "responsibleUser.firstName")
     @Mapping(target = "responsibleUserLastName", source = "responsibleUser.lastName")
+    @Mapping(target = "responsibleUserRole", ignore = true)
     ObjectResponseDto toDto(ObjectEntity entity);
 
     @Mapping(target = "id", ignore = true)

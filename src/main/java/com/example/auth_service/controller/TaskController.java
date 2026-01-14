@@ -9,6 +9,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,9 +59,11 @@ public class TaskController {
      * @return {@link ResponseEntity} со списком всех задач
      */
     @GetMapping
-    public ResponseEntity<List<TaskDTO>> getAllTasks() {
-        List<TaskDTO> tasks = taskService.getAllTasks();
-        return ResponseEntity.ok(tasks);
+    public ResponseEntity<Page<TaskDTO>> getAllTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(taskService.getAllTasks(PageRequest.of(page, size)));
     }
 
     /**
@@ -128,9 +133,12 @@ public class TaskController {
      * @return {@link ResponseEntity} со списком задач для указанного объекта
      */
     @GetMapping("/object/{objectId}")
-    public ResponseEntity<List<TaskDTO>> getTasksByObjectId(@PathVariable Long objectId) {
-        log.info("Получение задач для объекта с ID: {}", objectId);
-        return ResponseEntity.ok(taskService.getTasksByObjectId(objectId));
+    public ResponseEntity<Page<TaskDTO>> getTasksByObjectId(
+            @PathVariable Long objectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(taskService.getTasksByObjectId(objectId, PageRequest.of(page, size)));
     }
 
     /**
