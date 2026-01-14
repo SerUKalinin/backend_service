@@ -1,20 +1,15 @@
 package com.example.auth_service.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
  * Сущность для представления ролей пользователей.
- * Содержит информацию о типе роли (например, USER или ADMIN).
+ *
+ * <p>Используется для назначения прав доступа пользователям системы.
+ * Каждая роль имеет уникальный тип, например, ROLE_USER или ROLE_ADMIN.</p>
  */
 @Data
 @Entity
@@ -24,8 +19,8 @@ import lombok.NoArgsConstructor;
 public class Role {
 
     /**
-     * Идентификатор роли.
-     * Уникальный и генерируется автоматически.
+     * Уникальный идентификатор роли.
+     * Генерируется автоматически.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,22 +28,30 @@ public class Role {
 
     /**
      * Тип роли.
-     * Значение обязательно и должно быть уникальным.
-     * Возможные типы: ROLE_USER, ROLE_ADMIN.
+     * Обязательное поле, уникальное для каждой роли.
+     * Примеры: ROLE_USER, ROLE_ADMIN, ROLE_DIRECTOR и т.д.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "role_type", nullable = false, unique = true)
     private RoleType roleType;
 
     /**
-     * Перечисление для типов ролей.
-     * Определяет доступные типы ролей в системе.
+     * Перечисление возможных типов ролей в системе.
      */
     public enum RoleType {
-        ROLE_USER,  // Роль пользователя с ограниченными правами
+        /** Роль пользователя с базовыми правами. */
+        ROLE_USER,
+
+        /** Роль администратора системы. */
         ROLE_ADMIN,
+
+        /** Роль директора. */
         ROLE_DIRECTOR,
+
+        /** Роль начальника объекта. */
         ROLE_CHIEF,
-        ROLE_RESPONSIBLE// Роль администратора с расширенными правами
+
+        /** Роль ответственного пользователя/прораба. */
+        ROLE_RESPONSIBLE
     }
 }

@@ -3,11 +3,15 @@ package com.example.auth_service.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
- * DTO для верификации email.
- * Содержит email пользователя и код верификации.
+ * DTO для верификации электронной почты пользователя.
+ *
+ * <p>Используется в запросах API при подтверждении email после регистрации
+ * или при повторной отправке кода подтверждения.</p>
+ *
+ * <p>Содержит адрес электронной почты пользователя и код верификации,
+ * отправленный на указанный email.</p>
  */
 @Data
 @NoArgsConstructor
@@ -16,13 +20,15 @@ public class EmailVerificationDto {
 
     /**
      * Электронная почта пользователя.
-     * Должна быть в формате email.
+     *
+     * <p>Должна соответствовать формату email.</p>
      */
     private String email;
 
     /**
      * Код верификации, отправленный пользователю.
-     * Не должен быть пустым.
+     *
+     * <p>Не должен быть пустым и используется для подтверждения владения email.</p>
      */
     private String code;
 }

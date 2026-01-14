@@ -7,6 +7,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Сущность задачи в системе.
+ *
+ * <p>Используется для управления задачами, привязанными к объектам недвижимости.
+ * Хранит информацию о названии, описании, статусе, сроках, создателе, ответственном пользователе и вложениях.</p>
+ */
 @Entity
 @Data
 @Builder
@@ -39,7 +45,7 @@ public class Task {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    /** Дата и время обновления задачи. */
+    /** Дата и время последнего обновления задачи. */
     @Builder.Default
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
@@ -62,17 +68,25 @@ public class Task {
     @JoinColumn(name = "created_by_id")
     private User createdBy;
 
-    /** Ответственный пользователь. */
+    /** Ответственный пользователь за выполнение задачи. */
     @ManyToOne
     @JoinColumn(name = "responsible_user_id")
     private User responsibleUser;
 
+    /**
+     * Метод, вызываемый перед сохранением сущности.
+     * Устанавливает даты создания и обновления.
+     */
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Метод, вызываемый перед обновлением сущности.
+     * Обновляет дату последнего изменения.
+     */
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();

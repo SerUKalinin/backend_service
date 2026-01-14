@@ -15,6 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * Сервис для обновления информации о пользователях.
+ * <p>
+ * Предоставляет методы для изменения email, имени, фамилии, роли и статуса активации пользователя.
+ * Все операции выполняются в транзакции и используют {@link UserMapper} для возврата DTO.
+ * </p>
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,6 +31,15 @@ public class UserUpdateService {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
 
+    /**
+     * Обновляет email пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @param email новый email
+     * @return {@link UserDto} с обновлённой информацией
+     * @throws IllegalArgumentException если email пустой, некорректный или уже используется другим пользователем
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateEmail(Long userId, String email) {
         if (email == null || !Pattern.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", email)) {
@@ -41,6 +57,14 @@ public class UserUpdateService {
         return userMapper.toDto(user);
     }
 
+    /**
+     * Обновляет имя пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @param firstName новое имя пользователя
+     * @return {@link UserDto} с обновлённой информацией
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateFirstName(Long userId, String firstName) {
         User user = userRepository.findById(userId)
@@ -50,6 +74,14 @@ public class UserUpdateService {
         return userMapper.toDto(user);
     }
 
+    /**
+     * Обновляет фамилию пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @param lastName новая фамилия пользователя
+     * @return {@link UserDto} с обновлённой информацией
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateLastName(Long userId, String lastName) {
         User user = userRepository.findById(userId)
@@ -59,6 +91,15 @@ public class UserUpdateService {
         return userMapper.toDto(user);
     }
 
+    /**
+     * Обновляет роль пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @param roleName название роли {@link Role.RoleType}
+     * @return {@link UserDto} с обновлённой информацией
+     * @throws IllegalArgumentException если роль не найдена
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateRole(Long userId, String roleName) {
         Role.RoleType roleType = Role.RoleType.valueOf(roleName);
@@ -72,6 +113,14 @@ public class UserUpdateService {
         return userMapper.toDto(user);
     }
 
+    /**
+     * Обновляет статус активации пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @param active новый статус активации
+     * @return {@link UserDto} с обновлённой информацией
+     * @throws UserNotFoundException если пользователь с указанным ID не найден
+     */
     @Transactional
     public UserDto updateActiveStatus(Long userId, boolean active) {
         User user = userRepository.findById(userId)

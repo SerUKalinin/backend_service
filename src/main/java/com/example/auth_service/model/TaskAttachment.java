@@ -5,7 +5,10 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * Сущность вложения к задаче.
+ * Сущность, представляющая вложение к задаче.
+ *
+ * <p>Хранит информацию о файле, его оригинальном имени, размере и времени загрузки,
+ * а также связь с задачей, к которой относится вложение.</p>
  */
 @Entity
 @Data
@@ -25,24 +28,25 @@ public class TaskAttachment {
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
-    /** Сохранённое имя файла на диске */
+    /** Путь к файлу на диске. */
     @Column(nullable = false)
     private String filePath;
 
-    /** Оригинальное имя файла */
+    /** Оригинальное имя файла, загруженного пользователем. */
     @Column(nullable = false)
     private String originalFileName;
 
-    /** Размер файла в байтах */
+    /** Размер файла в байтах. */
     @Column(nullable = false)
     private Long size;
 
-    /** Дата и время загрузки вложения */
+    /** Дата и время загрузки вложения. */
     @Column(nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 
     /**
-     * Устанавливает дату загрузки перед сохранением в базу данных.
+     * Метод, вызываемый перед сохранением сущности.
+     * Устанавливает дату загрузки вложения.
      */
     @PrePersist
     protected void onCreate() {

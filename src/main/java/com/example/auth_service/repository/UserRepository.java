@@ -8,42 +8,43 @@ import java.util.Optional;
 
 /**
  * Репозиторий для работы с сущностью {@link User}.
- * Предоставляет методы для взаимодействия с базой данных через JPA.
+ * <p>
+ * Предоставляет стандартные CRUD-операции через {@link JpaRepository} и дополнительные методы для поиска
+ * пользователей по username и email, а также проверки их существования.
+ * </p>
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * Находит пользователя по имени пользователя {@link User}.
+     * Находит пользователя по имени пользователя.
      *
-     * @param username Имя пользователя, которое нужно найти.
-     * @return {@link Optional} содержащий найденного пользователя, если он существует, или пустой {@link Optional}, если пользователь не найден.
-     * @throws IllegalArgumentException Если {@code username} равен null или пустой строке.
+     * @param username имя пользователя
+     * @return {@link Optional} с найденным пользователем или пустой, если пользователь не найден
      */
     Optional<User> findByUsername(String username);
 
     /**
-     * Находит пользователя по адресу электронной почты {@link User}.
+     * Находит пользователя по email.
      *
-     * @param email Адрес электронной почты, который нужно найти.
-     * @return {@link Optional} содержащий найденного пользователя, если он существует, или пустой {@link Optional}, если пользователь не найден.
-     * @throws IllegalArgumentException Если {@code email} равен null или пустой строке.
+     * @param email адрес электронной почты
+     * @return {@link Optional} с найденным пользователем или пустой, если пользователь не найден
      */
     Optional<User> findByEmail(String email);
 
     /**
-     * Проверяет, существует ли пользователь с указанным email.
+     * Проверяет существование пользователя по email.
      *
-     * @param email Адрес электронной почты.
-     * @return {@link Boolean} true, если пользователь с данным email существует, иначе false.
+     * @param email адрес электронной почты
+     * @return {@code true}, если пользователь с данным email существует, иначе {@code false}
      */
     boolean existsByEmail(String email);
 
     /**
-     * Проверяет, существует ли пользователь с указанным username.
+     * Проверяет существование пользователя по username.
      *
-     * @param username Имя пользователя.
-     * @return {@link Boolean} true, если пользователь с данным username существует, иначе false.
+     * @param username имя пользователя
+     * @return {@code true}, если пользователь с данным username существует, иначе {@code false}
      */
     boolean existsByUsername(String username);
 }

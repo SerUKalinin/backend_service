@@ -9,5 +9,4 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface RedisPasswordResetTokenRepository extends CrudRepository<PasswordResetToken, String> {
-    // Базовые методы CRUD наследуются от CrudRepository
-} 
+}

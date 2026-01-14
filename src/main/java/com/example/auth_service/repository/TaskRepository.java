@@ -8,7 +8,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Репозиторий для работы с задачами.
+ * Репозиторий для работы с задачами ({@link Task}).
+ * <p>
+ * Предоставляет стандартные CRUD-операции через {@link JpaRepository} и
+ * дополнительные методы для поиска задач по статусу, объекту недвижимости и заголовку.
+ * </p>
  */
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
@@ -38,9 +42,20 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     List<Task> findByStatusAndRealEstateObjectId(TaskStatus status, Long objectId);
 
+    /**
+     * Проверяет, существует ли задача с указанным заголовком для конкретного объекта недвижимости.
+     *
+     * @param title    заголовок задачи
+     * @param objectId идентификатор объекта недвижимости
+     * @return {@code true}, если задача существует, иначе {@code false}
+     */
     boolean existsByTitleAndRealEstateObjectId(String title, Long objectId);
 
-    // Найти задачи по списку id объектов
+    /**
+     * Находит задачи для списка объектов недвижимости.
+     *
+     * @param objectIds список идентификаторов объектов недвижимости
+     * @return список задач, принадлежащих указанным объектам
+     */
     List<Task> findByRealEstateObjectIdIn(List<Long> objectIds);
-
 }

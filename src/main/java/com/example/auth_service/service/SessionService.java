@@ -7,6 +7,13 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
+/**
+ * Сервис для управления сессиями пользователей.
+ * <p>
+ * Сохраняет, проверяет, обновляет и удаляет сессии пользователей в Redis через {@link RedisSessionRepository}.
+ * Сессии содержат токен пользователя и время жизни сессии.
+ * </p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -15,8 +22,13 @@ public class SessionService {
     private final RedisSessionRepository redisSessionRepository;
 
     /**
-     * Сохраняет данные сессии пользователя в Redis.
-     * В качестве значения сохраняем токен и время истечения.
+     * Сохраняет сессию пользователя в Redis.
+     * <p>
+     * В качестве значения сохраняется токен и время истечения сессии.
+     *
+     * @param username имя пользователя
+     * @param token токен сессии
+     * @param duration время жизни сессии
      */
     public void saveSession(String username, String token, Duration duration) {
         log.debug("Сохранение сессии для пользователя {} на {}", username, duration);
@@ -24,7 +36,13 @@ public class SessionService {
     }
 
     /**
-     * Получает токен сессии пользователя из Redis.
+     * Проверяет валидность сессии пользователя.
+     * <p>
+     * Сессия считается невалидной, если она отсутствует или истекла.
+     *
+     * @param username имя пользователя
+     * @param token токен сессии
+     * @return {@code true}, если сессия существует и не истекла; {@code false} иначе
      */
     public boolean isSessionValid(String username, String token) {
         if (!redisSessionRepository.isSessionExists(username, token)
@@ -38,7 +56,11 @@ public class SessionService {
     }
 
     /**
-     * Обновляет время жизни сессии пользователя.
+     * Обновляет время жизни существующей сессии пользователя.
+     *
+     * @param username имя пользователя
+     * @param token токен сессии
+     * @param duration новое время жизни сессии
      */
     public void updateSession(String username, String token, Duration duration) {
         log.debug("Обновление сессии для пользователя {} на {}", username, duration);
@@ -47,6 +69,8 @@ public class SessionService {
 
     /**
      * Удаляет сессию пользователя из Redis.
+     *
+     * @param username имя пользователя
      */
     public void removeSession(String username) {
         log.debug("Удаление сессии пользователя {}", username);

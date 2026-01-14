@@ -8,17 +8,20 @@ import java.util.Optional;
 
 /**
  * Репозиторий для работы с сущностью {@link Role}.
- * Предоставляет методы для взаимодействия с базой данных через JPA.
+ * <p>
+ * Предоставляет стандартные CRUD-операции через {@link JpaRepository} и
+ * метод поиска роли по типу {@link Role.RoleType}.
+ * </p>
  */
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Long> {
 
     /**
-     * Находит роль по типу роли {@link Role.RoleType}.
+     * Находит роль по её типу.
      *
-     * @param roleType Тип роли, которую нужно найти.
-     * @return {@link Optional} содержащий найденную роль, если она существует, или пустой {@link Optional}, если роль не найдена.
-     * @throws IllegalArgumentException Если {@code roleType} равен null.
+     * @param roleType тип роли ({@link Role.RoleType}), который необходимо найти
+     * @return {@link Optional} с найденной ролью, либо пустой, если роль не существует
+     * @throws IllegalArgumentException если {@code roleType} равен null
      */
     Optional<Role> findByRoleType(Role.RoleType roleType);
 }
