@@ -11,37 +11,44 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Сервисный класс для работы с аутентификацией и управлением аккаунтами пользователей.
- * <p>
- * Делегирует работу с учётными записями {@link AuthAccountService} и работу с токенами {@link AuthTokenService}.
- * Обеспечивает регистрацию, авторизацию, подтверждение email, сброс пароля, выход из системы и обновление JWT-токенов.
- * </p>
+ * Сервис для управления аутентификацией и аккаунтами пользователей.
+ *
+ * <p>Обеспечивает регистрацию, авторизацию, подтверждение email, сброс пароля,
+ * выход из системы, обновление JWT-токенов и работу с сессиями через делегирование
+ * в {@link AuthAccountService} и {@link AuthTokenService}.</p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    /**
+     * Сервис для управления аккаунтами пользователей.
+     */
     private final AuthAccountService accountService;
+
+    /**
+     * Сервис для работы с JWT-токенами и сессиями пользователей.
+     */
     private final AuthTokenService authTokenService;
 
     /**
      * Регистрирует нового пользователя или администратора.
      *
-     * @param dto     DTO с данными для регистрации пользователя.
-     * @param isAdmin true — если регистрируется администратор, false — обычный пользователь.
-     * @throws MessagingException если не удалось отправить email с кодом подтверждения.
+     * @param dto     DTO с данными для регистрации пользователя
+     * @param isAdmin true, если создаётся администратор, false — обычный пользователь
+     * @throws MessagingException если не удалось отправить email с кодом подтверждения
      */
     public void register(UserSignupDto dto, boolean isAdmin) throws MessagingException {
         accountService.register(dto, isAdmin);
     }
 
     /**
-     * Аутентифицирует пользователя и возвращает JWT-токен.
+     * Аутентифицирует пользователя и возвращает access JWT-токен.
      *
-     * @param dto      DTO с логином и паролем пользователя.
-     * @param response HTTP-ответ для установки cookie с токеном.
-     * @return {@link AuthResponse} с JWT-токеном.
+     * @param dto      DTO с логином и паролем пользователя
+     * @param response HTTP-ответ для установки cookie с токеном
+     * @return {@link AuthResponse} с JWT-токеном доступа
      */
     public AuthResponse login(UserSigninDto dto, HttpServletResponse response) {
         return accountService.login(dto, response);
@@ -50,29 +57,29 @@ public class AuthService {
     /**
      * Подтверждает email пользователя по коду подтверждения.
      *
-     * @param email email пользователя.
-     * @param code  код подтверждения.
-     * @return {@link AuthResponse} с JWT-токеном.
+     * @param email email пользователя
+     * @param code  код подтверждения
+     * @return {@link AuthResponse} с JWT-токеном доступа
      */
     public AuthResponse confirmEmail(String email, String code) {
         return accountService.confirmEmail(email, code);
     }
 
     /**
-     * Повторно отправляет код подтверждения на указанный email.
+     * Повторно отправляет код подтверждения на email пользователя.
      *
-     * @param email email пользователя.
-     * @throws MessagingException если не удалось отправить письмо.
+     * @param email email пользователя
+     * @throws MessagingException если не удалось отправить письмо
      */
     public void resendConfirmationCode(String email) throws MessagingException {
         accountService.resendConfirmationCode(email);
     }
 
     /**
-     * Отправляет ссылку на сброс пароля пользователю.
+     * Отправляет ссылку для сброса пароля пользователю.
      *
-     * @param email email пользователя.
-     * @throws MessagingException если не удалось отправить письмо.
+     * @param email email пользователя
+     * @throws MessagingException если не удалось отправить письмо
      */
     public void sendPasswordResetLink(String email) throws MessagingException {
         accountService.sendPasswordResetLink(email);
@@ -81,19 +88,19 @@ public class AuthService {
     /**
      * Сбрасывает пароль пользователя по токену сброса.
      *
-     * @param token       токен для сброса пароля.
-     * @param newPassword новый пароль.
-     * @return {@link AuthResponse} с JWT-токеном.
+     * @param token       токен сброса пароля
+     * @param newPassword новый пароль пользователя
+     * @return {@link AuthResponse} с новым JWT-токеном доступа
      */
     public AuthResponse resetPassword(String token, String newPassword) {
         return accountService.resetPassword(token, newPassword);
     }
 
     /**
-     * Выполняет выход пользователя, удаляя refresh token из Redis и сессию.
+     * Выполняет выход пользователя, удаляя refresh token и очищая сессию.
      *
-     * @param request  HTTP-запрос с cookie.
-     * @param response HTTP-ответ для очистки cookie.
+     * @param request  HTTP-запрос с cookie
+     * @param response HTTP-ответ для очистки cookie
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         authTokenService.logout(request, response);
@@ -102,28 +109,28 @@ public class AuthService {
     /**
      * Обновляет access JWT-токен на основе refresh token из запроса.
      *
-     * @param request  HTTP-запрос с cookie.
-     * @param response HTTP-ответ для установки нового refresh token в cookie.
-     * @return {@link AuthResponse} с новым access JWT-токеном.
+     * @param request  HTTP-запрос с cookie
+     * @param response HTTP-ответ для установки нового refresh token в cookie
+     * @return {@link AuthResponse} с новым access JWT-токеном
      */
     public AuthResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
         return authTokenService.refreshToken(request, response);
     }
 
     /**
-     * Добавляет JWT-токен в HttpOnly cookie.
+     * Добавляет JWT-токен в HttpOnly cookie для безопасности.
      *
-     * @param token    JWT-токен.
-     * @param response HTTP-ответ для установки cookie.
+     * @param token    JWT-токен
+     * @param response HTTP-ответ для установки cookie
      */
     public void addJwtToCookie(String token, HttpServletResponse response) {
         authTokenService.addJwtToCookie(token, response);
     }
 
     /**
-     * Валидирует JWT-токен, проверяет сессию и обновляет её время действия.
+     * Валидирует JWT-токен, проверяет сессию и обновляет время действия.
      *
-     * @param token JWT-токен для проверки.
+     * @param token JWT-токен для проверки
      */
     public void validateJwtToken(String token) {
         authTokenService.validateJwtToken(token);

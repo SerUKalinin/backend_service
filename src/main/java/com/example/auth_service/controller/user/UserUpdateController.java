@@ -9,16 +9,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST-контроллер для обновления данных пользователей системы.
- * <p>
- * Предоставляет методы для обновления различных данных пользователя, таких как:
- * <ul>
- *     <li>Имя и фамилия</li>
- *     <li>Email</li>
- *     <li>Роль пользователя (только для администратора)</li>
- *     <li>Статус активности пользователя (только для администратора)</li>
- * </ul>
- * </p>
+ * REST-контроллер для обновления информации о пользователях.
+ *
+ * Обеспечивает возможности изменения персональных данных пользователя
+ * и управляемых администратором свойств, включая роль и статус активности.
+ * Контроллер используется в пользовательском и административном интерфейсах
+ * для управления учетными записями.
  */
 @Slf4j
 @RestController
@@ -26,14 +22,18 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users/update")
 public class UserUpdateController {
 
+    /**
+     * Сервис для обновления данных пользователей.
+     * Отвечает за бизнес-логику изменения свойств пользователей в системе.
+     */
     private final UserUpdateService userUpdateService;
 
     /**
-     * Обновляет имя пользователя по его идентификатору.
+     * Обновляет имя пользователя.
      *
-     * @param userId  ID пользователя
-     * @param userDto DTO с новым именем пользователя
-     * @return {@link ResponseEntity} с обновлённым {@link UserDto} (HTTP 200 OK)
+     * @param userId  уникальный идентификатор пользователя
+     * @param userDto объект DTO, содержащий новое имя пользователя
+     * @return {@link ResponseEntity} с обновлённым {@link UserDto}, HTTP 200 OK
      */
     @PutMapping("/{userId}/first-name")
     public ResponseEntity<UserDto> updateFirstName(@PathVariable Long userId, @RequestBody UserDto userDto) {
@@ -43,11 +43,11 @@ public class UserUpdateController {
     }
 
     /**
-     * Обновляет фамилию пользователя по его идентификатору.
+     * Обновляет фамилию пользователя.
      *
-     * @param userId  ID пользователя
-     * @param userDto DTO с новой фамилией пользователя
-     * @return {@link ResponseEntity} с обновлённым {@link UserDto} (HTTP 200 OK)
+     * @param userId  уникальный идентификатор пользователя
+     * @param userDto объект DTO, содержащий новую фамилию пользователя
+     * @return {@link ResponseEntity} с обновлённым {@link UserDto}, HTTP 200 OK
      */
     @PutMapping("/{userId}/last-name")
     public ResponseEntity<UserDto> updateLastName(@PathVariable Long userId, @RequestBody UserDto userDto) {
@@ -57,11 +57,11 @@ public class UserUpdateController {
     }
 
     /**
-     * Обновляет email пользователя по его идентификатору.
+     * Обновляет email пользователя.
      *
-     * @param userId  ID пользователя
-     * @param userDto DTO с новым email пользователя
-     * @return {@link ResponseEntity} с обновлённым {@link UserDto} (HTTP 200 OK)
+     * @param userId  уникальный идентификатор пользователя
+     * @param userDto объект DTO, содержащий новый email пользователя
+     * @return {@link ResponseEntity} с обновлённым {@link UserDto}, HTTP 200 OK
      */
     @PutMapping("/{userId}/email")
     public ResponseEntity<UserDto> updateEmail(@PathVariable Long userId, @RequestBody UserDto userDto) {
@@ -71,12 +71,13 @@ public class UserUpdateController {
     }
 
     /**
-     * Обновляет роль пользователя по его идентификатору.
-     * <p>Метод доступен только администраторам (роль {@code ADMIN}).</p>
+     * Обновляет роль пользователя.
      *
-     * @param userId  ID пользователя
-     * @param userDto DTO с новой ролью пользователя
-     * @return {@link ResponseEntity} с обновлённым {@link UserDto} (HTTP 200 OK)
+     * Доступно только администраторам с ролью {@code ADMIN}.
+     *
+     * @param userId  уникальный идентификатор пользователя
+     * @param userDto объект DTO, содержащий новую роль пользователя
+     * @return {@link ResponseEntity} с обновлённым {@link UserDto}, HTTP 200 OK
      */
     @PutMapping("/{userId}/role")
     @PreAuthorize("hasRole('ADMIN')")
@@ -87,12 +88,13 @@ public class UserUpdateController {
     }
 
     /**
-     * Обновляет статус активности пользователя по его идентификатору.
-     * <p>Метод доступен только администраторам (роль {@code ADMIN}).</p>
+     * Обновляет статус активности пользователя.
      *
-     * @param userId  ID пользователя
-     * @param userDto DTO с новым статусом активности
-     * @return {@link ResponseEntity} с обновлённым {@link UserDto} (HTTP 200 OK)
+     * Доступно только администраторам с ролью {@code ADMIN}.
+     *
+     * @param userId  уникальный идентификатор пользователя
+     * @param userDto объект DTO, содержащий новый статус активности
+     * @return {@link ResponseEntity} с обновлённым {@link UserDto}, HTTP 200 OK
      */
     @PutMapping("/{userId}/active")
     @PreAuthorize("hasRole('ADMIN')")

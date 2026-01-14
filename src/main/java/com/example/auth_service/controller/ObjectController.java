@@ -13,11 +13,11 @@ import java.util.List;
 
 /**
  * REST-контроллер для управления объектами недвижимости.
- * <p>
- * Предоставляет методы для CRUD операций над объектами, получения дочерних объектов,
- * назначение и удаление ответственных пользователей, а также получение объектов текущего пользователя.
- * Все операции делегируются в {@link ObjectService}.
- * </p>
+ *
+ * Предоставляет методы для CRUD операций, получения дочерних объектов,
+ * управления ответственными пользователями и получения объектов по текущему пользователю.
+ * Все операции делегируются {@link ObjectService}, который реализует бизнес-логику работы
+ * с объектами недвижимости в системе.
  */
 @Slf4j
 @RestController
@@ -26,12 +26,15 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:63342")
 public class ObjectController {
 
+    /**
+     * Сервис для управления объектами недвижимости.
+     */
     private final ObjectService objectService;
 
     /**
      * Получение списка всех объектов недвижимости.
      *
-     * @return {@link ResponseEntity} со списком {@link ObjectResponseDto} всех объектов.
+     * @return {@link ResponseEntity} со списком {@link ObjectResponseDto} всех объектов
      */
     @GetMapping
     public ResponseEntity<List<ObjectResponseDto>> getAllObjects() {
@@ -41,9 +44,9 @@ public class ObjectController {
     }
 
     /**
-     * Получение объекта по его ID.
+     * Получение объекта по его идентификатору.
      *
-     * @param id ID объекта
+     * @param id ID объекта; должен существовать в системе
      * @return {@link ResponseEntity} с {@link ObjectResponseDto} объекта
      */
     @GetMapping("/{id}")
@@ -56,7 +59,7 @@ public class ObjectController {
     /**
      * Получение объектов по типу.
      *
-     * @param type Тип объекта ({@link ObjectType})
+     * @param type Тип объекта ({@link ObjectType}); фильтр для выборки
      * @return {@link ResponseEntity} со списком объектов указанного типа
      */
     @GetMapping("/by-type")
@@ -68,7 +71,7 @@ public class ObjectController {
     /**
      * Получение дочерних объектов для указанного объекта.
      *
-     * @param id ID родительского объекта
+     * @param id ID родительского объекта; должен существовать в системе
      * @return {@link ResponseEntity} со списком дочерних объектов
      */
     @GetMapping("/{id}/children")
@@ -80,7 +83,7 @@ public class ObjectController {
     /**
      * Создание нового объекта недвижимости.
      *
-     * @param objectDto DTO с данными нового объекта
+     * @param objectDto DTO с данными нового объекта; все обязательные поля должны быть заполнены
      * @return {@link ResponseEntity} с {@link ObjectResponseDto} созданного объекта
      */
     @PostMapping
@@ -91,9 +94,9 @@ public class ObjectController {
     }
 
     /**
-     * Обновление существующего объекта по ID.
+     * Обновление существующего объекта по идентификатору.
      *
-     * @param id        ID объекта
+     * @param id        ID объекта; должен существовать в системе
      * @param objectDto DTO с обновлёнными данными объекта
      * @return {@link ResponseEntity} с {@link ObjectResponseDto} обновлённого объекта
      */
@@ -105,9 +108,9 @@ public class ObjectController {
     }
 
     /**
-     * Удаление объекта по ID.
+     * Удаление объекта по идентификатору.
      *
-     * @param id ID объекта
+     * @param id ID объекта; должен существовать в системе
      * @return {@link ResponseEntity} без содержимого (HTTP 204), если удаление прошло успешно
      */
     @DeleteMapping("/{id}")
@@ -120,7 +123,7 @@ public class ObjectController {
     /**
      * Получение объектов текущего пользователя.
      *
-     * @return {@link ResponseEntity} со списком объектов текущего пользователя
+     * @return {@link ResponseEntity} со списком объектов, за которые отвечает текущий пользователь
      */
     @GetMapping("/my-objects")
     public ResponseEntity<List<ObjectResponseDto>> getCurrentUserObjects() {
@@ -131,7 +134,7 @@ public class ObjectController {
     /**
      * Получение объектов по ответственному пользователю.
      *
-     * @param userId ID ответственного пользователя
+     * @param userId ID ответственного пользователя; должен существовать в системе
      * @return {@link ResponseEntity} со списком объектов, за которые отвечает указанный пользователь
      */
     @GetMapping("/by-responsible/{userId}")
@@ -143,8 +146,8 @@ public class ObjectController {
     /**
      * Назначение ответственного пользователя для объекта.
      *
-     * @param id     ID объекта
-     * @param userId ID пользователя
+     * @param id     ID объекта; должен существовать в системе
+     * @param userId ID пользователя; должен существовать в системе
      * @return {@link ResponseEntity} с {@link ObjectResponseDto} обновлённого объекта
      */
     @PutMapping("/{id}/assign-responsible/{userId}")
@@ -159,7 +162,7 @@ public class ObjectController {
     /**
      * Удаление ответственного пользователя с объекта.
      *
-     * @param id ID объекта
+     * @param id ID объекта; должен существовать в системе
      * @return {@link ResponseEntity} с {@link ObjectResponseDto} обновлённого объекта
      */
     @PutMapping("/{id}/remove-responsible")
@@ -172,8 +175,8 @@ public class ObjectController {
     /**
      * Получение пути (хлебных крошек) до объекта.
      *
-     * @param id ID объекта
-     * @return {@link ResponseEntity} со списком объектов, представляющих путь к объекту
+     * @param id ID объекта; должен существовать в системе
+     * @return {@link ResponseEntity} со списком объектов, представляющих путь от корня до указанного объекта
      */
     @GetMapping("/{id}/path")
     public ResponseEntity<List<ObjectResponseDto>> getObjectPath(@PathVariable Long id) {

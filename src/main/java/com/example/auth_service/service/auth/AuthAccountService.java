@@ -35,9 +35,9 @@ import java.util.UUID;
 /**
  * Сервис для управления аккаунтами пользователей.
  *
- * <p>Отвечает за регистрацию пользователей и администраторов, вход в систему,
- * подтверждение email, повторную отправку кодов подтверждения, сброс пароля
- * и генерацию JWT токенов.</p>
+ * <p>Отвечает за регистрацию, аутентификацию, подтверждение email, повторную отправку кодов,
+ * сброс пароля и генерацию JWT токенов. Обеспечивает интеграцию с {@link UserRepository}, {@link RoleRepository},
+ * {@link RedisService}, {@link EmailService} и {@link SessionService}.</p>
  */
 @Slf4j
 @Service
@@ -60,9 +60,10 @@ public class AuthAccountService {
     /**
      * Регистрирует нового пользователя или администратора.
      *
-     * @param dto    DTO с данными для регистрации
+     * @param dto     DTO с данными для регистрации
      * @param isAdmin true, если регистрируется администратор
-     * @throws MessagingException если не удалось отправить email с кодом подтверждения
+     * @throws MessagingException           если не удалось отправить email с кодом подтверждения
+     * @throws UserAlreadyExistsException   если username или email уже заняты
      */
     @Transactional
     public void register(UserSignupDto dto, boolean isAdmin) throws MessagingException {
@@ -75,11 +76,13 @@ public class AuthAccountService {
     }
 
     /**
-     * Аутентифицирует пользователя по логину и паролю.
+     * Аутентифицирует пользователя по логину и паролю, создаёт сессию и сохраняет refresh-токен.
      *
      * @param dto      DTO с данными для входа
      * @param response HTTP-ответ для установки cookie (не используется в текущей версии)
      * @return DTO с JWT-токеном доступа
+     * @throws UserNotActivatedException если аккаунт не активирован
+     * @throws UserNotFoundException     если пользователь не найден
      */
     @Transactional
     public AuthResponse login(UserSigninDto dto, HttpServletResponse response) {
@@ -108,7 +111,7 @@ public class AuthAccountService {
      * @param email email пользователя
      * @param code  код подтверждения
      * @return DTO с JWT-токеном
-     * @throws InvalidConfirmationCodeException если код неверный или истек
+     * @throws InvalidConfirmationCodeException если код неверный или истёк
      * @throws UserNotFoundException            если пользователь не найден
      */
     @Transactional
@@ -134,9 +137,9 @@ public class AuthAccountService {
      * Повторно отправляет код подтверждения на email пользователя.
      *
      * @param email email пользователя
-     * @throws MessagingException       если не удалось отправить email
-     * @throws UserNotFoundException    если пользователь не найден
-     * @throws UserAlreadyExistsException если пользователь уже активирован
+     * @throws MessagingException           если не удалось отправить email
+     * @throws UserNotFoundException        если пользователь не найден
+     * @throws UserAlreadyExistsException   если пользователь уже активирован
      */
     public void resendConfirmationCode(String email) throws MessagingException {
         User user = userRepository.findByEmail(email)
@@ -175,6 +178,8 @@ public class AuthAccountService {
      * @param token       JWT-токен сброса пароля
      * @param newPassword новый пароль пользователя
      * @return DTO с JWT-токеном доступа
+     * @throws UserNotFoundException если пользователь не найден
+     * @throws RuntimeException      если токен недействителен
      */
     @Transactional
     public AuthResponse resetPassword(String token, String newPassword) {
@@ -193,7 +198,7 @@ public class AuthAccountService {
     /* ---------------------- PRIVATE METHODS ---------------------- */
 
     /**
-     * Проверяет, что имя пользователя и email уникальны.
+     * Проверяет уникальность username и email.
      *
      * @param dto DTO с данными пользователя
      * @throws UserAlreadyExistsException если username или email уже заняты
@@ -225,9 +230,10 @@ public class AuthAccountService {
     /**
      * Создаёт сущность пользователя с указанной ролью.
      *
-     * @param dto DTO с данными для регистрации
+     * @param dto     DTO с данными для регистрации
      * @param isAdmin true, если создаётся администратор
-     * @return новая сущность User
+     * @return новая сущность {@link User}
+     * @throws IllegalStateException если роль не найдена в базе
      */
     private User createUser(UserSignupDto dto, boolean isAdmin) {
         Role role = roleRepository.findByRoleType(
@@ -262,7 +268,7 @@ public class AuthAccountService {
      * Декодирует JWT-токен сброса пароля.
      *
      * @param token JWT-токен сброса пароля
-     * @return DecodedJWT
+     * @return {@link DecodedJWT}
      * @throws RuntimeException если токен недействителен
      */
     private DecodedJWT decodeResetToken(String token) {

@@ -2,15 +2,14 @@ package com.example.auth_service.service;
 
 import com.example.auth_service.repository.redis.RedisSessionRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class SessionServiceTest {
 
@@ -24,6 +23,7 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("Сохранение сессии: вызов метода репозитория с правильными параметрами")
     void saveSession_shouldCallRepository() {
         String username = "user";
         String token = "token";
@@ -35,6 +35,7 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("Проверка сессии: возвращает true, если сессия существует и не истекла")
     void isSessionValid_shouldReturnTrue_whenSessionExistsAndNotExpired() {
         String username = "user";
         String token = "token";
@@ -46,6 +47,7 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("Проверка сессии: возвращает false, если сессия не существует")
     void isSessionValid_shouldReturnFalse_whenSessionNotExists() {
         String username = "user";
         String token = "token";
@@ -56,6 +58,7 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("Проверка сессии: возвращает false, если сессия истекла")
     void isSessionValid_shouldReturnFalse_whenSessionExpired() {
         String username = "user";
         String token = "token";
@@ -67,6 +70,7 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("Обновление сессии: вызов метода репозитория с правильными параметрами")
     void updateSession_shouldCallRepository() {
         String username = "user";
         String token = "token";
@@ -78,6 +82,7 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("Удаление сессии: вызов метода репозитория с правильным именем пользователя")
     void removeSession_shouldCallRepository() {
         String username = "user";
 

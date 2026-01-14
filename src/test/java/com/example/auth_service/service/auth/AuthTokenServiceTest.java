@@ -13,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -23,13 +24,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollection;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 class AuthTokenServiceTest {
 
@@ -49,13 +49,13 @@ class AuthTokenServiceTest {
     }
 
     @Test
+    @DisplayName("Обновление токена доступа: возвращает новые токены и обновляет сессию")
     void refreshAccessToken_shouldReturnNewTokens() {
         String refreshToken = "refreshToken";
         HttpServletResponse response = mock(HttpServletResponse.class);
 
         User user = new User();
         user.setUsername("user1");
-
         Role role = new Role();
         role.setRoleType(Role.RoleType.ROLE_USER);
         user.setRoles(Set.of(role));
@@ -69,12 +69,13 @@ class AuthTokenServiceTest {
 
         assertEquals("newAccessToken", result.getJwtToken());
         verify(redisService).deleteRefreshToken("user1", refreshToken);
-        verify(redisService).saveRefreshToken(eq("user1"), anyString(), eq(Duration.ofDays(7)));
+        verify(redisService).saveRefreshToken(eq("user1"), any(String.class), eq(Duration.ofDays(7)));
         verify(sessionService).saveSession(eq("user1"), eq("newAccessToken"), eq(Duration.ofHours(2)));
         verify(response).addCookie(any(Cookie.class));
     }
 
     @Test
+    @DisplayName("Обновление токена доступа: выбрасывает исключение при недействительном токене")
     void refreshAccessToken_shouldThrowIfInvalidToken() {
         String refreshToken = "badToken";
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -85,6 +86,7 @@ class AuthTokenServiceTest {
     }
 
     @Test
+    @DisplayName("Обновление токена через cookie: делегирует вызов refreshAccessToken")
     void refreshToken_shouldDelegateToRefreshAccessToken() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -102,6 +104,7 @@ class AuthTokenServiceTest {
     }
 
     @Test
+    @DisplayName("Выход пользователя: удаляет токен и сессию, очищает cookie")
     void logout_shouldDeleteTokenAndSession() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -113,10 +116,11 @@ class AuthTokenServiceTest {
 
         verify(redisService).deleteRefreshToken("user1", "token");
         verify(sessionService).removeSession("user1");
-        verify(response).addCookie(any(Cookie.class)); // проверка удаления cookie
+        verify(response).addCookie(any(Cookie.class));
     }
 
     @Test
+    @DisplayName("Добавление JWT в cookie")
     void addJwtToCookie_shouldAddCookie() {
         HttpServletResponse response = mock(HttpServletResponse.class);
         tokenService.addJwtToCookie("jwtToken", response);
@@ -124,6 +128,7 @@ class AuthTokenServiceTest {
     }
 
     @Test
+    @DisplayName("Валидация JWT: обновляет сессию при валидном токене")
     void validateJwtToken_shouldCheckSession() {
         DecodedJWT decodedJWT = mock(DecodedJWT.class);
         when(decodedJWT.getSubject()).thenReturn("user1");
@@ -136,6 +141,7 @@ class AuthTokenServiceTest {
     }
 
     @Test
+    @DisplayName("Валидация JWT: выбрасывает исключение при недействительной сессии")
     void validateJwtToken_shouldThrowIfSessionInvalid() {
         DecodedJWT decodedJWT = mock(DecodedJWT.class);
         when(decodedJWT.getSubject()).thenReturn("user1");

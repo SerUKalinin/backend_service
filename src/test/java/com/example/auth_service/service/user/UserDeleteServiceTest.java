@@ -3,15 +3,12 @@ package com.example.auth_service.service.user;
 import com.example.auth_service.exception.UserNotFoundException;
 import com.example.auth_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class UserDeleteServiceTest {
 
@@ -25,6 +22,7 @@ class UserDeleteServiceTest {
     }
 
     @Test
+    @DisplayName("Удаление пользователя: пользователь существует")
     void deleteUser_shouldDeleteWhenUserExists() {
         Long userId = 1L;
         when(userRepository.existsById(userId)).thenReturn(true);
@@ -36,6 +34,7 @@ class UserDeleteServiceTest {
     }
 
     @Test
+    @DisplayName("Удаление пользователя: пользователь не найден, выбрасывается исключение")
     void deleteUser_shouldThrowExceptionWhenUserDoesNotExist() {
         Long userId = 2L;
         when(userRepository.existsById(userId)).thenReturn(false);

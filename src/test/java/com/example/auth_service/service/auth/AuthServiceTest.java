@@ -7,6 +7,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +29,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Регистрация пользователя: делегирует вызов AuthAccountService")
     void register_shouldDelegateToAccountService() throws MessagingException {
         UserSignupDto dto = new UserSignupDto();
         boolean isAdmin = false;
@@ -38,6 +40,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Логин пользователя: делегирует вызов AuthAccountService и возвращает JWT")
     void login_shouldDelegateToAccountService() {
         UserSigninDto dto = new UserSigninDto();
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -52,6 +55,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Подтверждение email: делегирует вызов AuthAccountService и возвращает JWT")
     void confirmEmail_shouldDelegateToAccountService() {
         String email = "test@mail.com";
         String code = "123456";
@@ -65,6 +69,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Повторная отправка кода подтверждения: делегирует вызов AuthAccountService")
     void resendConfirmationCode_shouldDelegateToAccountService() throws MessagingException {
         String email = "test@mail.com";
 
@@ -74,6 +79,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Отправка ссылки для сброса пароля: делегирует вызов AuthAccountService")
     void sendPasswordResetLink_shouldDelegateToAccountService() throws MessagingException {
         String email = "test@mail.com";
 
@@ -83,6 +89,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Сброс пароля: делегирует вызов AuthAccountService и возвращает JWT")
     void resetPassword_shouldDelegateToAccountService() {
         String token = "token";
         String newPassword = "newPass";
@@ -97,6 +104,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Выход пользователя: делегирует вызов AuthTokenService")
     void logout_shouldDelegateToAuthTokenService() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -107,6 +115,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Обновление токена: делегирует вызов AuthTokenService и возвращает JWT")
     void refreshToken_shouldDelegateToAuthTokenService() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -120,6 +129,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Добавление JWT в cookie: делегирует вызов AuthTokenService")
     void addJwtToCookie_shouldDelegateToAuthTokenService() {
         HttpServletResponse response = mock(HttpServletResponse.class);
         String token = "jwtToken";
@@ -130,6 +140,7 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Валидация JWT: делегирует вызов AuthTokenService")
     void validateJwtToken_shouldDelegateToAuthTokenService() {
         String token = "jwtToken";
 

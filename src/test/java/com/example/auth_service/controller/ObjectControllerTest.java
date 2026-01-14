@@ -5,6 +5,7 @@ import com.example.auth_service.dto.ObjectResponseDto;
 import com.example.auth_service.model.ObjectType;
 import com.example.auth_service.service.ObjectService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
@@ -27,6 +28,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение всех объектов: возвращает полный список")
     void getAllObjects_shouldReturnList() {
         List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
         when(objectService.getAllObjects()).thenReturn(mockList);
@@ -38,6 +40,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение объекта по ID: возвращает корректный объект")
     void getObjectById_shouldReturnObject() {
         ObjectResponseDto dto = new ObjectResponseDto();
         when(objectService.getObjectById(1L)).thenReturn(dto);
@@ -49,6 +52,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение объектов по типу: возвращает список объектов указанного типа")
     void getObjectsByType_shouldReturnList() {
         List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
         when(objectService.getObjectsByType(ObjectType.BUILDING)).thenReturn(mockList);
@@ -60,6 +64,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение дочерних объектов: возвращает список детей объекта")
     void getChildren_shouldReturnList() {
         List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
         when(objectService.getChildren(1L)).thenReturn(mockList);
@@ -71,6 +76,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Создание объекта: возвращает созданный объект")
     void createObject_shouldReturnCreatedObject() {
         ObjectRequestDto request = new ObjectRequestDto();
         ObjectResponseDto responseDto = new ObjectResponseDto();
@@ -83,6 +89,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление объекта: возвращает обновленный объект")
     void updateObject_shouldReturnUpdatedObject() {
         ObjectRequestDto request = new ObjectRequestDto();
         ObjectResponseDto responseDto = new ObjectResponseDto();
@@ -95,6 +102,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Удаление объекта: вызывает сервис и возвращает статус 204")
     void deleteObject_shouldCallService() {
         ResponseEntity<Void> response = objectController.deleteObject(1L);
 
@@ -103,6 +111,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение объектов текущего пользователя: возвращает список")
     void getCurrentUserObjects_shouldReturnList() {
         List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
         when(objectService.getCurrentUserObjects()).thenReturn(mockList);
@@ -114,6 +123,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение объектов по ответственному пользователю: возвращает список объектов")
     void getObjectsByResponsibleUser_shouldReturnList() {
         List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
         when(objectService.getObjectsByResponsibleUser(2L)).thenReturn(mockList);
@@ -125,6 +135,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Назначение ответственного пользователя: возвращает обновленный объект")
     void assignResponsibleUser_shouldReturnUpdatedObject() {
         ObjectResponseDto responseDto = new ObjectResponseDto();
         when(objectService.assignResponsibleUser(1L, 2L)).thenReturn(responseDto);
@@ -136,6 +147,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Снятие ответственного пользователя: возвращает обновленный объект")
     void removeResponsibleUser_shouldReturnUpdatedObject() {
         ObjectResponseDto responseDto = new ObjectResponseDto();
         when(objectService.removeResponsibleUser(1L)).thenReturn(responseDto);
@@ -147,6 +159,7 @@ class ObjectControllerTest {
     }
 
     @Test
+    @DisplayName("Получение пути объекта: возвращает список родителей до корня")
     void getObjectPath_shouldReturnList() {
         List<ObjectResponseDto> mockList = List.of(new ObjectResponseDto());
         when(objectService.getObjectPath(1L)).thenReturn(mockList);

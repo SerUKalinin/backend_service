@@ -8,9 +8,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST-контроллер для управления удалением пользователей из системы.
+ * REST-контроллер для удаления пользователей системы.
  * <p>
- * Все операции удаления доступны только администраторам с ролью {@code ADMIN}.
+ * Контроллер предоставляет эндпоинт для удаления пользователя по идентификатору.
+ * Все операции защищены ролями Spring Security и доступны только администраторам
+ * с ролью {@code ADMIN}. Логирует операции удаления для аудита.
  * </p>
  */
 @Slf4j
@@ -19,17 +21,26 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users")
 public class UserDeleteController {
 
+    /**
+     * Сервис для удаления пользователей.
+     * <p>
+     * Отвечает за бизнес-логику удаления пользователя из системы.
+     * Не допускает null, инъектируется через конструктор.
+     */
     private final UserDeleteService userDeleteService;
 
     /**
-     * Удаляет пользователя по идентификатору.
+     * Удаляет пользователя по указанному идентификатору.
      * <p>
-     * Метод доступен только администраторам (роль {@code ADMIN}) благодаря аннотации
-     * {@link PreAuthorize}. При успешном удалении возвращает HTTP статус {@code 204 No Content}.
+     * Метод доступен только администраторам (роль {@code ADMIN}).
+     * При успешном удалении возвращает HTTP статус 204 (No Content).
+     * Операция логируется с уровнем WARN для обеспечения аудита действий администратора.
      * </p>
      *
-     * @param id Идентификатор пользователя, которого необходимо удалить
-     * @return {@link ResponseEntity} без содержимого с HTTP статусом 204
+     * @param id идентификатор пользователя для удаления; должен быть положительным числом
+     * @return {@link ResponseEntity} без содержимого с HTTP статусом 204 при успешном удалении
+     * @throws com.example.auth_service.exception.UserNotFoundException если пользователь с указанным ID не найден
+     * @throws org.springframework.security.access.AccessDeniedException если текущий пользователь не имеет роли {@code ADMIN}
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

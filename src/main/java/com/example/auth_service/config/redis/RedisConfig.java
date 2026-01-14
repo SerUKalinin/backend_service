@@ -16,27 +16,52 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
  * Конфигурация Redis для приложения.
- * Использует Lettuce в качестве клиента для взаимодействия с сервером Redis.
+ * <p>
+ * Отвечает за создание соединения с Redis и регистрацию {@link RedisTemplate},
+ * используемых для хранения сессий, токенов сброса пароля и кэша.
+ * В качестве клиента используется Lettuce.
+ * </p>
  */
 @Slf4j
 @Configuration
 @EnableRedisRepositories(basePackages = "com.example.auth_service.repository.redis")
 public class RedisConfig {
 
+    /**
+     * Хост Redis-сервера.
+     * <p>
+     * Загружается из конфигурации приложения через {@code spring.redis.data.host}.
+     * Не может быть пустым или null.
+     */
     @Value("${spring.redis.data.host}")
     private String host;
 
+    /**
+     * Порт Redis-сервера.
+     * <p>
+     * Загружается из конфигурации приложения через {@code spring.redis.data.port}.
+     * Должен быть в диапазоне 1–65535.
+     */
     @Value("${spring.redis.data.port}")
     private int port;
 
+    /**
+     * Пароль Redis-сервера.
+     * <p>
+     * Загружается из конфигурации приложения через {@code spring.redis.data.password}.
+     * Не может быть null.
+     */
     @Value("${spring.redis.data.password}")
     private String password;
 
     /**
-     * Создает и настраивает фабрику подключений к Redis.
+     * Создаёт {@link LettuceConnectionFactory} для подключения к Redis.
+     * <p>
+     * Выполняет базовую валидацию параметров подключения и используется
+     * всеми {@link RedisTemplate} в приложении.
      *
-     * @return {@link LettuceConnectionFactory} для работы с Redis.
-     * @throws RedisConfigurationException если конфигурация некорректна.
+     * @return фабрика подключений к Redis
+     * @throws RedisConfigurationException если параметры подключения некорректны
      */
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
@@ -64,11 +89,13 @@ public class RedisConfig {
     }
 
     /**
-     * Создает и настраивает шаблон Redis для работы с ключами и значениями типа String.
+     * Создаёт {@link RedisTemplate} для работы со строковыми ключами и значениями.
+     * <p>
+     * Используется для простых операций хранения данных без сериализации объектов.
      *
-     * @param connectionFactory Фабрика подключений к Redis.
-     * @return {@link RedisTemplate} для работы с Redis.
-     * @throws IllegalArgumentException если передана некорректная фабрика подключений.
+     * @param connectionFactory фабрика подключений Redis; не может быть null
+     * @return {@link RedisTemplate} для работы с {@code String}-ключами и значениями
+     * @throws IllegalArgumentException если {@code connectionFactory} null
      */
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -88,10 +115,12 @@ public class RedisConfig {
     }
 
     /**
-     * Создает и настраивает шаблон Redis для работы с объектами PasswordResetToken.
+     * Создаёт {@link RedisTemplate} для хранения токенов сброса пароля.
+     * <p>
+     * Сериализует объекты {@link PasswordResetToken} в JSON для хранения в Redis.
      *
-     * @param connectionFactory Фабрика подключений к Redis.
-     * @return {@link RedisTemplate} для работы с PasswordResetToken.
+     * @param connectionFactory фабрика подключений Redis; не может быть null
+     * @return {@link RedisTemplate} для работы с токенами сброса пароля
      */
     @Bean
     public RedisTemplate<String, PasswordResetToken> passwordResetTokenRedisTemplate(RedisConnectionFactory connectionFactory) {

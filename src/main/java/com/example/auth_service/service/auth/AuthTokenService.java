@@ -20,29 +20,43 @@ import java.time.Duration;
 import java.util.UUID;
 
 /**
- * Сервисный класс для работы с токенами аутентификации.
- * <p>
- * Обеспечивает обновление access и refresh токенов, выход пользователя, управление JWT в cookie
- * и проверку валидности токенов.
- * </p>
+ * Сервис для управления токенами аутентификации пользователей.
+ *
+ * <p>Обеспечивает обновление access и refresh токенов, управление JWT в HttpOnly cookie,
+ * выполнение выхода пользователя и проверку валидности токенов с поддержкой сессий.</p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthTokenService {
 
+    /**
+     * Сервис для работы с refresh токенами в Redis.
+     */
     private final RedisService redisService;
+
+    /**
+     * Сервис для работы с сессиями пользователей.
+     */
     private final SessionService sessionService;
+
+    /**
+     * Утилита для генерации и декодирования JWT-токенов.
+     */
     private final JwtUtil jwtUtil;
+
+    /**
+     * Репозиторий для доступа к данным пользователей.
+     */
     private final UserRepository userRepository;
 
     /**
-     * Обновляет access token на основе переданного refresh token.
+     * Обновляет access token на основе переданного refresh token и сохраняет новые токены.
      *
-     * @param refreshToken refresh token пользователя.
-     * @param response     HTTP-ответ для установки нового refresh token в cookie.
-     * @return {@link AuthResponse} с новым access JWT-токеном.
-     * @throws AuthException если refresh token недействителен или пользователь не найден.
+     * @param refreshToken refresh token пользователя, должен быть действительным
+     * @param response     HTTP-ответ для установки нового refresh token в cookie
+     * @return {@link AuthResponse} с новым access JWT-токеном
+     * @throws AuthException если refresh token недействителен или пользователь не найден
      */
     public AuthResponse refreshAccessToken(String refreshToken, HttpServletResponse response) {
         String username = redisService.findUsernameByRefreshToken(refreshToken);
@@ -66,10 +80,10 @@ public class AuthTokenService {
     /**
      * Обновляет access token на основе refresh token из HTTP-запроса.
      *
-     * @param request  HTTP-запрос с cookie.
-     * @param response HTTP-ответ для установки нового refresh token.
-     * @return {@link AuthResponse} с новым access JWT-токеном.
-     * @throws AuthException если refresh token отсутствует или недействителен.
+     * @param request  HTTP-запрос с cookie refresh token
+     * @param response HTTP-ответ для установки нового refresh token
+     * @return {@link AuthResponse} с новым access JWT-токеном
+     * @throws AuthException если refresh token отсутствует или недействителен
      */
     public AuthResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractRefreshToken(request);
@@ -82,10 +96,11 @@ public class AuthTokenService {
     }
 
     /**
-     * Выполняет выход пользователя, удаляя refresh token из Redis и сессию.
+     * Выполняет выход пользователя, удаляя refresh token из Redis и сессию,
+     * а также удаляя cookie с refresh token.
      *
-     * @param request  HTTP-запрос с cookie.
-     * @param response HTTP-ответ для удаления cookie с refresh token.
+     * @param request  HTTP-запрос с cookie
+     * @param response HTTP-ответ для удаления cookie
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractRefreshToken(request);
@@ -102,10 +117,10 @@ public class AuthTokenService {
     }
 
     /**
-     * Добавляет JWT-токен в HttpOnly cookie.
+     * Добавляет JWT-токен в HttpOnly cookie для безопасного хранения на клиенте.
      *
-     * @param token    JWT-токен.
-     * @param response HTTP-ответ для установки cookie.
+     * @param token    JWT-токен
+     * @param response HTTP-ответ для установки cookie
      */
     public void addJwtToCookie(String token, HttpServletResponse response) {
         Cookie cookie = new Cookie("JWT_TOKEN", token);
@@ -117,10 +132,10 @@ public class AuthTokenService {
     }
 
     /**
-     * Валидирует JWT-токен, проверяет сессию и обновляет её время действия.
+     * Валидирует JWT-токен, проверяет сессию пользователя и обновляет время её действия.
      *
-     * @param token JWT-токен для проверки.
-     * @throws AuthException если токен недействителен или сессия отсутствует.
+     * @param token JWT-токен для проверки
+     * @throws AuthException если токен недействителен или сессия отсутствует
      */
     public void validateJwtToken(String token) {
         DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
@@ -136,8 +151,8 @@ public class AuthTokenService {
     /**
      * Генерирует новый access JWT-токен для пользователя.
      *
-     * @param user пользователь.
-     * @return access JWT-токен.
+     * @param user пользователь
+     * @return новый access JWT-токен
      */
     private String generateAccessToken(User user) {
         return jwtUtil.generateToken(
@@ -151,19 +166,19 @@ public class AuthTokenService {
     /**
      * Генерирует новый refresh token.
      *
-     * @return новый refresh token.
+     * @return новый refresh token
      */
     private String generateRefreshToken() {
         return UUID.randomUUID().toString();
     }
 
     /**
-     * Сохраняет access и refresh токены в Redis и устанавливает cookie.
+     * Сохраняет access и refresh токены в Redis и устанавливает cookie с refresh token.
      *
-     * @param username имя пользователя.
-     * @param access   access token.
-     * @param refresh  refresh token.
-     * @param response HTTP-ответ для установки cookie.
+     * @param username имя пользователя
+     * @param access   access token
+     * @param refresh  refresh token
+     * @param response HTTP-ответ для установки cookie
      */
     private void persistTokens(String username, String access, String refresh, HttpServletResponse response) {
         redisService.saveRefreshToken(username, refresh, Duration.ofDays(7));
@@ -180,8 +195,8 @@ public class AuthTokenService {
     /**
      * Извлекает refresh token из cookie HTTP-запроса.
      *
-     * @param request HTTP-запрос.
-     * @return refresh token или null, если отсутствует.
+     * @param request HTTP-запрос
+     * @return refresh token или null, если отсутствует
      */
     private String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
@@ -194,9 +209,9 @@ public class AuthTokenService {
     }
 
     /**
-     * Удаляет refresh token cookie.
+     * Удаляет refresh token cookie на клиенте.
      *
-     * @param response HTTP-ответ для удаления cookie.
+     * @param response HTTP-ответ для удаления cookie
      */
     private void invalidateRefreshCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", "");

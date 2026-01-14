@@ -3,6 +3,7 @@ package com.example.auth_service.controller.user;
 import com.example.auth_service.dto.UserDto;
 import com.example.auth_service.service.user.UserUpdateService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
@@ -26,6 +27,7 @@ class UserUpdateControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление имени пользователя: возвращает обновленный объект")
     void updateFirstName_shouldReturnUpdatedUser() {
         UserDto request = new UserDto();
         request.setFirstName("NewName");
@@ -42,6 +44,7 @@ class UserUpdateControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление фамилии пользователя: возвращает обновленный объект")
     void updateLastName_shouldReturnUpdatedUser() {
         UserDto request = new UserDto();
         request.setLastName("NewLast");
@@ -58,6 +61,7 @@ class UserUpdateControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление email пользователя: возвращает объект с новым email")
     void updateEmail_shouldReturnUpdatedUser() {
         UserDto request = new UserDto();
         request.setEmail("new@example.com");
@@ -74,6 +78,7 @@ class UserUpdateControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление роли пользователя: возвращает объект с новой ролью")
     void updateRole_shouldReturnUpdatedUser() {
         UserDto request = new UserDto();
         request.setRoles(List.of("ADMIN"));
@@ -90,6 +95,7 @@ class UserUpdateControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление статуса активности пользователя: возвращает обновленный объект")
     void updateActiveStatus_shouldReturnUpdatedUser() {
         UserDto request = new UserDto();
         request.setActive(true);

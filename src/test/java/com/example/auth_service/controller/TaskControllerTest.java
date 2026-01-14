@@ -6,6 +6,7 @@ import com.example.auth_service.dto.TaskDTO;
 import com.example.auth_service.dto.TaskUpdateDTO;
 import com.example.auth_service.service.TaskService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
@@ -29,6 +30,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Создание задачи: возвращает созданную задачу с корректным Location")
     void createTask_shouldReturnCreatedTask() {
         TaskCreateDTO createDTO = new TaskCreateDTO();
         TaskDTO taskDTO = new TaskDTO();
@@ -44,6 +46,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Получение всех задач: возвращает список всех задач")
     void getAllTasks_shouldReturnList() {
         List<TaskDTO> tasks = List.of(new TaskDTO());
         when(taskService.getAllTasks()).thenReturn(tasks);
@@ -55,6 +58,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Получение задачи по ID: возвращает корректную задачу")
     void getTaskById_shouldReturnTask() {
         TaskDTO taskDTO = new TaskDTO();
         when(taskService.getTaskById(1L)).thenReturn(taskDTO);
@@ -66,6 +70,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление задачи: возвращает обновленную задачу")
     void updateTask_shouldReturnUpdatedTask() {
         TaskUpdateDTO updateDTO = new TaskUpdateDTO();
         TaskDTO taskDTO = new TaskDTO();
@@ -78,6 +83,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Удаление задачи: вызывает сервис и возвращает статус 204")
     void deleteTask_shouldCallService() {
         ResponseEntity<Void> response = taskController.deleteTask(1L);
 
@@ -86,6 +92,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Назначение ответственного за задачу: вызывает сервис и возвращает статус 200")
     void assignResponsible_shouldCallService() {
         AssignResponsibleRequest request = new AssignResponsibleRequest();
         request.setUserId(2L);
@@ -97,6 +104,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Снятие ответственного с задачи: вызывает сервис и возвращает статус 200")
     void removeResponsible_shouldCallService() {
         ResponseEntity<?> response = taskController.removeResponsible(1L);
 
@@ -105,6 +113,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Получение задач по ID объекта: возвращает список задач объекта")
     void getTasksByObjectId_shouldReturnList() {
         List<TaskDTO> tasks = List.of(new TaskDTO());
         when(taskService.getTasksByObjectId(1L)).thenReturn(tasks);
@@ -116,6 +125,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Статистика статусов задач объекта: возвращает карту с количеством задач по статусам")
     void getTaskStatusStats_shouldReturnMap() {
         Map<String, Integer> stats = Map.of("NEW", 2, "DONE", 1);
         when(taskService.getTaskStatusStatsRecursive(1L)).thenReturn(stats);

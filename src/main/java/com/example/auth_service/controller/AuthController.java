@@ -16,19 +16,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST-контроллер для аутентификации и регистрации пользователей.
- * <p>
- * Обрабатывает все операции, связанные с:
- * <ul>
- *     <li>Регистрацией пользователей и администраторов</li>
- *     <li>Входом и выходом из системы</li>
- *     <li>Подтверждением и повторной отправкой кода email</li>
- *     <li>Сбросом пароля</li>
- *     <li>Обновлением и валидацией JWT токенов</li>
- * </ul>
- * Использует фасадный сервис {@link AuthService} для делегирования всех операций
- * на сервисы работы с аккаунтами и токенами.
- * </p>
+ * REST-контроллер для управления процессами аутентификации и регистрации пользователей.
+ *
+ * Отвечает за регистрацию новых пользователей и администраторов, вход и выход из системы,
+ * подтверждение email, сброс пароля, обновление и валидацию JWT токенов.
+ * Контроллер делегирует бизнес-логику {@link AuthService} и управляет HTTP-ответами.
+ * Применяет механизм {@link RateLimit} для защиты эндпоинтов от избыточной нагрузки.
  */
 @Slf4j
 @RestController
@@ -36,14 +29,25 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
+    /**
+     * Фасадный сервис для выполнения операций аутентификации и регистрации.
+     */
     private final AuthService authService;
+
+    /**
+     * Утилита для работы с JWT токенами.
+     */
     private final JwtUtil jwtUtil;
+
+    /**
+     * Сервис управления сессиями пользователей.
+     */
     private final SessionService sessionService;
 
     /**
      * Регистрация нового пользователя.
      *
-     * @param userSignupDto данные нового пользователя
+     * @param userSignupDto DTO с данными нового пользователя
      * @throws MessagingException если произошла ошибка при отправке письма подтверждения
      */
     @RateLimit(value = 3, timeWindow = 3600)
@@ -57,7 +61,7 @@ public class AuthController {
     /**
      * Регистрация нового администратора.
      *
-     * @param userSignupDto данные администратора
+     * @param userSignupDto DTO с данными администратора
      * @throws MessagingException если произошла ошибка при отправке письма подтверждения
      */
     @RateLimit(value = 1, timeWindow = 3600)
@@ -69,10 +73,10 @@ public class AuthController {
     }
 
     /**
-     * Аутентификация пользователя и получение JWT токена.
+     * Аутентификация пользователя и выдача JWT токена.
      *
      * @param userSigninDto данные для входа (username/email и пароль)
-     * @param response      HTTP-ответ для возможной установки cookie
+     * @param response      HTTP-ответ для установки cookie с токенами при необходимости
      * @return {@link AuthResponse} с access токеном
      */
     @RateLimit(value = 5, timeWindow = 60)
@@ -84,7 +88,7 @@ public class AuthController {
     }
 
     /**
-     * Выход пользователя и удаление его сессии.
+     * Выход пользователя из системы и удаление сессии.
      *
      * @param request  HTTP-запрос с cookie refresh token
      * @param response HTTP-ответ для очистки cookie
@@ -98,9 +102,9 @@ public class AuthController {
     }
 
     /**
-     * Подтверждение email пользователя с кодом.
+     * Подтверждение email пользователя с кодом подтверждения.
      *
-     * @param emailVerificationDto содержит email и код подтверждения
+     * @param emailVerificationDto DTO с email и кодом подтверждения
      * @param response            HTTP-ответ для установки JWT cookie
      * @return {@link AuthResponse} с access токеном
      */
@@ -114,9 +118,9 @@ public class AuthController {
     }
 
     /**
-     * Повторная отправка кода подтверждения email.
+     * Повторная отправка кода подтверждения email пользователю.
      *
-     * @param email email пользователя
+     * @param email email пользователя для повторной отправки
      * @throws MessagingException если произошла ошибка при отправке письма
      */
     @RateLimit(value = 3, timeWindow = 3600)
@@ -142,9 +146,9 @@ public class AuthController {
     }
 
     /**
-     * Запрос на сброс пароля пользователя.
+     * Инициирует процесс сброса пароля пользователя.
      *
-     * @param forgotPasswordDto содержит email пользователя
+     * @param forgotPasswordDto DTO с email пользователя
      * @throws MessagingException если произошла ошибка при отправке письма
      */
     @RateLimit(value = 3, timeWindow = 3600)
@@ -156,10 +160,10 @@ public class AuthController {
     }
 
     /**
-     * Сброс пароля пользователя.
+     * Сброс пароля пользователя с установкой нового пароля.
      *
-     * @param passwordResetDto содержит token и новый пароль
-     * @return {@link AuthResponse} с новым access токеном
+     * @param passwordResetDto DTO с токеном сброса и новым паролем
+     * @return {@link AuthResponse} с новым access токеном после успешного сброса
      */
     @RateLimit(value = 3, timeWindow = 3600)
     @PostMapping("/reset-password")
@@ -173,7 +177,7 @@ public class AuthController {
      * Валидация JWT токена.
      *
      * @param authHeader заголовок Authorization в формате "Bearer {token}"
-     * @return HTTP 200 если токен валиден, HTTP 401 если нет
+     * @return HTTP 200 OK если токен валиден, HTTP 401 Unauthorized если токен невалиден
      */
     @RateLimit(value = 10, timeWindow = 60)
     @GetMapping("/validate")

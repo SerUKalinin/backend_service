@@ -10,8 +10,8 @@ import com.example.auth_service.model.User;
 import com.example.auth_service.repository.ObjectRepository;
 import com.example.auth_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,12 +19,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class ObjectServiceTest {
 
@@ -43,6 +39,7 @@ class ObjectServiceTest {
     }
 
     @Test
+    @DisplayName("Создание объекта: успешно сохраняется с указанием создателя")
     void createObject_shouldSaveObjectSuccessfully() {
         User currentUser = new User();
         currentUser.setId(1L);
@@ -83,12 +80,14 @@ class ObjectServiceTest {
     }
 
     @Test
+    @DisplayName("Получение объекта по ID: выбрасывается ObjectNotFoundException, если объект не найден")
     void getObjectById_shouldThrowException_ifNotFound() {
         when(objectRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ObjectNotFoundException.class, () -> objectService.getObjectById(99L));
     }
 
     @Test
+    @DisplayName("Удаление объекта: выбрасывается IllegalStateException, если есть дочерние объекты")
     void deleteObject_shouldThrowException_ifHasChildren() {
         ObjectEntity parent = new ObjectEntity();
         when(objectRepository.findById(1L)).thenReturn(Optional.of(parent));
@@ -98,6 +97,7 @@ class ObjectServiceTest {
     }
 
     @Test
+    @DisplayName("Назначение ответственного пользователя: успешно обновляется")
     void assignResponsibleUser_shouldUpdateSuccessfully() {
         ObjectEntity object = new ObjectEntity();
         when(objectRepository.findById(1L)).thenReturn(Optional.of(object));
@@ -118,6 +118,7 @@ class ObjectServiceTest {
     }
 
     @Test
+    @DisplayName("Получение полного пути объекта: возвращает список объектов от корня до текущего")
     void getObjectPath_shouldReturnFullPath() {
         ObjectEntity root = new ObjectEntity();
         root.setId(1L);

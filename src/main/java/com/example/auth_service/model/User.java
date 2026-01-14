@@ -9,7 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,8 +17,11 @@ import lombok.NoArgsConstructor;
 import java.util.Set;
 
 /**
- * Сущность для представления пользователя.
- * Хранит информацию о пользователе, его ролях и постах.
+ * Сущность пользователя в системе.
+ *
+ * <p>Хранит основные данные о пользователе, включая логин, email, пароль,
+ * роли и статус активации. Используется для аутентификации, авторизации
+ * и управления доступом к функционалу системы.</p>
  */
 @Data
 @Entity
@@ -29,44 +31,52 @@ import java.util.Set;
 public class User {
 
     /**
-     * Идентификатор пользователя.
-     * Уникальный и генерируется автоматически.
+     * Уникальный идентификатор пользователя.
+     * Генерируется автоматически при создании записи в базе данных.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
-     * Имя пользователя.
-     * Уникально для каждого пользователя и не может быть пустым.
+     * Логин пользователя.
+     * Уникальное значение, обязательное для заполнения.
      */
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
     /**
      * Электронная почта пользователя.
-     * Уникальна для каждого пользователя и не может быть пустой.
+     * Уникальное значение, обязательное для заполнения.
      */
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     /**
      * Пароль пользователя.
-     * Не может быть пустым.
+     * Хранится в зашифрованном виде и обязателен для заполнения.
      */
     @Column(name = "password", nullable = false)
     private String password;
 
+    /**
+     * Имя пользователя.
+     * Может быть пустым.
+     */
     @Column(name = "first_name")
-    private String firstName;  // Поле для имени
+    private String firstName;
 
+    /**
+     * Фамилия пользователя.
+     * Может быть пустой.
+     */
     @Column(name = "last_name")
     private String lastName;
 
     /**
      * Роли пользователя.
-     * Связь "многие ко многим" с таблицей ролей.
-     * Используется eager загрузка для немедленной загрузки ролей.
+     * Используется для определения прав доступа и разграничения функционала.
+     * Связь "многие ко многим" с сущностью {@link Role}.
      */
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles",
@@ -76,8 +86,9 @@ public class User {
 
     /**
      * Статус активации пользователя.
-     * По умолчанию пользователь не активирован.
+     * Определяет, может ли пользователь выполнять действия в системе.
+     * По умолчанию {@code false}.
      */
     @Column(name = "active", nullable = false)
-    private boolean active = false;  // Значение по умолчанию - false
+    private boolean active = false;
 }

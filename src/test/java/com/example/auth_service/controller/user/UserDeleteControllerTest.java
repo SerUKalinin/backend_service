@@ -2,6 +2,7 @@ package com.example.auth_service.controller.user;
 
 import com.example.auth_service.service.user.UserDeleteService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
@@ -22,15 +23,14 @@ class UserDeleteControllerTest {
     }
 
     @Test
+    @DisplayName("Удаление пользователя: вызов сервиса с ID и возврат 204 No Content")
     void deleteUser_shouldCallServiceAndReturnNoContent() {
         Long userId = 1L;
 
         ResponseEntity<Void> response = userDeleteController.deleteUser(userId);
 
-        // Проверяем, что сервис вызван с правильным ID
         verify(userDeleteService, times(1)).deleteUser(userId);
 
-        // Проверяем, что возвращается HTTP 204 No Content
         assertEquals(204, response.getStatusCodeValue());
     }
 }

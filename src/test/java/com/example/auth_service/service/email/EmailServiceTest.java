@@ -3,6 +3,7 @@ package com.example.auth_service.service.email;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -36,6 +37,7 @@ class EmailServiceTest {
     }
 
     @Test
+    @DisplayName("Отправка кода подтверждения: проверяет вызов JavaMailSender")
     void sendConfirmationCode_shouldCallJavaMailSender() throws MessagingException {
         String to = "user@example.com";
         String code = "123456";
@@ -46,6 +48,7 @@ class EmailServiceTest {
     }
 
     @Test
+    @DisplayName("Отправка ссылки для сброса пароля: делегирует вызов sendEmail")
     void sendPasswordResetEmail_shouldCallSendEmail() throws MessagingException {
         EmailService spyService = spy(emailService);
         String to = "user@example.com";
@@ -57,6 +60,7 @@ class EmailServiceTest {
     }
 
     @Test
+    @DisplayName("Отправка произвольного письма: вызывает JavaMailSender.send()")
     void sendEmail_shouldCallJavaMailSender() throws Exception {
         MimeMessage mimeMessage = mock(MimeMessage.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);

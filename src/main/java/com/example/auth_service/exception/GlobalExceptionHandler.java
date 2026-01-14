@@ -7,17 +7,22 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Глобальный обработчик исключений для обработки специфических ошибок в приложении.
+ * Глобальный обработчик исключений приложения.
+ *
+ * <p>Отвечает за централизованную обработку всех исключений, возникающих в контроллерах,
+ * и формирует корректные HTTP-ответы для клиента с соответствующим статусом и сообщением.</p>
+ *
+ * <p>Позволяет логировать ошибки и стандартизировать обработку ошибок на уровне всего приложения.</p>
  */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
     /**
-     * Обрабатывает исключение, связанное с ошибками аутентификации и авторизации.
+     * Обрабатывает исключения аутентификации и авторизации.
      *
-     * @param ex Исключение {@link AuthException}
-     * @return Ответ с кодом 401 UNAUTHORIZED и сообщением об ошибке
+     * @param ex исключение {@link AuthException}, выбрасываемое при проблемах входа пользователя
+     * @return {@link ResponseEntity} с HTTP статусом 401 UNAUTHORIZED и сообщением ошибки
      */
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<String> handleAuthException(AuthException ex) {
@@ -26,10 +31,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения, возникающие при попытке создания сущности, которая уже существует.
+     * Обрабатывает исключения конфликтов при создании сущностей, которые уже существуют.
      *
-     * @param ex Исключение {@link EmailAlreadyExistsException}, {@link UserAlreadyExistsException}, {@link TaskAlreadyExistsException}
-     * @return Ответ с кодом 409 CONFLICT и сообщением об ошибке
+     * @param ex исключения {@link EmailAlreadyExistsException}, {@link UserAlreadyExistsException}, {@link TaskAlreadyExistsException}
+     * @return {@link ResponseEntity} с HTTP статусом 409 CONFLICT и сообщением ошибки
      */
     @ExceptionHandler({
             EmailAlreadyExistsException.class,
@@ -42,10 +47,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения, возникающие при отсутствии запрашиваемой сущности в базе данных.
+     * Обрабатывает исключения отсутствия сущности в системе.
      *
-     * @param ex Исключение {@link UserNotFoundException}, {@link ObjectNotFoundException}, {@link TaskNotFoundException}, {@link FileNotFoundException}
-     * @return Ответ с кодом 404 NOT FOUND и сообщением об ошибке
+     * @param ex исключения {@link UserNotFoundException}, {@link ObjectNotFoundException}, {@link TaskNotFoundException}, {@link FileNotFoundException}
+     * @return {@link ResponseEntity} с HTTP статусом 404 NOT FOUND и сообщением ошибки
      */
     @ExceptionHandler({
             UserNotFoundException.class,
@@ -59,10 +64,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения, связанные с невалидными данными.
+     * Обрабатывает исключения, связанные с некорректными данными пользователя или системы.
      *
-     * @param ex Исключение {@link InvalidDataException}, {@link InvalidConfirmationCodeException}, {@link InvalidFileException}
-     * @return Ответ с кодом 400 BAD REQUEST и сообщением об ошибке
+     * @param ex исключения {@link InvalidDataException}, {@link InvalidConfirmationCodeException}, {@link InvalidFileException}
+     * @return {@link ResponseEntity} с HTTP статусом 400 BAD REQUEST и сообщением ошибки
      */
     @ExceptionHandler({
             InvalidDataException.class,
@@ -75,10 +80,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключение, возникающее при попытке входа неактивированного пользователя.
+     * Обрабатывает исключение при попытке входа пользователя, который не активирован.
      *
-     * @param ex Исключение {@link UserNotActivatedException}
-     * @return Ответ с кодом 403 FORBIDDEN и сообщением об ошибке
+     * @param ex исключение {@link UserNotActivatedException}
+     * @return {@link ResponseEntity} с HTTP статусом 403 FORBIDDEN и сообщением ошибки
      */
     @ExceptionHandler(UserNotActivatedException.class)
     public ResponseEntity<String> handleUserNotActivatedException(UserNotActivatedException ex) {
@@ -87,10 +92,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключение, связанное с превышением лимита запросов.
+     * Обрабатывает исключения, связанные с превышением лимита запросов.
      *
-     * @param ex Исключение {@link RateLimitExceededException}
-     * @return Ответ с кодом 429 TOO MANY REQUESTS и сообщением об ошибке
+     * @param ex исключение {@link RateLimitExceededException}
+     * @return {@link ResponseEntity} с HTTP статусом 429 TOO MANY REQUESTS и сообщением ошибки
      */
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<String> handleRateLimitExceededException(RateLimitExceededException ex) {
@@ -99,10 +104,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения, связанные с системными ошибками.
+     * Обрабатывает системные исключения приложения.
      *
-     * @param ex Исключение {@link InvalidCorsConfigurationException}, {@link RedisConfigurationException}, {@link FileStorageException}
-     * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением об ошибке
+     * @param ex исключения {@link InvalidCorsConfigurationException}, {@link RedisConfigurationException}, {@link FileStorageException}
+     * @return {@link ResponseEntity} с HTTP статусом 500 INTERNAL SERVER ERROR и сообщением ошибки
      */
     @ExceptionHandler({
             InvalidCorsConfigurationException.class,
@@ -115,10 +120,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает любые неожиданные исключения, не предусмотренные в других методах.
+     * Обрабатывает все неожиданные исключения, не предусмотренные другими методами.
      *
-     * @param ex Общее исключение {@link Exception}
-     * @return Ответ с кодом 500 INTERNAL SERVER ERROR и сообщением "Внутренняя ошибка сервера"
+     * @param ex любое {@link Exception}, возникшее в контроллерах
+     * @return {@link ResponseEntity} с HTTP статусом 500 INTERNAL SERVER ERROR и стандартным сообщением "Внутренняя ошибка сервера"
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {

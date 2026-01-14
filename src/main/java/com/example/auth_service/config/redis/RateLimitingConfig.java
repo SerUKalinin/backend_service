@@ -7,18 +7,23 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Конфигурация для rate limiting.
- * Настраивает RedisTemplate для работы с ограничением частоты запросов.
+ * Конфигурация Redis для механизма ограничения частоты запросов (rate limiting).
+ *
+ * Определяет специализированный {@link RedisTemplate}, используемый инфраструктурными
+ * компонентами приложения (фильтры, аспекты) для учёта количества вызовов
+ * и контроля нагрузки на сервис.
  */
 @Configuration
 public class RateLimitingConfig {
 
     /**
-     * Создает и настраивает RedisTemplate для rate limiting.
-     * Использует StringRedisSerializer для сериализации ключей и значений.
+     * Создаёт {@link RedisTemplate} для хранения счётчиков запросов.
+     * <p>
+     * Настраивает сериализацию ключей и значений в строки, включая хэш-ключи,
+     * для корректного использования в механизме rate limiting.
      *
-     * @param connectionFactory Фабрика подключений к Redis
-     * @return Настроенный RedisTemplate
+     * @param connectionFactory фабрика подключений к Redis; должна быть корректно инициализирована
+     * @return {@link RedisTemplate} для операций учёта частоты запросов
      */
     @Bean
     public RedisTemplate<String, Long> rateLimitRedisTemplate(RedisConnectionFactory connectionFactory) {
@@ -31,4 +36,4 @@ public class RateLimitingConfig {
         template.afterPropertiesSet();
         return template;
     }
-} 
+}

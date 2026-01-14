@@ -13,10 +13,10 @@ import java.util.Map;
 
 /**
  * REST-контроллер для управления файлами, прикреплёнными к задачам.
- * <p>
- * Предоставляет методы для загрузки, получения, скачивания и удаления файлов,
- * связанных с задачами. Все операции делегируются в {@link FileStorageService}.
- * </p>
+ *
+ * Отвечает за загрузку, получение, скачивание и удаление файлов, связанных с задачами.
+ * Все операции делегируются {@link FileStorageService}, который реализует бизнес-логику
+ * хранения и обработки файлов.
  */
 @Slf4j
 @RestController
@@ -24,13 +24,16 @@ import java.util.Map;
 @RequestMapping("/api/files")
 public class FileController {
 
+    /**
+     * Сервис для работы с файлами задач.
+     */
     private final FileStorageService fileStorageService;
 
     /**
      * Загружает один или несколько файлов для конкретной задачи.
      *
-     * @param taskId ID задачи, к которой прикрепляются файлы
-     * @param files  Массив файлов для загрузки
+     * @param taskId ID задачи, к которой прикрепляются файлы; должно быть существующим в системе
+     * @param files  Массив файлов для загрузки; каждый файл не должен быть пустым
      * @return {@link ResponseEntity} с списком {@link Map}, содержащих информацию о загруженных файлах
      */
     @PostMapping("/upload")
@@ -43,8 +46,8 @@ public class FileController {
     /**
      * Получает список всех файлов, прикреплённых к задаче.
      *
-     * @param taskId ID задачи
-     * @return {@link ResponseEntity} со списком {@link Map}, содержащих информацию о файлах задачи
+     * @param taskId ID задачи; должен существовать в системе
+     * @return {@link ResponseEntity} со списком {@link Map}, содержащих метаданные файлов задачи
      */
     @GetMapping("/task/{taskId}")
     public ResponseEntity<List<Map<String, String>>> getTaskFiles(@PathVariable Long taskId) {
@@ -54,8 +57,8 @@ public class FileController {
     /**
      * Скачивает файл по имени.
      *
-     * @param fileName Имя файла для скачивания
-     * @return {@link ResponseEntity} с {@link Resource} файла
+     * @param fileName Имя файла для скачивания; должно существовать в хранилище
+     * @return {@link ResponseEntity} с {@link Resource} файла для передачи клиенту
      */
     @GetMapping("/download/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
@@ -65,7 +68,7 @@ public class FileController {
     /**
      * Удаляет файл по имени.
      *
-     * @param fileName Имя файла для удаления
+     * @param fileName Имя файла для удаления; должно существовать в хранилище
      * @return {@link ResponseEntity} без содержимого (HTTP 200 OK), если удаление прошло успешно
      */
     @DeleteMapping("/{fileName:.+}")

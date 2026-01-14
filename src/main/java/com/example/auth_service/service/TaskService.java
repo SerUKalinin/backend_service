@@ -23,11 +23,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Сервис для управления задачами (Task).
- * <p>
- * Предоставляет методы для создания, чтения, обновления, удаления и статистики задач.
- * Использует MapStruct для маппинга между DTO и сущностью Task.
- * </p>
+ * Сервис управления задачами (Task) в системе.
+ *
+ * <p>Обеспечивает создание, получение, обновление, удаление и назначение ответственных
+ * пользователей для задач. Предоставляет статистику по статусам задач и поддерживает
+ * работу с задачами, связанными с объектами недвижимости и их иерархией.</p>
+ *
+ * <p>Использует {@link TaskMapper} для преобразования между DTO и сущностями {@link Task}.</p>
  */
 @Slf4j
 @Service
@@ -35,18 +37,27 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class TaskService {
 
+    /** Репозиторий для работы с задачами. */
     private final TaskRepository taskRepository;
+
+    /** Репозиторий для работы с объектами недвижимости. */
     private final ObjectRepository objectRepository;
+
+    /** Репозиторий для работы с пользователями. */
     private final UserRepository userRepository;
+
+    /** Маппер для преобразования между Task и DTO. */
     private final TaskMapper taskMapper;
+
+    /** Сервис для получения информации о текущем пользователе. */
     private final SecurityService securityService;
 
     /**
-     * Создаёт новую задачу в системе.
+     * Создаёт новую задачу.
      *
-     * @param dto {@link TaskCreateDTO} с данными для создания задачи
-     * @return {@link TaskDTO} с данными созданной задачи
-     * @throws EntityNotFoundException если объект недвижимости не найден
+     * @param dto DTO с данными для создания задачи
+     * @return DTO с данными созданной задачи
+     * @throws EntityNotFoundException если объект недвижимости, к которому привязывается задача, не найден
      */
     @Transactional
     public TaskDTO createTask(TaskCreateDTO dto) {
@@ -68,9 +79,9 @@ public class TaskService {
     }
 
     /**
-     * Получает все задачи в системе.
+     * Получает список всех задач в системе.
      *
-     * @return список {@link TaskDTO} всех задач
+     * @return список DTO всех задач
      */
     public List<TaskDTO> getAllTasks() {
         return taskRepository.findAll()
@@ -83,7 +94,7 @@ public class TaskService {
      * Получает задачу по её идентификатору.
      *
      * @param id идентификатор задачи
-     * @return {@link TaskDTO} с данными задачи
+     * @return DTO задачи
      * @throws TaskNotFoundException если задача не найдена
      */
     public TaskDTO getTaskById(Long id) {
@@ -91,10 +102,10 @@ public class TaskService {
     }
 
     /**
-     * Получает список задач, связанных с конкретным объектом недвижимости.
+     * Получает задачи для указанного объекта недвижимости.
      *
      * @param objectId идентификатор объекта недвижимости
-     * @return список {@link TaskDTO} задач для данного объекта
+     * @return список DTO задач для объекта
      */
     public List<TaskDTO> getTasksByObjectId(Long objectId) {
         log.info("Получение задач для объекта {}", objectId);
@@ -105,11 +116,11 @@ public class TaskService {
     }
 
     /**
-     * Обновляет данные существующей задачи.
+     * Обновляет существующую задачу.
      *
-     * @param id  идентификатор задачи
-     * @param dto {@link TaskUpdateDTO} с новыми данными задачи
-     * @return {@link TaskDTO} обновлённой задачи
+     * @param id идентификатор задачи
+     * @param dto DTO с новыми данными задачи
+     * @return DTO обновлённой задачи
      * @throws TaskNotFoundException если задача не найдена
      */
     @Transactional
@@ -163,7 +174,7 @@ public class TaskService {
      * Получает статистику задач по статусам для объекта и всех его потомков.
      *
      * @param objectId идентификатор объекта недвижимости
-     * @return {@link Map} с ключом статус задачи и значением количество задач в этом статусе
+     * @return карта: ключ — статус задачи, значение — количество задач с этим статусом
      */
     public Map<String, Integer> getTaskStatusStatsRecursive(Long objectId) {
         List<Long> ids = new ArrayList<>();
@@ -178,10 +189,10 @@ public class TaskService {
     }
 
     /**
-     * Ищет задачу по идентификатору.
+     * Находит задачу по идентификатору.
      *
      * @param id идентификатор задачи
-     * @return {@link Task} найденная задача
+     * @return сущность задачи
      * @throws TaskNotFoundException если задача не найдена
      */
     private Task findTask(Long id) {
@@ -192,7 +203,7 @@ public class TaskService {
     /**
      * Получает текущего аутентифицированного пользователя.
      *
-     * @return {@link User} текущий пользователь
+     * @return текущий пользователь
      * @throws EntityNotFoundException если пользователь не найден
      */
     private User getCurrentUser() {
@@ -202,7 +213,7 @@ public class TaskService {
     }
 
     /**
-     * Получает список идентификаторов всех потомков объекта недвижимости.
+     * Рекурсивно получает идентификаторы всех потомков объекта недвижимости.
      *
      * @param parentId идентификатор родительского объекта
      * @return список идентификаторов всех потомков

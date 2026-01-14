@@ -18,6 +18,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -75,6 +76,7 @@ class AuthAccountServiceTest {
     }
 
     @Test
+    @DisplayName("Регистрация пользователя: сохраняет нового пользователя и отправляет код подтверждения")
     void register_shouldSaveUserAndSendCode() throws MessagingException {
         UserSignupDto dto = new UserSignupDto();
         dto.setUsername("user1");
@@ -108,6 +110,7 @@ class AuthAccountServiceTest {
     }
 
     @Test
+    @DisplayName("Логин активного пользователя: возвращает JWT и сохраняет сессию")
     void login_shouldReturnAuthResponse_whenUserActive() {
         UserSigninDto dto = new UserSigninDto();
         dto.setUsername("user1");
@@ -125,11 +128,12 @@ class AuthAccountServiceTest {
 
         AuthResponse response = authService.login(dto, mock(HttpServletResponse.class));
 
-        assertEquals("jwtToken", response.getJwtToken()); // <- исправлено
+        assertEquals("jwtToken", response.getJwtToken());
         verify(sessionService).saveSession(eq("user1"), eq("jwtToken"), any(Duration.class));
     }
 
     @Test
+    @DisplayName("Логин неактивного пользователя: выбрасывает UserNotActivatedException")
     void login_shouldThrow_whenUserNotActive() {
         UserSigninDto dto = new UserSigninDto();
         dto.setUsername("user1");
@@ -145,6 +149,7 @@ class AuthAccountServiceTest {
     }
 
     @Test
+    @DisplayName("Подтверждение email: активирует пользователя и возвращает JWT")
     void confirmEmail_shouldActivateUser() {
         String email = "user@mail.com";
         String code = "123456";
@@ -163,18 +168,20 @@ class AuthAccountServiceTest {
         AuthResponse response = authService.confirmEmail(email, code);
 
         assertTrue(user.isActive());
-        assertEquals("jwtToken", response.getJwtToken()); // <- исправлено
+        assertEquals("jwtToken", response.getJwtToken());
         verify(redisService).deleteConfirmationCode(email);
         verify(sessionService).saveSession(eq("user1"), eq("jwtToken"), any(Duration.class));
     }
 
     @Test
+    @DisplayName("Подтверждение email: выбрасывает InvalidConfirmationCodeException при некорректном коде")
     void confirmEmail_shouldThrowIfCodeInvalid() {
         when(redisService.checkConfirmationCode("email", "code")).thenReturn(false);
         assertThrows(InvalidConfirmationCodeException.class, () -> authService.confirmEmail("email", "code"));
     }
 
     @Test
+    @DisplayName("Повторная отправка кода подтверждения для активного пользователя: выбрасывает UserAlreadyExistsException")
     void resendConfirmationCode_shouldThrowIfUserActive() throws MessagingException {
         User user = new User();
         user.setActive(true);
@@ -184,6 +191,7 @@ class AuthAccountServiceTest {
     }
 
     @Test
+    @DisplayName("Сброс пароля: генерирует токен и отправляет email с ссылкой на восстановление")
     void sendPasswordResetLink_shouldGenerateTokenAndSendEmail() throws MessagingException {
         User user = new User();
         user.setEmail("email");
@@ -199,6 +207,7 @@ class AuthAccountServiceTest {
     }
 
     @Test
+    @DisplayName("Сброс пароля: кодирует новый пароль и возвращает JWT")
     void resetPassword_shouldEncodeAndSaveNewPassword() {
         String token = "resetToken";
         String newPassword = "newPass";
@@ -207,7 +216,6 @@ class AuthAccountServiceTest {
         user.setUsername("user1");
         user.setEmail("email");
 
-        // Обязательно добавляем роли
         Role role = new Role();
         role.setRoleType(Role.RoleType.ROLE_USER);
         user.setRoles(Set.of(role));

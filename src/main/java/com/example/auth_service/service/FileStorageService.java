@@ -25,29 +25,27 @@ import java.nio.file.*;
 import java.util.*;
 
 /**
- * Сервис для хранения, получения и удаления файлов, связанных с задачами.
+ * Сервис для работы с файлами вложений задач.
  *
- * <p>Отвечает за загрузку файлов, валидацию формата и размера,
- * физическое сохранение в файловой системе, а также управление
- * метаданными файлов в базе данных.</p>
+ * <p>Отвечает за загрузку, хранение, получение и удаление файлов,
+ * а также за управление их метаданными в базе данных.</p>
  *
- * <p><strong>Ответственность:</strong></p>
+ * <p>Основная ответственность:</p>
  * <ul>
- *   <li>Загрузка и валидация файлов вложений задач</li>
- *   <li>Хранение файлов в файловой системе</li>
- *   <li>Связывание файлов с задачами</li>
- *   <li>Формирование ссылок на скачивание</li>
- *   <li>Удаление файлов и их метаданных</li>
+ *     <li>Валидация загружаемых файлов (размер, формат)</li>
+ *     <li>Физическое сохранение файлов в файловой системе</li>
+ *     <li>Создание и хранение метаданных файлов</li>
+ *     <li>Генерация ссылок для скачивания файлов</li>
+ *     <li>Удаление файлов и связанных метаданных</li>
  * </ul>
  *
- * <p>Сервис не содержит бизнес-логики задач и работает исключительно
- * с файловыми операциями и их привязкой к сущностям.</p>
+ * <p>Сервис не реализует бизнес-логику задач и работает только с файловыми операциями.</p>
  */
 @Slf4j
 @Service
 public class FileStorageService {
 
-    /** Корневая директория для хранения загружаемых файлов. */
+    /** Корневая директория для хранения файлов. */
     private final Path fileStorageLocation;
 
     /** Репозиторий для работы с задачами. */
@@ -56,7 +54,7 @@ public class FileStorageService {
     /** Репозиторий для работы с вложениями задач. */
     private final TaskAttachmentRepository taskAttachmentRepository;
 
-    /** Максимально допустимый размер файла (10 MB). */
+    /** Максимальный размер файла в байтах (10 MB). */
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     /** Допустимые расширения файлов. */
@@ -65,9 +63,9 @@ public class FileStorageService {
     );
 
     /**
-     * Создаёт сервис хранения файлов и инициализирует директорию загрузки.
+     * Конструктор сервиса инициализирует директорию для хранения файлов.
      *
-     * @param config конфигурация хранилища файлов
+     * @param config конфигурация директории загрузки
      * @param taskRepository репозиторий задач
      * @param taskAttachmentRepository репозиторий вложений задач
      * @throws FileStorageException если не удалось создать директорию хранения
@@ -89,43 +87,34 @@ public class FileStorageService {
     }
 
     /**
-     * Загружает файлы и привязывает их к задаче.
+     * Загружает и сохраняет файлы, привязывая их к задаче.
      *
-     * <p>В процессе загрузки:</p>
-     * <ol>
-     *     <li>Проверяется существование задачи</li>
-     *     <li>Валидируется каждый файл (размер, расширение)</li>
-     *     <li>Файл сохраняется в файловой системе</li>
-     *     <li>Метаданные сохраняются в базе данных</li>
-     *     <li>Формируется ссылка для скачивания</li>
-     * </ol>
+     * <p>Метод выполняет проверку существования задачи, валидацию файлов,
+     * сохранение в файловой системе, сохранение метаданных и формирование ссылок для скачивания.</p>
      *
-     * @param taskId идентификатор задачи
+     * @param taskId идентификатор задачи, к которой привязываются файлы
      * @param files массив файлов для загрузки
-     * @return список информации о загруженных файлах
-     * @throws TaskNotFoundException если задача не найдена
-     * @throws InvalidFileException если файл невалиден
-     * @throws FileStorageException при ошибке сохранения файла
+     * @return список метаданных загруженных файлов с ссылками для скачивания
+     * @throws TaskNotFoundException если задача с указанным ID не найдена
+     * @throws InvalidFileException если файл невалиден (пустой, большой или недопустимого типа)
+     * @throws FileStorageException при ошибках сохранения файла
      */
     public ResponseEntity<List<Map<String, String>>> uploadFiles(Long taskId, MultipartFile[] files) {
         if (files == null || files.length == 0) {
             throw new InvalidFileException("Файлы не выбраны");
         }
 
-        // Проверяем существование задачи
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Задача не найдена: " + taskId));
 
         List<Map<String, String>> responses = Arrays.stream(files)
-                .peek(this::validateFile) // Валидируем каждый файл
+                .peek(this::validateFile)
                 .map(file -> {
-                    // Генерация безопасного имени файла
                     String ext = Optional.ofNullable(StringUtils.getFilenameExtension(file.getOriginalFilename()))
                             .map(String::toLowerCase)
                             .orElse("");
                     String storedFileName = UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
 
-                    // Сохраняем файл
                     try {
                         Files.copy(file.getInputStream(),
                                 fileStorageLocation.resolve(storedFileName),
@@ -134,7 +123,6 @@ public class FileStorageService {
                         throw new FileStorageException("Ошибка при сохранении файла: " + file.getOriginalFilename(), e);
                     }
 
-                    // Сохраняем метаданные
                     TaskAttachment attachment = TaskAttachment.builder()
                             .task(task)
                             .filePath(storedFileName)
@@ -143,7 +131,6 @@ public class FileStorageService {
                             .build();
                     taskAttachmentRepository.save(attachment);
 
-                    // Формируем ссылку для скачивания
                     String fileUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                             .path("/api/files/download/")
                             .path(storedFileName)
@@ -159,29 +146,11 @@ public class FileStorageService {
     }
 
     /**
-     * Формирует информацию о файле для ответа клиенту.
-     *
-     * @param attachment объект TaskAttachment с метаданными файла
-     * @param fileUri URI для скачивания файла
-     * @return Map с данными файла
-     */
-    private Map<String, String> buildFileInfo(TaskAttachment attachment, String fileUri) {
-        Map<String, String> info = new HashMap<>();
-        info.put("fileName", attachment.getFilePath());
-        info.put("originalFileName", attachment.getOriginalFileName());
-        info.put("fileDownloadUri", fileUri);
-        info.put("fileType", getFileType(attachment.getFilePath()));
-        info.put("size", String.valueOf(attachment.getSize()));
-        return info;
-    }
-
-
-    /**
-     * Возвращает список файлов, прикреплённых к задаче.
+     * Получает список файлов, прикреплённых к задаче.
      *
      * @param taskId идентификатор задачи
-     * @return список метаданных файлов
-     * @throws TaskNotFoundException если задача не найдена
+     * @return список метаданных файлов с ссылками для скачивания
+     * @throws TaskNotFoundException если задача с указанным ID не найдена
      */
     public ResponseEntity<List<Map<String, String>>> getTaskFiles(Long taskId) {
         if (!taskRepository.existsById(taskId)) {
@@ -205,9 +174,7 @@ public class FileStorageService {
             info.put("uploadedAt", a.getUploadedAt().toString());
 
             try {
-                info.put("size", String.valueOf(
-                        Files.size(fileStorageLocation.resolve(a.getFilePath()))
-                ));
+                info.put("size", String.valueOf(Files.size(fileStorageLocation.resolve(a.getFilePath()))));
             } catch (IOException e) {
                 info.put("size", "0");
             }
@@ -222,7 +189,7 @@ public class FileStorageService {
      * Загружает файл как {@link Resource} для скачивания.
      *
      * @param fileName имя файла в хранилище
-     * @return файл в виде HTTP-ответа
+     * @return HTTP-ответ с файлом и корректным MIME-типом
      * @throws FileNotFoundException если файл не найден
      */
     public ResponseEntity<Resource> downloadFile(String fileName) {
@@ -235,11 +202,11 @@ public class FileStorageService {
     }
 
     /**
-     * Удаляет файл и связанные с ним метаданные из базы и файловой системы.
+     * Удаляет файл и связанные с ним метаданные из системы.
      *
      * @param fileName имя файла в хранилище
      * @throws FileNotFoundException если файл не найден
-     * @throws FileStorageException при ошибке удаления
+     * @throws FileStorageException при ошибках удаления
      */
     public void deleteFile(String fileName) {
         taskAttachmentRepository.findByFilePath(fileName)
@@ -247,13 +214,13 @@ public class FileStorageService {
         deleteFileInternal(fileName);
     }
 
-    /* ==================== Internal helpers ==================== */
+    /* ==================== Вспомогательные методы ==================== */
 
     /**
-     * Валидирует файл на предмет размера и допустимого расширения.
+     * Валидирует файл на предмет пустоты, размера и допустимого расширения.
      *
      * @param file файл для проверки
-     * @throws InvalidFileException если файл пустой, слишком большой или недопустимого типа
+     * @throws InvalidFileException если файл пустой, превышает размер или недопустимого типа
      */
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
@@ -270,33 +237,27 @@ public class FileStorageService {
     }
 
     /**
-     * Сохраняет файл в файловую систему.
+     * Формирует информацию о файле для ответа клиенту.
      *
-     * @param file файл для сохранения
-     * @return сгенерированное уникальное имя файла
-     * @throws FileStorageException при ошибке сохранения
+     * @param attachment объект {@link TaskAttachment} с метаданными файла
+     * @param fileUri URI для скачивания файла
+     * @return Map с ключами: fileName, originalFileName, fileDownloadUri, fileType, size
      */
-    private String storeFile(MultipartFile file) {
-        String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        String fileName = UUID.randomUUID() + "." + ext;
-
-        try {
-            Files.copy(
-                    file.getInputStream(),
-                    fileStorageLocation.resolve(fileName),
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-            return fileName;
-        } catch (IOException e) {
-            throw new FileStorageException("Ошибка при сохранении файла", e);
-        }
+    private Map<String, String> buildFileInfo(TaskAttachment attachment, String fileUri) {
+        Map<String, String> info = new HashMap<>();
+        info.put("fileName", attachment.getFilePath());
+        info.put("originalFileName", attachment.getOriginalFileName());
+        info.put("fileDownloadUri", fileUri);
+        info.put("fileType", getFileType(attachment.getFilePath()));
+        info.put("size", String.valueOf(attachment.getSize()));
+        return info;
     }
 
     /**
-     * Загружает файл из файловой системы как {@link Resource}.
+     * Загружает файл как ресурс.
      *
      * @param fileName имя файла
-     * @return ресурс для скачивания
+     * @return {@link Resource} для скачивания
      * @throws FileNotFoundException если файл не найден
      */
     private Resource loadFileAsResource(String fileName) {
@@ -317,7 +278,7 @@ public class FileStorageService {
      *
      * @param fileName имя файла
      * @throws FileNotFoundException если файл не найден
-     * @throws FileStorageException при ошибке удаления
+     * @throws FileStorageException при ошибках удаления
      */
     private void deleteFileInternal(String fileName) {
         try {
@@ -346,11 +307,9 @@ public class FileStorageService {
         return switch (ext.toLowerCase()) {
             case "pdf" -> "application/pdf";
             case "doc" -> "application/msword";
-            case "docx" ->
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
             case "xls" -> "application/vnd.ms-excel";
-            case "xlsx" ->
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             case "jpg", "jpeg" -> "image/jpeg";
             case "png" -> "image/png";
             case "gif" -> "image/gif";

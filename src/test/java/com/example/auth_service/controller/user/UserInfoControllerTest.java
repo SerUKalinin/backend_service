@@ -3,6 +3,7 @@ package com.example.auth_service.controller.user;
 import com.example.auth_service.dto.UserDto;
 import com.example.auth_service.service.user.UserInfoService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,6 +28,7 @@ class UserInfoControllerTest {
     }
 
     @Test
+    @DisplayName("Получение информации о текущем пользователе по аутентификации")
     void getUserInfo_shouldReturnCurrentUser() {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("user");
@@ -43,6 +45,7 @@ class UserInfoControllerTest {
     }
 
     @Test
+    @DisplayName("Получение списка всех пользователей с корректным размером списка")
     void getAllUsersInfo_shouldReturnListOfUsers() {
         UserDto user1 = new UserDto(); user1.setId(1L); user1.setUsername("user1");
         UserDto user2 = new UserDto(); user2.setId(2L); user2.setUsername("user2");
@@ -58,6 +61,7 @@ class UserInfoControllerTest {
     }
 
     @Test
+    @DisplayName("Получение информации о пользователе по ID с корректными данными")
     void getUserById_shouldReturnUser() {
         UserDto user = new UserDto();
         user.setId(1L);

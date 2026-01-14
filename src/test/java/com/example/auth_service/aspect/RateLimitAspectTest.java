@@ -52,14 +52,12 @@ public class RateLimitAspectTest {
 
     @BeforeEach
     void setUp() {
-        // Настройка моков
         when(rateLimitRedisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
-    @DisplayName("Должен разрешить запрос, когда количество запросов в пределах лимита")
+    @DisplayName("Разрешить запрос, если количество запросов не превышает лимит")
     void testRateLimitWithinLimit() throws Throwable {
-        // Arrange
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
@@ -73,18 +71,15 @@ public class RateLimitAspectTest {
         when(requestAttributes.getRequest()).thenReturn(request);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
 
-        // Act
         Object result = rateLimitAspect.rateLimit(joinPoint, rateLimit);
 
-        // Assert
         assertEquals("success", result);
         verify(rateLimitRedisTemplate).expire(anyString(), eq(60L), any());
     }
 
     @Test
-    @DisplayName("Должен выбросить исключение при превышении лимита запросов")
+    @DisplayName("Выбросить RateLimitExceededException при превышении лимита запросов")
     void testRateLimitExceeded() {
-        // Arrange
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
         when(rateLimit.key()).thenReturn("");
@@ -96,14 +91,13 @@ public class RateLimitAspectTest {
         when(requestAttributes.getRequest()).thenReturn(request);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
 
-        // Act & Assert
         assertThrows(RateLimitExceededException.class, () -> {
             rateLimitAspect.rateLimit(joinPoint, rateLimit);
         });
     }
 
     @Test
-    @DisplayName("Должен использовать пользовательский ключ, если он указан")
+    @DisplayName("Использовать пользовательский ключ при его указании")
     void testCustomKey() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
@@ -119,7 +113,7 @@ public class RateLimitAspectTest {
     }
 
     @Test
-    @DisplayName("Должен генерировать корректный ключ на основе метода и IP-адреса")
+    @DisplayName("Сгенерировать ключ на основе метода и IP-адреса при отсутствии пользовательского ключа")
     void testKeyGenerator() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
@@ -140,7 +134,7 @@ public class RateLimitAspectTest {
     }
 
     @Test
-    @DisplayName("Должен сбрасывать счетчик после истечения временного окна")
+    @DisplayName("Сбросить счетчик после истечения временного окна")
     void testRateLimitResetAfterTimeWindow() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
@@ -167,7 +161,7 @@ public class RateLimitAspectTest {
     }
 
     @Test
-    @DisplayName("Должен обрабатывать разные IP-адреса независимо")
+    @DisplayName("Обрабатывать разные IP-адреса независимо")
     void teatDifferentIpAddresses() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
@@ -180,24 +174,20 @@ public class RateLimitAspectTest {
         RequestContextHolder.setRequestAttributes(requestAttributes);
         when(requestAttributes.getRequest()).thenReturn(request);
 
-        // Первый IP
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         when(valueOperations.increment(anyString())).thenReturn(6L);
-
         assertThrows(RateLimitExceededException.class, () -> {
             rateLimitAspect.rateLimit(joinPoint, rateLimit);
         });
 
-        // Второй IP
         when(request.getRemoteAddr()).thenReturn("127.0.0.2");
         when(valueOperations.increment(anyString())).thenReturn(1L);
-
         Object result = rateLimitAspect.rateLimit(joinPoint, rateLimit);
         assertEquals("success", result);
     }
 
     @Test
-    @DisplayName("Должен обрабатывать разные методы независимо")
+    @DisplayName("Обрабатывать разные методы независимо при одинаковом IP")
     void tastDifferentMethods() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
@@ -210,23 +200,20 @@ public class RateLimitAspectTest {
         when(requestAttributes.getRequest()).thenReturn(request);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
 
-        // Первый метод
         when(signature.getName()).thenReturn("login");
         when(valueOperations.increment(anyString())).thenReturn(6L);
-
         assertThrows(RateLimitExceededException.class, () -> {
             rateLimitAspect.rateLimit(joinPoint, rateLimit);
         });
 
         when(signature.getName()).thenReturn("register");
         when(valueOperations.increment(anyString())).thenReturn(1L);
-
         Object result = rateLimitAspect.rateLimit(joinPoint, rateLimit);
         assertEquals("success", result);
     }
 
     @Test
-    @DisplayName("Должен корректно работать с разными временными окнами")
+    @DisplayName("Корректно работать с различными временными окнами лимита")
     void testDifferentTimeWindows() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
@@ -245,13 +232,11 @@ public class RateLimitAspectTest {
 
         assertEquals("success", result);
         verify(rateLimitRedisTemplate).expire(anyString(), eq(30L), any());
-
     }
 
     @Test
-    @DisplayName("Должен разрешить запрос на границе лимита")
+    @DisplayName("Разрешить запрос на границе лимита")
     void testAtLimitBoundary() throws Throwable {
-        // Arrange
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
         when(rateLimit.key()).thenReturn("");
@@ -264,17 +249,13 @@ public class RateLimitAspectTest {
         when(valueOperations.increment(anyString())).thenReturn(5L);
         when(joinPoint.proceed()).thenReturn("success");
 
-        // Act
         Object result = rateLimitAspect.rateLimit(joinPoint, rateLimit);
-
-        // Assert
         assertEquals("success", result);
     }
 
     @Test
-    @DisplayName("Должен выбросить исключение при превышении лимита на 1")
+    @DisplayName("Выбросить RateLimitExceededException при превышении лимита на 1")
     void testExceedingLimitByOne() {
-        // Arrange
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
         when(rateLimit.key()).thenReturn("");
@@ -286,16 +267,14 @@ public class RateLimitAspectTest {
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         when(valueOperations.increment(anyString())).thenReturn(6L);
 
-        // Act & Assert
         assertThrows(RateLimitExceededException.class, () -> {
             rateLimitAspect.rateLimit(joinPoint, rateLimit);
         });
     }
 
     @Test
-    @DisplayName("Должен корректно обрабатывать параллельные запросы")
+    @DisplayName("Корректно обрабатывать параллельные запросы и соблюдение лимита")
     void testConcurrentRequests() throws Throwable {
-        // Arrange
         RateLimit rateLimit = mock(RateLimit.class);
         when(rateLimit.value()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
@@ -307,21 +286,16 @@ public class RateLimitAspectTest {
         when(requestAttributes.getRequest()).thenReturn(request);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
 
-        // Имитация параллельных запросов
         when(valueOperations.increment(anyString())).thenReturn(1L, 2L, 3L, 4L, 5L, 6L);
         when(joinPoint.proceed()).thenReturn("success");
 
-        // Выполняем 5 запросов (в пределах лимита)
         for (int i = 0; i < 5; i++) {
             Object result = rateLimitAspect.rateLimit(joinPoint, rateLimit);
             assertEquals("success", result);
         }
 
-        // Шестой запрос должен превысить лимит
         assertThrows(RateLimitExceededException.class, () -> {
             rateLimitAspect.rateLimit(joinPoint, rateLimit);
         });
     }
-
-
 }

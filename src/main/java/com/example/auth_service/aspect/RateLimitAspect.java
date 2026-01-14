@@ -16,9 +16,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Аспект для обработки ограничения частоты запросов.
- * Перехватывает вызовы методов с аннотацией @RateLimit и проверяет
- * количество запросов за указанный период времени.
+ * Аспект для ограничения частоты вызовов методов приложения.
+ *
+ * Применяется к методам, помеченным аннотацией {@link RateLimit}.
+ * Служит для защиты публичных API и внутренних сервисов от избыточных запросов,
+ * предотвращая перегрузку системы. Учёт и контроль выполняются с использованием Redis.
  */
 @Aspect
 @Component
@@ -26,52 +28,70 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RateLimitAspect {
 
+    /**
+     * RedisTemplate для хранения счётчиков вызовов.
+     *
+     * Используется для инкрементации и отслеживания количества запросов
+     * по ключу, формируемому на основе метода, класса и IP-адреса клиента
+     * либо заданному явно в аннотации {@link RateLimit}.
+     */
     private final RedisTemplate<String, Long> rateLimitRedisTemplate;
 
     /**
-     * Обрабатывает вызовы методов с аннотацией @RateLimit.
+     * Перехватывает вызов метода и проверяет соблюдение лимита запросов.
      *
-     * @param joinPoint Точка соединения
-     * @param rateLimit Аннотация с параметрами ограничения
-     * @return Результат выполнения метода
-     * @throws Throwable Исключение при превышении лимита или ошибке выполнения
+     * Инкрементирует счётчик запросов в Redis. Если текущее количество
+     * превышает значение {@link RateLimit#value()}, выбрасывает
+     * {@link RateLimitExceededException}.
+     *
+     * @param joinPoint точка соединения AOP, содержащая информацию о целевом методе
+     * @param rateLimit аннотация с настройками ограничения частоты вызовов
+     * @return результат выполнения целевого метода при соблюдении лимита
+     * @throws RateLimitExceededException если превышен допустимый лимит вызовов
+     * @throws Throwable если целевой метод выбрасывает исключение
      */
     @Around("@annotation(rateLimit)")
     public Object rateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
         String key = generateKey(joinPoint, rateLimit);
         Long currentCount = rateLimitRedisTemplate.opsForValue().increment(key);
-        
+
         if (currentCount == 1) {
             rateLimitRedisTemplate.expire(key, rateLimit.timeWindow(), TimeUnit.SECONDS);
         }
-        
+
         if (currentCount > rateLimit.value()) {
-            log.warn("Rate limit exceeded for key: {}", key);
-            throw new RateLimitExceededException("Rate limit exceeded. Try again later.");
+            log.warn("Превышен лимит запросов для ключа: {}", key);
+            throw new RateLimitExceededException("Превышен лимит запросов. Попробуйте позже.");
         }
-        
+
         return joinPoint.proceed();
     }
 
     /**
-     * Генерирует ключ для Redis на основе метода и параметров запроса.
+     * Формирует уникальный ключ для хранения счётчика вызовов в Redis.
      *
-     * @param joinPoint Точка соединения
-     * @param rateLimit Аннотация с параметрами ограничения
-     * @return Строковый ключ для Redis
+     * Если аннотация {@link RateLimit} содержит явный ключ — используется он.
+     * В противном случае ключ создаётся на основе имени класса, метода
+     * и IP-адреса клиента.
+     *
+     * @param joinPoint точка соединения AOP, используемая для получения информации о методе
+     * @param rateLimit аннотация с настройками ограничения частоты вызовов
+     * @return строка ключа Redis для учёта запросов
      */
     private String generateKey(ProceedingJoinPoint joinPoint, RateLimit rateLimit) {
         if (!rateLimit.key().isEmpty()) {
             return rateLimit.key();
         }
 
-        // Получаем IP адрес из запроса
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        HttpServletRequest request =
+                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ip = request.getRemoteAddr();
 
-        return String.format("rate_limit:%s:%s:%s", 
-            joinPoint.getSignature().getDeclaringTypeName(),
-            joinPoint.getSignature().getName(),
-            ip);
+        return String.format(
+                "rate_limit:%s:%s:%s",
+                joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(),
+                ip
+        );
     }
-} 
+}

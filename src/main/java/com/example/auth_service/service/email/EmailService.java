@@ -10,25 +10,33 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 /**
- * Сервис для отправки электронных писем.
- * Содержит метод для отправки письма с кодом подтверждения.
+ * Сервис для отправки электронных писем пользователям.
+ *
+ * <p>Отвечает за отправку кодов подтверждения при регистрации и ссылок для сброса пароля.
+ * Использует {@link JavaMailSender} для работы с SMTP-сервером.</p>
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
+    /**
+     * Компонент Spring для отправки email сообщений.
+     */
     private final JavaMailSender javaMailSender;
-    
+
+    /**
+     * Email отправителя, подставляется из конфигурации приложения.
+     */
     @Value("${spring.mail.username}")
     private String fromEmail;
 
     /**
-     * Отправка письма с кодом подтверждения.
+     * Отправляет письмо с кодом подтверждения на указанный адрес.
      *
-     * @param to      Адрес получателя.
-     * @param code    Код подтверждения.
-     * @throws MessagingException Ошибка при отправке письма.
+     * @param to    Email получателя, должен быть корректным
+     * @param code  Код подтверждения для активации аккаунта
+     * @throws MessagingException Если произошла ошибка при отправке письма
      */
     public void sendConfirmationCode(String to, String code) throws MessagingException {
         log.info("Попытка отправки письма с кодом подтверждения на адрес: {}", to);
@@ -51,11 +59,11 @@ public class EmailService {
     }
 
     /**
-     * Отправляет письмо со ссылкой для сброса пароля.
+     * Отправляет письмо с ссылкой для сброса пароля пользователя.
      *
-     * @param to Email получателя.
-     * @param resetLink Ссылка для сброса пароля.
-     * @throws MessagingException Если произошла ошибка при отправке письма.
+     * @param to        Email получателя, должен быть корректным
+     * @param resetLink Ссылка для сброса пароля, должна быть валидной и доступной пользователю
+     * @throws MessagingException Если произошла ошибка при отправке письма
      */
     public void sendPasswordResetEmail(String to, String resetLink) throws MessagingException {
         String subject = "Сброс пароля - RealEstate PRO";
@@ -76,12 +84,12 @@ public class EmailService {
     }
 
     /**
-     * Отправляет email с указанным содержимым.
+     * Отправляет email с указанной темой и содержимым (HTML).
      *
-     * @param to      Email получателя.
-     * @param subject Тема письма.
-     * @param content Содержимое письма (HTML).
-     * @throws MessagingException Если произошла ошибка при отправке письма.
+     * @param to      Email получателя, должен быть корректным
+     * @param subject Тема письма, не должна быть пустой
+     * @param content HTML-содержимое письма
+     * @throws MessagingException Если произошла ошибка при отправке письма
      */
     public void sendEmail(String to, String subject, String content) throws MessagingException {
         log.info("Отправка письма на адрес: {}", to);

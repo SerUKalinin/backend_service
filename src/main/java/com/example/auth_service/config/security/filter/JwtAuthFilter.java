@@ -24,27 +24,63 @@ import java.time.Duration;
 import java.util.Date;
 
 /**
- * Фильтр для аутентификации JWT.
- * Проверяет наличие и валидность JWT в заголовке Authorization.
+ * JWT-фильтр аутентификации для Spring Security.
+ * <p>
+ * Отвечает за извлечение, проверку и обработку JWT-токенов из HTTP-запросов.
+ * Проверяет срок действия токена, его наличие в blacklist и валидность пользовательской сессии.
+ * При успешной верификации устанавливает аутентификацию в {@link SecurityContextHolder}.
+ * </p>
+ * <p>
+ * Используется на уровне security-фильтров для защиты REST-эндпоинтов приложения.
+ * Поддерживает обновление времени жизни сессии после успешной аутентификации.
+ * </p>
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    /**
+     * Утилита для работы с JWT-токенами.
+     * <p>
+     * Предоставляет методы для декодирования и проверки валидности токенов.
+     */
     private final JwtUtil jwtUtil;
+
+    /**
+     * Сервис для загрузки деталей пользователя.
+     * <p>
+     * Используется для извлечения {@link UserDetails} по имени пользователя.
+     */
     private final CustomUserDetailsService customUserDetailsService;
+
+    /**
+     * Репозиторий Redis для работы с blacklist токенов.
+     * <p>
+     * Используется для проверки, что токен не был отозван.
+     */
     private final RedisRepository redisRepository;
+
+    /**
+     * Сервис управления сессиями пользователей.
+     * <p>
+     * Проверяет валидность сессии и обновляет время её жизни после аутентификации.
+     */
     private final SessionService sessionService;
 
     /**
-     * Проверяет и обрабатывает JWT-токен из запроса.
+     * Обрабатывает HTTP-запрос и выполняет JWT-аутентификацию при наличии токена.
+     * <p>
+     * Если токен действителен, устанавливает {@link UsernamePasswordAuthenticationToken}
+     * в {@link SecurityContextHolder}. Обновляет срок действия сессии.
+     * В случае ошибки верификации или истечения срока действия возвращает статус 401.
+     * </p>
      *
-     * @param request     HTTP-запрос.
-     * @param response    HTTP-ответ.
-     * @param filterChain Цепочка фильтров.
-     * @throws IOException      если произошла ошибка ввода-вывода.
-     * @throws ServletException если произошла ошибка сервлета.
+     * @param request HTTP-запрос клиента; не может быть null
+     * @param response HTTP-ответ, через который возвращаются коды ошибок при неуспешной аутентификации
+     * @param filterChain цепочка фильтров Spring Security
+     * @throws IOException при ошибках ввода-вывода
+     * @throws ServletException при ошибках обработки запроса
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -57,36 +93,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 DecodedJWT decodedJWT = jwtUtil.decodeToken(token);
                 String username = decodedJWT.getSubject();
 
-                // Проверяем, не истек ли токен
                 if (decodedJWT.getExpiresAt().before(new Date())) {
                     log.warn("Токен истек");
                     throw new JWTVerificationException("Токен истек");
                 }
 
-                // Проверяем, не находится ли токен в черном списке
                 if (redisRepository.isExists(token)) {
                     log.warn("Токен находится в черном списке");
                     throw new JWTVerificationException("Токен находится в черном списке");
                 }
 
-                // Проверяем валидность сессии
                 if (!sessionService.isSessionValid(username, token)) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
 
-                // Загружаем пользователя из базы данных
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
-                // Создаем объект аутентификации
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Устанавливаем аутентификацию в контекст безопасности
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                // Обновляем сессию
                 sessionService.updateSession(username, token, Duration.ofHours(2));
 
                 log.debug("Успешная аутентификация для пользователя: {}", username);

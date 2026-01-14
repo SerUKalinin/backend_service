@@ -7,17 +7,34 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Конфигурация CORS (Cross-Origin Resource Sharing) для сервиса аутентификации.
- * Позволяет управлять разрешёнными источниками, методами и заголовками для кросс-доменных запросов.
+ * Конфигурация CORS для приложения аутентификации.
+ * <p>
+ * Настраивает кросс-доменные HTTP-запросы, определяя разрешённые источники, методы и заголовки.
+ * Используется на уровне веб-конфигурации Spring MVC и применяется ко всем REST-эндпоинтам приложения.
+ * </p>
+ * <p>
+ * Контролирует корректность настроек и предотвращает пустой список разрешённых источников.
+ * </p>
  */
 @Slf4j
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     /**
-     * Настраивает разрешённые CORS-правила для веб-приложения.
+     * Настраивает правила CORS для всех эндпоинтов приложения.
+     * <p>
+     * Метод задаёт:
+     * <ul>
+     *     <li>Список разрешённых источников</li>
+     *     <li>Допустимые HTTP методы</li>
+     *     <li>Разрешённые заголовки</li>
+     *     <li>Поддержку передачи учетных данных</li>
+     * </ul>
+     * Также проверяет, что список источников не пуст, и логирует процесс настройки.
+     * </p>
      *
-     * @param registry Реестр CORS-настроек.
+     * @param registry реестр CORS-настроек Spring MVC; не может быть null
+     * @throws InvalidCorsConfigurationException если список разрешённых источников пуст
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {

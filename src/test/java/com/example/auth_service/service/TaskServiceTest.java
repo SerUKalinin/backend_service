@@ -14,6 +14,7 @@ import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.service.security.SecurityService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -21,13 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class TaskServiceTest {
 
@@ -51,6 +47,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Создание задачи: успешно сохраняется с корректными полями")
     void createTask_shouldSaveTaskSuccessfully() {
         TaskCreateDTO dto = new TaskCreateDTO();
         dto.setRealEstateObjectId(1L);
@@ -79,6 +76,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Создание задачи: выбрасывает исключение если объект не найден")
     void createTask_shouldThrowException_whenObjectNotFound() {
         TaskCreateDTO dto = new TaskCreateDTO();
         dto.setRealEstateObjectId(1L);
@@ -89,6 +87,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Получение задачи по ID: возвращает TaskDTO")
     void getTaskById_shouldReturnTaskDTO() {
         Task task = new Task();
         TaskDTO taskDTO = new TaskDTO();
@@ -103,6 +102,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Обновление задачи: корректно обновляет поля")
     void updateTask_shouldUpdateTask() {
         TaskUpdateDTO dto = new TaskUpdateDTO();
         Task task = new Task();
@@ -118,6 +118,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Назначение ответственного: корректно устанавливает пользователя")
     void assignResponsible_shouldSetUser() {
         Task task = new Task();
         User user = new User();
@@ -132,6 +133,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Удаление ответственного: корректно устанавливает null")
     void removeResponsible_shouldSetNull() {
         Task task = new Task();
         task.setResponsibleUser(new User());
@@ -144,6 +146,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Удаление задачи: успешно удаляет существующую задачу")
     void deleteTask_shouldDeleteTask() {
         when(taskRepository.existsById(1L)).thenReturn(true);
 
@@ -153,6 +156,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Удаление задачи: выбрасывает исключение если задача не найдена")
     void deleteTask_shouldThrow_whenNotFound() {
         when(taskRepository.existsById(1L)).thenReturn(false);
 
@@ -160,6 +164,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Статистика задач по статусу: корректно считает задачи рекурсивно")
     void getTaskStatusStatsRecursive_shouldReturnStats() {
         ObjectEntity parent = new ObjectEntity();
         parent.setId(1L);

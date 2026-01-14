@@ -6,6 +6,7 @@ import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.model.User;
 import com.example.auth_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,10 +14,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class UserInfoServiceTest {
 
@@ -32,6 +30,7 @@ class UserInfoServiceTest {
     }
 
     @Test
+    @DisplayName("Получение информации о пользователе по username: пользователь существует")
     void getUserInfo_shouldReturnUserDto_whenUserExists() {
         String username = "user1";
         User user = new User();
@@ -48,6 +47,7 @@ class UserInfoServiceTest {
     }
 
     @Test
+    @DisplayName("Получение информации о пользователе по username: пользователь не найден, выбрасывается исключение")
     void getUserInfo_shouldThrowException_whenUserNotFound() {
         String username = "nonexistent";
         when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
@@ -61,6 +61,7 @@ class UserInfoServiceTest {
     }
 
     @Test
+    @DisplayName("Получение информации обо всех пользователях")
     void getAllUserInfo_shouldReturnListOfUserDto() {
         User user1 = new User();
         User user2 = new User();
@@ -78,6 +79,7 @@ class UserInfoServiceTest {
     }
 
     @Test
+    @DisplayName("Получение информации о пользователе по ID: пользователь существует")
     void getUserById_shouldReturnUserDto_whenUserExists() {
         Long userId = 1L;
         User user = new User();
@@ -94,6 +96,7 @@ class UserInfoServiceTest {
     }
 
     @Test
+    @DisplayName("Получение информации о пользователе по ID: пользователь не найден, выбрасывается исключение")
     void getUserById_shouldThrowException_whenUserNotFound() {
         Long userId = 99L;
         when(userRepository.findById(userId)).thenReturn(Optional.empty());

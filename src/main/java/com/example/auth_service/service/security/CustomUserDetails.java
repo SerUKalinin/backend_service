@@ -4,30 +4,43 @@ import com.example.auth_service.model.User;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
 /**
- * Кастомный класс для хранения данных пользователя, который реализует интерфейс {@link UserDetails}.
- * Используется для работы с Spring Security.
+ * Кастомная реализация {@link UserDetails} для интеграции с Spring Security.
+ *
+ * <p>Предоставляет информацию о пользователе и его ролях для механизма аутентификации и авторизации.
+ * Используется внутри {@link org.springframework.security.core.userdetails.UserDetailsService}.</p>
  */
 @Slf4j
 public class CustomUserDetails implements UserDetails {
 
+    /**
+     * Сущность пользователя {@link User}, содержащая основную информацию о пользователе.
+     */
     @Getter
     private final User user;
+
+    /**
+     * Коллекция ролей и привилегий пользователя в формате {@link GrantedAuthority}.
+     */
     private final Collection<? extends GrantedAuthority> authorities;
 
+    /**
+     * Конструктор, инициализирующий пользователя и его полномочия.
+     *
+     * @param user        Сущность пользователя. Не может быть null.
+     * @param authorities Коллекция ролей пользователя. Не может быть null или пустой.
+     */
     public CustomUserDetails(User user, Collection<? extends GrantedAuthority> authorities) {
         this.user = user;
         this.authorities = authorities;
     }
 
     /**
-     * Возвращает роли пользователя в виде коллекции {@link GrantedAuthority}.
-     * Каждая роль преобразуется в {@link SimpleGrantedAuthority}.
+     * Возвращает список полномочий пользователя.
      *
      * @return Коллекция {@link GrantedAuthority}, представляющая роли пользователя.
      */
@@ -39,7 +52,7 @@ public class CustomUserDetails implements UserDetails {
     /**
      * Возвращает пароль пользователя.
      *
-     * @return Пароль пользователя.
+     * @return Хэшированный пароль пользователя.
      */
     @Override
     public String getPassword() {
@@ -47,9 +60,9 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Возвращает имя пользователя.
+     * Возвращает имя пользователя для аутентификации.
      *
-     * @return Имя пользователя.
+     * @return Логин пользователя.
      */
     @Override
     public String getUsername() {
@@ -59,7 +72,7 @@ public class CustomUserDetails implements UserDetails {
     /**
      * Проверяет, не истек ли срок действия учетной записи.
      *
-     * @return true, если учетная запись не истекла.
+     * @return true, если учетная запись действительна, false если просрочена.
      */
     @Override
     public boolean isAccountNonExpired() {
@@ -77,9 +90,9 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Проверяет, не истек ли срок действия учетных данных (например, пароля).
+     * Проверяет, не истек ли срок действия учетных данных.
      *
-     * @return true, если учетные данные не истекли.
+     * @return true, если учетные данные действительны.
      */
     @Override
     public boolean isCredentialsNonExpired() {
@@ -87,9 +100,9 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Проверяет, включена ли учетная запись пользователя.
+     * Проверяет, активна ли учетная запись пользователя.
      *
-     * @return true, если учетная запись активна.
+     * @return true, если учетная запись включена, false если отключена.
      */
     @Override
     public boolean isEnabled() {

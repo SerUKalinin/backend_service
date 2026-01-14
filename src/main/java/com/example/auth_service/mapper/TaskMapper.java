@@ -11,17 +11,24 @@ import org.mapstruct.MappingTarget;
 import java.util.List;
 
 /**
- * Маппер для преобразования между сущностью {@link Task} и DTO.
- * Использует MapStruct для автоматического создания методов маппинга.
+ * Mapper для преобразования между сущностью {@link Task} и DTO ({@link TaskDTO}, {@link TaskCreateDTO}, {@link TaskUpdateDTO}).
+ *
+ * <p>Отвечает за преобразование данных между слоями приложения:
+ * - конвертация сущности задачи в DTO для передачи клиенту,
+ * - создание сущности задачи на основе DTO для сохранения,
+ * - обновление существующей сущности данными из DTO.</p>
+ *
+ * <p>Используется сервисным слоем для обеспечения чистой архитектуры и отделения модели данных от представления.</p>
  */
 @Mapper(componentModel = "spring")
 public interface TaskMapper {
 
     /**
-     * Преобразует {@link Task} в {@link TaskDTO}.
+     * Преобразует сущность {@link Task} в DTO {@link TaskDTO}.
+     * Выполняется маппинг связанных сущностей пользователя и объекта недвижимости.
      *
-     * @param task сущность задачи
-     * @return DTO задачи
+     * @param task сущность задачи; не может быть null
+     * @return DTO задачи с заполненными полями, включая id пользователей и информацию о создателе и ответственном пользователе
      */
     @Mapping(target = "realEstateObjectId", source = "realEstateObject.id")
     @Mapping(target = "createdByFirstName", source = "createdBy.firstName")
@@ -32,11 +39,12 @@ public interface TaskMapper {
     TaskDTO toDto(Task task);
 
     /**
-     * Преобразует {@link TaskCreateDTO} в {@link Task}.
-     * Поля, которые устанавливаются в сервисе, игнорируются.
+     * Преобразует DTO {@link TaskCreateDTO} в сущность {@link Task}.
+     * Игнорируются поля, которые устанавливаются сервисом автоматически
+     * (id, timestamps, связанные сущности, вложения).
      *
-     * @param dto DTO для создания задачи
-     * @return сущность задачи
+     * @param dto DTO для создания задачи; не может быть null
+     * @return новая сущность задачи с полями, указанными в DTO
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -45,14 +53,16 @@ public interface TaskMapper {
     @Mapping(target = "responsibleUser", ignore = true)
     @Mapping(target = "realEstateObject", ignore = true)
     @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "status", constant = "NEW")
     Task toEntity(TaskCreateDTO dto);
 
     /**
-     * Обновляет сущность {@link Task} на основе {@link TaskUpdateDTO}.
-     * Игнорирует поля, которые не должны изменяться напрямую.
+     * Обновляет существующую сущность {@link Task} на основе данных из {@link TaskUpdateDTO}.
+     * Игнорируются поля, которые не должны изменяться напрямую:
+     * id, timestamps, создатель, ответственный, объект недвижимости, вложения.
      *
-     * @param dto DTO с обновлёнными полями
-     * @param task сущность задачи для обновления
+     * @param dto  DTO с обновлёнными данными; не может быть null
+     * @param task сущность задачи для обновления; не может быть null
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -64,10 +74,10 @@ public interface TaskMapper {
     void updateTaskFromDto(TaskUpdateDTO dto, @MappingTarget Task task);
 
     /**
-     * Преобразует список {@link Task} в список {@link TaskDTO}.
+     * Преобразует список сущностей {@link Task} в список DTO {@link TaskDTO}.
      *
-     * @param tasks список задач
-     * @return список DTO
+     * @param tasks список задач; может быть пустым или null
+     * @return список DTO; если входной список null, возвращается пустой список
      */
     List<TaskDTO> toDtoList(List<Task> tasks);
 }

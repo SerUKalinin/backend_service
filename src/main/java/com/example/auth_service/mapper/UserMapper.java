@@ -8,10 +8,27 @@ import org.mapstruct.MappingTarget;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper для преобразования между сущностью {@link User} и DTO {@link UserDto}.
+ *
+ * <p>Обеспечивает:
+ * - конвертацию сущности пользователя в DTO для передачи в API,
+ * - конвертацию списка пользователей в список DTO,
+ * - обновление сущности пользователя на основе DTO.</p>
+ *
+ * <p>Используется сервисным слоем для обеспечения отделения модели данных от представления
+ * и поддержки чистой архитектуры.</p>
+ */
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    // Маппинг User > UserDto
+    /**
+     * Преобразует сущность {@link User} в DTO {@link UserDto}.
+     * Если роли отсутствуют, устанавливается роль по умолчанию "ROLE_USER".
+     *
+     * @param user сущность пользователя; может быть null
+     * @return DTO пользователя с заполненными полями, включая список ролей и активность; возвращает null, если входной объект null
+     */
     default UserDto toDto(User user) {
         if (user == null) return null;
 
@@ -33,13 +50,24 @@ public interface UserMapper {
         return dto;
     }
 
-    // Маппинг списка User > List<UserDto>
+    /**
+     * Преобразует список сущностей {@link User} в список DTO {@link UserDto}.
+     *
+     * @param users список пользователей; может быть null или пустым
+     * @return список DTO; если входной список null, возвращается пустой список
+     */
     default List<UserDto> toDtoList(List<User> users) {
         if (users == null) return List.of();
         return users.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    // Обновление User из UserDto
+    /**
+     * Обновляет существующую сущность {@link User} данными из {@link UserDto}.
+     * Игнорирует управление ролями, которые должны управляться через сервис.
+     *
+     * @param dto  DTO с новыми данными; не может быть null
+     * @param user сущность пользователя для обновления; не может быть null
+     */
     default void updateUserFromDto(UserDto dto, @MappingTarget User user) {
         if (dto.getEmail() != null) user.setEmail(dto.getEmail());
         if (dto.getFirstName() != null) user.setFirstName(dto.getFirstName());

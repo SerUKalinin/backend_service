@@ -18,35 +18,52 @@ import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
- * Утилитный класс для работы с JWT токенами.
- * Предоставляет методы для генерации, проверки и декодирования токенов,
- * а также для добавления токенов в черный список.
+ * Утилитный сервис для работы с JWT-токенами.
+ *
+ * <p>Обеспечивает генерацию, проверку, декодирование токенов, а также управление их валидностью
+ * через черный список. Используется для аутентификации пользователей и управления сессиями
+ * в системе.</p>
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtUtil {
 
+    /**
+     * Секретный ключ для подписи JWT.
+     */
     @Value("${auth_service.jwtSecret}")
     private String jwtSecret;
 
+    /**
+     * Время жизни JWT в миллисекундах.
+     */
     @Value("${auth_service.jwtLifeTimeDuration}")
     private long jwtLifeTimeDuration;
 
+    /**
+     * Издатель токена.
+     */
     @Value("${auth_service.issuer}")
     private String issuer;
 
+    /**
+     * Репозиторий для хранения черного списка JWT.
+     */
     private final RedisJwtBlacklistRepositoryImpl redisRepository;
 
-    private static final long PASSWORD_RESET_TOKEN_EXPIRATION = 3600000; // 1 час
+    /**
+     * Время действия токена для сброса пароля (1 час).
+     */
+    private static final long PASSWORD_RESET_TOKEN_EXPIRATION = 3600000;
 
     /**
-     * Генерирует JWT токен для указанного пользователя с привилегиями.
+     * Генерирует JWT-токен для пользователя на основе имени и ролей.
      *
-     * @param username    Имя пользователя для которого генерируется токен.
-     * @param authorities Привилегии пользователя.
-     * @return Сгенерированный JWT токен.
-     * @throws IllegalArgumentException Если {@code username} или {@code authorities} пусты или null.
+     * @param username    Имя пользователя, для которого создается токен. Не может быть пустым или null.
+     * @param authorities Коллекция полномочий пользователя. Не может быть пустой или null.
+     * @return JWT-токен с указанными данными.
+     * @throws IllegalArgumentException если входные параметры некорректны.
      */
     public String generateToken(String username, Collection<? extends GrantedAuthority> authorities) {
         if (username == null || username.isBlank()) {
@@ -61,27 +78,24 @@ public class JwtUtil {
         String roles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-                
         log.debug("Генерация токена для пользователя {} с ролями: {}", username, roles);
-        
-        String token = JWT.create()
+
+        return JWT.create()
                 .withSubject(username)
                 .withIssuer(issuer)
                 .withClaim("roles", roles)
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(System.currentTimeMillis() + jwtLifeTimeDuration))
                 .sign(Algorithm.HMAC256(jwtSecret));
-
-        return token;
     }
 
     /**
-     * Генерирует JWT токен для указанного пользователя с расширенной информацией.
+     * Генерирует JWT-токен с расширенной информацией для пользователя.
      *
-     * @param user Пользователь для которого генерируется токен.
-     * @param authorities Привилегии пользователя.
-     * @return Сгенерированный JWT токен.
-     * @throws IllegalArgumentException Если {@code user} или {@code authorities} пусты или null.
+     * @param user        Пользователь. Не может быть null.
+     * @param authorities Коллекция полномочий пользователя. Не может быть пустой или null.
+     * @return JWT-токен с расширенной информацией (ID, email, ФИО, статус активности).
+     * @throws IllegalArgumentException если входные параметры некорректны.
      */
     public String generateToken(User user, Collection<? extends GrantedAuthority> authorities) {
         if (user == null) {
@@ -96,10 +110,9 @@ public class JwtUtil {
         String roles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-                
         log.debug("Генерация расширенного токена для пользователя {} с ролями: {}", user.getUsername(), roles);
-        
-        String token = JWT.create()
+
+        return JWT.create()
                 .withSubject(user.getUsername())
                 .withIssuer(issuer)
                 .withClaim("roles", roles)
@@ -111,16 +124,13 @@ public class JwtUtil {
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(System.currentTimeMillis() + jwtLifeTimeDuration))
                 .sign(Algorithm.HMAC256(jwtSecret));
-
-        return token;
     }
 
     /**
-     * Проверяет, является ли токен валидным.
-     * Токен должен существовать, не быть в черном списке и не быть просроченным.
+     * Проверяет валидность токена.
      *
-     * @param token Токен для проверки.
-     * @return true, если токен валиден, иначе false.
+     * @param token JWT-токен.
+     * @return true, если токен корректен, не просрочен и не находится в черном списке; false иначе.
      */
     public boolean isValid(String token) {
         if (token == null || token.isBlank()) {
@@ -148,11 +158,10 @@ public class JwtUtil {
     }
 
     /**
-     * Добавляет токен в черный список, чтобы он больше не использовался.
-     * Токен будет недействителен до его истечения.
+     * Добавляет токен в черный список, делая его недействительным.
      *
-     * @param token Токен, который нужно добавить в черный список.
-     * @throws IllegalArgumentException Если токен некорректен или пуст.
+     * @param token JWT-токен для добавления в черный список.
+     * @throws IllegalArgumentException если токен пустой или недействителен.
      */
     public void addJwtToBlacklist(String token) {
         DecodedJWT decodedJWT = decodeToken(token);
@@ -166,12 +175,11 @@ public class JwtUtil {
     }
 
     /**
-     * Декодирует JWT токен и возвращает его содержимое.
-     * Проверяет, что токен является валидным.
+     * Декодирует и проверяет JWT-токен.
      *
-     * @param token Токен для декодирования.
+     * @param token JWT-токен.
      * @return Декодированный JWT.
-     * @throws IllegalArgumentException Если токен некорректен или пуст.
+     * @throws IllegalArgumentException если токен пустой, некорректный или просрочен.
      */
     public DecodedJWT decodeToken(String token) {
         if (token == null || token.isBlank()) {
@@ -193,10 +201,10 @@ public class JwtUtil {
     }
 
     /**
-     * Генерирует токен для сброса пароля.
+     * Генерирует JWT-токен для сброса пароля.
      *
      * @param username Имя пользователя.
-     * @return Сгенерированный токен.
+     * @return JWT-токен для сброса пароля с временем жизни 1 час.
      */
     public String generatePasswordResetToken(String username) {
         return JWT.create()
@@ -209,9 +217,9 @@ public class JwtUtil {
     /**
      * Декодирует токен для сброса пароля.
      *
-     * @param token Токен для декодирования.
+     * @param token JWT-токен для сброса пароля.
      * @return Декодированный JWT.
-     * @throws IllegalArgumentException Если токен недействителен.
+     * @throws IllegalArgumentException если токен недействителен.
      */
     public DecodedJWT decodePasswordResetToken(String token) {
         try {

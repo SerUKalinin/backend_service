@@ -13,6 +13,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
@@ -43,6 +44,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Регистрация пользователя: вызов сервиса с обычным флагом")
     void register_shouldCallAuthServiceRegister() throws MessagingException {
         UserSignupDto dto = new UserSignupDto();
         dto.setEmail("user@example.com");
@@ -54,6 +56,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Регистрация администратора: вызов сервиса с флагом admin")
     void registerAdmin_shouldCallAuthServiceRegisterWithAdminFlag() throws MessagingException {
         UserSignupDto dto = new UserSignupDto();
         dto.setEmail("admin@example.com");
@@ -65,6 +68,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Вход пользователя: возвращает корректный JWT токен")
     void login_shouldReturnAuthResponse() {
         UserSigninDto dto = new UserSigninDto();
         dto.setUsername("user");
@@ -81,6 +85,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Выход пользователя: вызов сервиса logout")
     void logout_shouldCallAuthServiceLogout() {
         authController.logout(request, response);
 
@@ -88,6 +93,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Подтверждение email: возвращает JWT и вызывает добавление cookie")
     void verifyEmail_shouldReturnAuthResponseAndCallAddJwtToCookie() {
         EmailVerificationDto dto = new EmailVerificationDto();
         dto.setEmail("user@example.com");
@@ -105,6 +111,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Повторная отправка кода подтверждения: вызов сервиса resendConfirmationCode")
     void resendEmailVerification_shouldCallAuthServiceResendConfirmationCode() throws MessagingException {
         String email = "user@example.com";
 
@@ -114,6 +121,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Обновление JWT токена: возвращает новый токен")
     void refreshToken_shouldReturnAuthResponse() {
         AuthResponse authResponse = new AuthResponse("dummy-token");
         when(authService.refreshToken(request, response)).thenReturn(authResponse);
@@ -126,6 +134,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Восстановление пароля: вызов сервиса отправки ссылки сброса")
     void forgotPassword_shouldCallAuthServiceSendPasswordResetLink() throws MessagingException {
         ForgotPasswordDto dto = new ForgotPasswordDto();
         dto.setEmail("user@example.com");
@@ -136,6 +145,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Сброс пароля: возвращает JWT после успешного изменения пароля")
     void resetPassword_shouldReturnAuthResponse() {
         PasswordResetDto dto = new PasswordResetDto();
         dto.setToken("token");
@@ -152,6 +162,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Валидация токена JWT: возвращает 200 при корректном заголовке")
     void validateToken_shouldReturnOkWhenHeaderIsValid() {
         String token = "valid-token";
         String header = "Bearer " + token;
@@ -163,6 +174,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Валидация токена JWT: возвращает 401 при отсутствии или некорректном заголовке")
     void validateToken_shouldReturnUnauthorizedWhenHeaderIsInvalid() {
         ResponseEntity<Void> responseEntity = authController.validateToken(null);
 

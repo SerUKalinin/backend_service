@@ -23,8 +23,16 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Конфигурация безопасности приложения.
- * Настраивает фильтрацию запросов, аутентификацию и управление сессиями.
+ * Центральная конфигурация безопасности приложения аутентификации.
+ * <p>
+ * Определяет правила доступа к HTTP-эндпоинтам, стратегию аутентификации, работу с JWT,
+ * политику управления сессиями и интеграцию с сервисами пользователей.
+ * Применяется на уровне security-слоя Spring Security.
+ * </p>
+ * <p>
+ * Включает поддержку аннотаций безопасности для методов с {@link EnableMethodSecurity}
+ * и конфигурирует stateless-подход без использования HTTP-сессий.
+ * </p>
  */
 @Slf4j
 @Configuration
@@ -33,15 +41,32 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    /**
+     * Сервис для загрузки информации о пользователях.
+     * <p>
+     * Используется провайдером аутентификации для проверки учётных данных.
+     * Не допускает null, инъектируется через конструктор.
+     */
     private final UserDetailsService userDetailsService;
+
+    /**
+     * Фильтр JWT-аутентификации.
+     * <p>
+     * Обрабатывает входящие HTTP-запросы, проверяя JWT-токены
+     * и устанавливая контекст безопасности.
+     */
     private final JwtAuthFilter jwtAuthFilter;
 
     /**
-     * Настраивает цепочку фильтров безопасности.
+     * Формирует цепочку фильтров безопасности Spring Security.
+     * <p>
+     * Настраивает правила авторизации для HTTP-эндпоинтов, JWT-аутентификацию
+     * и stateless-режим работы без HTTP-сессий.
+     * </p>
      *
-     * @param http объект для конфигурации HTTP безопасности.
-     * @return настроенная цепочка безопасности.
-     * @throws Exception если произошла ошибка конфигурации.
+     * @param http объект конфигурации HTTP-безопасности; не может быть null
+     * @return {@link SecurityFilterChain} с применёнными настройками безопасности
+     * @throws Exception при ошибках конфигурации Spring Security
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -51,11 +76,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Доступ к аутентификации и регистрации открыт
-                        .requestMatchers(
-                                "/auth/**"
-                        ).permitAll()
-                        // Доступ к объектам недвижимости
+                        .requestMatchers("/auth/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/real-estate-objects").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/real-estate-objects").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}").hasRole("ADMIN")
@@ -65,38 +87,30 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}/assign-responsible/{userId}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/real-estate-objects/{id}/remove-responsible").hasRole("ADMIN")
 
-                        // Доступ к пользователям
-                        .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN") // создание пользователя
-                        .requestMatchers(HttpMethod.GET, "/users/info").authenticated() // инфо о себе
-                        .requestMatchers(HttpMethod.GET, "/users/info/all").hasRole("ADMIN") // инфо обо всех
-                        .requestMatchers(HttpMethod.GET, "/users/info/{id}").hasRole("ADMIN") // инфо по ID
-                        .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated() // обновление имени
-                        .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated() // обновление фамилии
-                        .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated() // обновление почты
-                        .requestMatchers(HttpMethod.PUT, "/users/update/{userId}/role").hasRole("ADMIN") // обновление роли
-                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN") // удаление пользователей
+                        .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/users/info").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/users/info/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/users/info/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/users/update/first-name").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/users/update/last-name").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/users/update/email").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/users/update/{userId}/role").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole("ADMIN")
 
-                        // Доступ к задачам
-                        .requestMatchers(HttpMethod.POST, "/tasks").hasRole("ADMIN") // создание задачи
-                        .requestMatchers(HttpMethod.GET, "/tasks").hasAnyRole("USER", "ADMIN") // просмотр всех задач
-                        .requestMatchers(HttpMethod.GET, "/tasks/{id}").hasAnyRole("USER", "ADMIN") // просмотр конкретной задачи
-                        .requestMatchers(HttpMethod.PUT, "/tasks/{id}").hasRole("ADMIN") // обновление задачи
-                        .requestMatchers(HttpMethod.DELETE, "/tasks/{id}").hasRole("ADMIN") // удаление задачи
-
-                        // Получение задач по статусу
+                        .requestMatchers(HttpMethod.POST, "/tasks").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tasks").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tasks/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/tasks/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/tasks/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/tasks/status/{status}").hasAnyRole("USER", "ADMIN")
-                        // Получение задач по объекту недвижимости
                         .requestMatchers(HttpMethod.GET, "/tasks/object/{objectId}").hasAnyRole("USER", "ADMIN")
-                        // Получение задач по статусу и объекту недвижимости
                         .requestMatchers(HttpMethod.GET, "/tasks/status/{status}/object/{objectId}").hasAnyRole("USER", "ADMIN")
 
-                        // Доступ к файлам
                         .requestMatchers(HttpMethod.POST, "/api/files/upload").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/files/download/{fileName:.+}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/files/{fileName:.+}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/files/task/{taskId}").hasAnyRole("USER", "ADMIN")
 
-                        // Любые другие запросы требуют авторизации
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -108,9 +122,11 @@ public class SecurityConfig {
     }
 
     /**
-     * Создает и возвращает {@link PasswordEncoder} для хеширования паролей.
+     * Регистрирует {@link PasswordEncoder} для хеширования паролей пользователей.
+     * <p>
+     * Используется при аутентификации и сохранении учётных данных пользователей.
      *
-     * @return экземпляр {@link BCryptPasswordEncoder}.
+     * @return экземпляр {@link PasswordEncoder} на основе BCrypt
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -119,11 +135,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Настраивает провайдера аутентификации.
-     * Использует {@link DaoAuthenticationProvider} с кастомным сервисом загрузки пользователей.
+     * Настраивает {@link AuthenticationProvider} на основе базы данных пользователей.
+     * <p>
+     * Использует {@link UserDetailsService} и {@link PasswordEncoder} для проверки
+     * учётных данных при аутентификации.
      *
-     * @return экземпляр {@link AuthenticationProvider}.
-     * @throws IllegalStateException если userDetailsService не инициализирован.
+     * @return {@link AuthenticationProvider} для проверки пользователя
+     * @throws IllegalStateException если {@link UserDetailsService} не инициализирован
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -140,11 +158,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Создает менеджер аутентификации.
+     * Предоставляет {@link AuthenticationManager} для процессов аутентификации.
+     * <p>
+     * Используется, в том числе, в контроллерах аутентификации для выполнения входа пользователей.
      *
-     * @param configuration объект конфигурации аутентификации.
-     * @return экземпляр {@link AuthenticationManager}.
-     * @throws Exception если произошла ошибка при создании менеджера аутентификации.
+     * @param configuration конфигурация аутентификации Spring Security; не может быть null
+     * @return {@link AuthenticationManager} для проверки учётных данных пользователей
+     * @throws Exception при ошибке создания менеджера аутентификации
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {

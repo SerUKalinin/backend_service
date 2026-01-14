@@ -2,6 +2,7 @@ package com.example.auth_service.controller;
 
 import com.example.auth_service.service.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -30,6 +31,7 @@ class FileControllerTest {
     }
 
     @Test
+    @DisplayName("Загрузка файлов: вызов сервиса и возврат информации о файлах")
     void uploadFiles_shouldCallServiceAndReturnResponse() {
         MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
         Long taskId = 1L;
@@ -46,6 +48,7 @@ class FileControllerTest {
     }
 
     @Test
+    @DisplayName("Получение списка файлов задачи: возвращает файлы из сервиса")
     void getTaskFiles_shouldReturnFilesFromService() {
         Long taskId = 1L;
         List<Map<String, String>> mockResponse = List.of(Map.of("fileName", "file1.txt"));
@@ -60,6 +63,7 @@ class FileControllerTest {
     }
 
     @Test
+    @DisplayName("Скачивание файла: возвращает ресурс с содержимым файла")
     void downloadFile_shouldReturnResource() {
         String fileName = "file.txt";
         Resource resource = new ByteArrayResource("content".getBytes());
@@ -73,6 +77,7 @@ class FileControllerTest {
     }
 
     @Test
+    @DisplayName("Удаление файла: вызов сервиса и возврат статуса 200")
     void deleteFile_shouldCallService() {
         String fileName = "file.txt";
 
