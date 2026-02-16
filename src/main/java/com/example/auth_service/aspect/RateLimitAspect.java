@@ -16,12 +16,30 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Аспект для ограничения частоты вызовов методов приложения.
+ * Аспект ограничения частоты вызовов методов (rate limiting).
  *
- * Применяется к методам, помеченным аннотацией {@link RateLimit}.
- * Служит для защиты публичных API и внутренних сервисов от избыточных запросов,
- * предотвращая перегрузку системы. Учёт и контроль выполняются с использованием Redis.
+ * <p>Перехватывает вызовы методов, помеченных аннотацией {@link RateLimit},
+ * и контролирует количество обращений в заданном временном окне.</p>
+ *
+ * <p>Основное назначение аспекта — защита публичных API и чувствительных операций
+ * от избыточной нагрузки, brute-force атак и неконтролируемых повторных вызовов.</p>
+ *
+ * <p>Учёт количества вызовов осуществляется с использованием Redis.
+ * Для каждого уникального ключа хранится счётчик с ограниченным временем жизни (TTL).</p>
+ *
+ * <p>Ключ ограничения формируется на основе:
+ * <ul>
+ *     <li>явно заданного логического ключа в {@link RateLimit#key()} (если указан),</li>
+ *     <li>или имени класса и метода,</li>
+ *     <li>и IP-адреса клиента.</li>
+ * </ul>
+ * Таким образом, лимит применяется индивидуально для каждого клиента.</p>
+ *
+ * <p>Аспект корректно обрабатывает ситуации отсутствия HTTP-контекста
+ * (например, при вызове из асинхронных задач или тестов),
+ * используя fallback-значение IP.</p>
  */
+
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -29,63 +47,90 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitAspect {
 
     /**
-     * RedisTemplate для хранения счётчиков вызовов.
+     * RedisTemplate для хранения и управления счётчиками запросов.
      *
-     * Используется для инкрементации и отслеживания количества запросов
-     * по ключу, формируемому на основе метода, класса и IP-адреса клиента
-     * либо заданному явно в аннотации {@link RateLimit}.
+     * <p>Используется для атомарного инкремента счётчика вызовов и контроля
+     * времени жизни ключей (TTL), соответствующих временным окнам ограничений.</p>
+     *
+     * <p>Каждый ключ Redis представляет собой отдельный rate limit,
+     * связанный с конкретным методом и клиентом.</p>
      */
     private final RedisTemplate<String, Long> rateLimitRedisTemplate;
 
     /**
-     * Перехватывает вызов метода и проверяет соблюдение лимита запросов.
+     * Перехватывает выполнение целевого метода и проверяет соблюдение лимита вызовов.
      *
-     * Инкрементирует счётчик запросов в Redis. Если текущее количество
-     * превышает значение {@link RateLimit#value()}, выбрасывает
-     * {@link RateLimitExceededException}.
+     * <p>При каждом вызове:</p>
+     * <ol>
+     *     <li>Формируется ключ ограничения.</li>
+     *     <li>Счётчик вызовов атомарно инкрементируется в Redis.</li>
+     *     <li>Проверяется и при необходимости устанавливается TTL ключа.</li>
+     *     <li>При превышении допустимого лимита выбрасывается исключение.</li>
+     * </ol>
      *
-     * @param joinPoint точка соединения AOP, содержащая информацию о целевом методе
-     * @param rateLimit аннотация с настройками ограничения частоты вызовов
+     * <p>Если текущее количество вызовов превышает значение,
+     * заданное в {@link RateLimit#limit()},
+     * выполнение метода блокируется.</p>
+     *
+     * @param joinPoint точка соединения AOP, содержащая информацию о вызываемом методе
+     * @param rateLimit аннотация с параметрами ограничения частоты вызовов
      * @return результат выполнения целевого метода при соблюдении лимита
      * @throws RateLimitExceededException если превышен допустимый лимит вызовов
      * @throws Throwable если целевой метод выбрасывает исключение
      */
+
     @Around("@annotation(rateLimit)")
     public Object rateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
         String key = generateKey(joinPoint, rateLimit);
+
         Long currentCount = rateLimitRedisTemplate.opsForValue().increment(key);
 
-        if (currentCount == 1) {
+        Long ttl = rateLimitRedisTemplate.getExpire(key, TimeUnit.SECONDS);
+        if (ttl == null || ttl == -1) {
             rateLimitRedisTemplate.expire(key, rateLimit.timeWindow(), TimeUnit.SECONDS);
         }
 
-        if (currentCount > rateLimit.value()) {
-            log.warn("Превышен лимит запросов для ключа: {}", key);
+        if (currentCount > rateLimit.limit()) {
+            log.warn(
+                    "Rate limit exceeded. key={}, count={}, limit={}, window={}s",
+                    key, currentCount, rateLimit.limit(), rateLimit.timeWindow()
+            );
             throw new RateLimitExceededException("Превышен лимит запросов. Попробуйте позже.");
         }
 
         return joinPoint.proceed();
     }
 
+
     /**
      * Формирует уникальный ключ для хранения счётчика вызовов в Redis.
      *
-     * Если аннотация {@link RateLimit} содержит явный ключ — используется он.
-     * В противном случае ключ создаётся на основе имени класса, метода
-     * и IP-адреса клиента.
+     * <p>Алгоритм формирования ключа:</p>
+     * <ul>
+     *     <li>Если в {@link RateLimit#key()} задано значение — используется
+     *     логический ключ в сочетании с IP-адресом клиента.</li>
+     *     <li>Если ключ не задан — используется имя класса, метода и IP-адрес клиента.</li>
+     * </ul>
      *
-     * @param joinPoint точка соединения AOP, используемая для получения информации о методе
+     * <p>В случае отсутствия HTTP-контекста используется fallback-значение IP,
+     * что позволяет безопасно применять аспект вне web-слоя.</p>
+     *
+     * @param joinPoint точка соединения AOP, содержащая информацию о целевом методе
      * @param rateLimit аннотация с настройками ограничения частоты вызовов
-     * @return строка ключа Redis для учёта запросов
+     * @return строковый ключ Redis для учёта количества вызовов
      */
-    private String generateKey(ProceedingJoinPoint joinPoint, RateLimit rateLimit) {
-        if (!rateLimit.key().isEmpty()) {
-            return rateLimit.key();
-        }
 
-        HttpServletRequest request =
-                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        String ip = request.getRemoteAddr();
+    private String generateKey(ProceedingJoinPoint joinPoint, RateLimit rateLimit) {
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+        String ip = (attributes != null)
+                ? attributes.getRequest().getRemoteAddr()
+                : "unknown";
+
+        if (!rateLimit.key().isEmpty()) {
+            return String.format("rate_limit:%s:%s", rateLimit.key(), ip);
+        }
 
         return String.format(
                 "rate_limit:%s:%s:%s",
@@ -94,4 +139,5 @@ public class RateLimitAspect {
                 ip
         );
     }
+
 }

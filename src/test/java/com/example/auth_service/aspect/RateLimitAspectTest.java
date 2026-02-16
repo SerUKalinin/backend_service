@@ -59,7 +59,7 @@ public class RateLimitAspectTest {
     @DisplayName("Разрешить запрос, если количество запросов не превышает лимит")
     void testRateLimitWithinLimit() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
         when(rateLimit.key()).thenReturn("");
         when(valueOperations.increment(anyString())).thenReturn(1L);
@@ -81,7 +81,7 @@ public class RateLimitAspectTest {
     @DisplayName("Выбросить RateLimitExceededException при превышении лимита запросов")
     void testRateLimitExceeded() {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.key()).thenReturn("");
         when(valueOperations.increment(anyString())).thenReturn(6L);
         when(joinPoint.getSignature()).thenReturn(signature);
@@ -100,7 +100,7 @@ public class RateLimitAspectTest {
     @DisplayName("Использовать пользовательский ключ при его указании")
     void testCustomKey() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
         when(rateLimit.key()).thenReturn("custom:kay");
         when(valueOperations.increment(anyString())).thenReturn(1L);
@@ -116,7 +116,7 @@ public class RateLimitAspectTest {
     @DisplayName("Сгенерировать ключ на основе метода и IP-адреса при отсутствии пользовательского ключа")
     void testKeyGenerator() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
         when(rateLimit.key()).thenReturn("");
         when(valueOperations.increment(anyString())).thenReturn(1L);
@@ -137,7 +137,7 @@ public class RateLimitAspectTest {
     @DisplayName("Сбросить счетчик после истечения временного окна")
     void testRateLimitResetAfterTimeWindow() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(1);
         when(rateLimit.key()).thenReturn("");
         when(valueOperations.increment(anyString())).thenReturn(1L);
@@ -164,7 +164,7 @@ public class RateLimitAspectTest {
     @DisplayName("Обрабатывать разные IP-адреса независимо")
     void teatDifferentIpAddresses() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
         when(rateLimit.key()).thenReturn("");
         when(joinPoint.proceed()).thenReturn("success");
@@ -190,7 +190,7 @@ public class RateLimitAspectTest {
     @DisplayName("Обрабатывать разные методы независимо при одинаковом IP")
     void tastDifferentMethods() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
         when(rateLimit.key()).thenReturn("");
         when(joinPoint.proceed()).thenReturn("success");
@@ -216,7 +216,7 @@ public class RateLimitAspectTest {
     @DisplayName("Корректно работать с различными временными окнами лимита")
     void testDifferentTimeWindows() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(30);
         when(rateLimit.key()).thenReturn("");
         when(valueOperations.increment(anyString())).thenReturn(1L);
@@ -238,7 +238,7 @@ public class RateLimitAspectTest {
     @DisplayName("Разрешить запрос на границе лимита")
     void testAtLimitBoundary() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.key()).thenReturn("");
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.getDeclaringTypeName()).thenReturn("com.example.auth_service.controller.AuthController");
@@ -257,7 +257,7 @@ public class RateLimitAspectTest {
     @DisplayName("Выбросить RateLimitExceededException при превышении лимита на 1")
     void testExceedingLimitByOne() {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.key()).thenReturn("");
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.getDeclaringTypeName()).thenReturn("com.example.auth_service.controller.AuthController");
@@ -276,7 +276,7 @@ public class RateLimitAspectTest {
     @DisplayName("Корректно обрабатывать параллельные запросы и соблюдение лимита")
     void testConcurrentRequests() throws Throwable {
         RateLimit rateLimit = mock(RateLimit.class);
-        when(rateLimit.value()).thenReturn(5);
+        when(rateLimit.limit()).thenReturn(5);
         when(rateLimit.timeWindow()).thenReturn(60);
         when(rateLimit.key()).thenReturn("");
         when(joinPoint.getSignature()).thenReturn(signature);

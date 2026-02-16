@@ -23,7 +23,7 @@ public @interface RateLimit {
      *
      * @return число запросов, которое нельзя превысить
      */
-    int value() default 10;
+    int limit() default 10;
 
     /**
      * Временной интервал (окно) для применения ограничения.

@@ -50,7 +50,7 @@ public class AuthController {
      * @param userSignupDto DTO с данными нового пользователя
      * @throws MessagingException если произошла ошибка при отправке письма подтверждения
      */
-    @RateLimit(value = 3, timeWindow = 3600)
+    @RateLimit(limit = 3, timeWindow = 3600)
     @PostMapping("/register-user")
     @ResponseStatus(HttpStatus.CREATED)
     public void register(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
@@ -64,7 +64,7 @@ public class AuthController {
      * @param userSignupDto DTO с данными администратора
      * @throws MessagingException если произошла ошибка при отправке письма подтверждения
      */
-    @RateLimit(value = 1, timeWindow = 3600)
+    @RateLimit(limit = 1, timeWindow = 3600)
     @PostMapping("/register-admin")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAdmin(@Valid @RequestBody UserSignupDto userSignupDto) throws MessagingException {
@@ -79,7 +79,7 @@ public class AuthController {
      * @param response      HTTP-ответ для установки cookie с токенами при необходимости
      * @return {@link AuthResponse} с access токеном
      */
-    @RateLimit(value = 5, timeWindow = 60)
+    @RateLimit(limit = 5, timeWindow = 60)
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody UserSigninDto userSigninDto, HttpServletResponse response) {
         log.info("Аутентификация пользователя: {}", userSigninDto.getUsername());
@@ -93,7 +93,7 @@ public class AuthController {
      * @param request  HTTP-запрос с cookie refresh token
      * @param response HTTP-ответ для очистки cookie
      */
-    @RateLimit(value = 10, timeWindow = 60)
+    @RateLimit(limit = 10, timeWindow = 60)
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(HttpServletRequest request, HttpServletResponse response) {
@@ -108,7 +108,7 @@ public class AuthController {
      * @param response            HTTP-ответ для установки JWT cookie
      * @return {@link AuthResponse} с access токеном
      */
-    @RateLimit(value = 3, timeWindow = 60)
+    @RateLimit(limit = 3, timeWindow = 60)
     @PostMapping("/verify-email")
     public ResponseEntity<AuthResponse> verifyEmail(@RequestBody EmailVerificationDto emailVerificationDto, HttpServletResponse response) {
         log.info("Проверка email: {}, code: {}", emailVerificationDto.getEmail(), emailVerificationDto.getCode());
@@ -123,7 +123,7 @@ public class AuthController {
      * @param email email пользователя для повторной отправки
      * @throws MessagingException если произошла ошибка при отправке письма
      */
-    @RateLimit(value = 3, timeWindow = 3600)
+    @RateLimit(limit = 3, timeWindow = 3600)
     @PostMapping("/resend-verification")
     @ResponseStatus(HttpStatus.OK)
     public void resendEmailVerification(@RequestParam String email) throws MessagingException {
@@ -138,7 +138,7 @@ public class AuthController {
      * @param response HTTP-ответ для установки новых cookie
      * @return {@link AuthResponse} с новым access токеном
      */
-    @RateLimit(value = 10, timeWindow = 60)
+    @RateLimit(limit = 10, timeWindow = 60)
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         AuthResponse authResponse = authService.refreshToken(request, response);
@@ -151,7 +151,7 @@ public class AuthController {
      * @param forgotPasswordDto DTO с email пользователя
      * @throws MessagingException если произошла ошибка при отправке письма
      */
-    @RateLimit(value = 3, timeWindow = 3600)
+    @RateLimit(limit = 3, timeWindow = 3600)
     @PostMapping("/forgot-password")
     @ResponseStatus(HttpStatus.OK)
     public void forgotPassword(@Valid @RequestBody ForgotPasswordDto forgotPasswordDto) throws MessagingException {
@@ -165,7 +165,7 @@ public class AuthController {
      * @param passwordResetDto DTO с токеном сброса и новым паролем
      * @return {@link AuthResponse} с новым access токеном после успешного сброса
      */
-    @RateLimit(value = 3, timeWindow = 3600)
+    @RateLimit(limit = 3, timeWindow = 3600)
     @PostMapping("/reset-password")
     public ResponseEntity<AuthResponse> resetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
         log.info("Запрос на сброс пароля");
@@ -179,7 +179,7 @@ public class AuthController {
      * @param authHeader заголовок Authorization в формате "Bearer {token}"
      * @return HTTP 200 OK если токен валиден, HTTP 401 Unauthorized если токен невалиден
      */
-    @RateLimit(value = 10, timeWindow = 60)
+    @RateLimit(limit = 10, timeWindow = 60)
     @GetMapping("/validate")
     public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
